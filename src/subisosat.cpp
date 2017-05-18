@@ -29,7 +29,7 @@ using namespace isosat;
 /************************************************************//**
  * @brief	
  * @return            string representation of connective	
- * @version						v0.01b
+ * @version						v0.01b // 
  ****************************************************************/
 igraph_bool_t igraph_compare_transitives(
           const igraph_t *graph1,

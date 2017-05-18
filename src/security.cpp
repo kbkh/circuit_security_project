@@ -40,7 +40,7 @@ igraph_bool_t check_map (
 {
     L1_struct *mapped = (L1_struct*) arg;
     if (vid2 == mapped->vid2) {
-        //        if (mapped->mapped[vid2][vid1])
+        //        if (mapped->mapped[vid2][vid1]) //
         //            cout << "reject vid2(" << vid2 << ") -> vid1(" << vid1 << ")" << endl;
         return !mapped->mapped[vid2][vid1];
     }
@@ -247,14 +247,17 @@ Security::Security (Circuit *_G, Circuit *_H)
                                                                             ****************************************************************************/
 void Security::clean_solutions () {
     for (int i = solutions.size()-1; i >= 0; i--) {
-        
+        //cout<<"here 1"<<endl;
         igraph_bool_t iso(false);
         igraph_test_isomorphic_map (G, H, &colour_G, &colour_H, 0, 0, &iso, NULL, solutions[i],
                                     &igraph_compare_transitives, 0, 0);
+        //cout<<"here 2"<<endl;
         
         if (!iso) {
             igraph_vector_destroy(solutions[i]);
+            //cout<<"here 3"<<endl;
             solutions.erase(solutions.begin()+i);
+            //cout<<"here 4"<<endl;
         }
         
     }
@@ -2968,7 +2971,7 @@ void Security::p2(igraph_t* G, igraph_vector_t* ids, int min_L1)
                                                                             * @brief
                                                                             * @version						v0.01b
                                                                             ****************************************************************************/
-void Security::S1_greedy (int threads, int min_L1, int max_L1, bool quite) { // Added by Karl (int remove_vertex_max)
+void Security::S1_greedy (bool save_state, int threads, int min_L1, int max_L1, bool quite) { // Added by Karl (int remove_vertex_max)
     
     /******************************
      * Setup
@@ -3062,7 +3065,7 @@ void Security::S1_greedy (int threads, int min_L1, int max_L1, bool quite) { // 
                 } else {
                     busy_threads.back()->test_edge = edge_list[sat_index++];
                 }
-
+                
                 busy_threads.back()->open(true,false);
                 
                 /******************************
@@ -3379,6 +3382,49 @@ void Security::S1_greedy (int threads, int min_L1, int max_L1, bool quite) { // 
         output = "S1_greedy ("  + G->get_name() + ")";
         output = report(output, G, H, best_edge->L1_prev, solutions.size(), best_edge->edge);
         cout << endl << output;
+        
+        // Added by Karl
+        // To be done only for the first iteration not the ones used inside the lift vertex thing. Add a bool
+        if (save_state) {
+            // Save netlist
+            Circuit temp_H, temp_G;
+            temp_H.copy(H);
+            temp_G.copy(G);
+            //clean_solutions();
+            vector<igraph_vector_t*> temp_solutions;
+            //temp_solutions = solutions;
+            cout<<"here solutions"<<endl;
+//            for (int i = 0; i < solutions.size(); i++) {
+//                temp_solutions.push_back(new igraph_vector_t());
+//                *temp_solutions[i] = *solutions[i];
+//                //memcpy(temp_solutions[i], solutions[i], sizeof(igraph_vector_t));
+//            }
+            //cout<<setfill('/')<<setw(200)<<temp_solutions[0]<<" "<<solutions[0]<<endl;
+            // Lift vertices after best edge added
+            cout<<setfill('/')<<setw(200)<<"lift"<<endl;
+            lift_vertex(maxL1, threads);
+            cout<<setfill('/')<<setw(200)<<"done"<<endl;
+            // Write to file
+            file(WRITE);
+            // Reload old netlist
+            G->copy(&temp_G);
+            H->copy(&temp_H);
+            solutions.clear();
+//            solutions.resize(temp_solutions.size());
+//            for (int i = 0; i < temp_solutions.size(); i++) {
+////                if (i >= temp_solutions.size()) {
+////                    int index = i==temp_solutions.size()?i:index;
+////                    delete solutions.
+////                }
+////                else
+//                //solutions.push_back(new igraph_vector_t());
+//                    *solutions[i] = *temp_solutions[i];
+//                //memcpy(temp_solutions[i], solutions[i], sizeof(igraph_vector_t));
+//            }
+            //solutions.clear();
+            //clean_solutions();
+        }
+        ////////////////
     }
     
     for (unsigned int i=0; i<edges.size(); i++)
@@ -3388,7 +3434,7 @@ void Security::S1_greedy (int threads, int min_L1, int max_L1, bool quite) { // 
 }
 
 // Added by Karl
-void Security::L1_main (string outFileName, int remove_vertices_max, int threads, int min_L1, int max_L1, bool quite) {
+void Security::L1_main (string outFileName, int _remove_vertices_max, int threads, int min_L1, int max_L1, bool quite) {
     // create and open file
     //string outFile = "gnuplotOutput/v_" + outFileName + "_" + to_string(min_L1);
     //ofstream outfile(outFile.c_str());
@@ -3398,34 +3444,42 @@ void Security::L1_main (string outFileName, int remove_vertices_max, int threads
     maxL1 = -1;
     //init_maap();
     //for (int i = 0; i < igraph_vcount(H); i++)
-      //  levels.push_back(0);
+    //  levels.push_back(0);
     //levels.resize(igraph_vcount(H));
     // Add edges until target sec lvl reached
     //read_levels();
-    S1_greedy(threads, min_L1, max_L1);
+//    string outFile = "gnuplotOutput/" + outFileName;
+//    ofstream koutfile(outFile.c_str());
+//    koutfile<<"# security"<<"     "<<"# lifted e"<<endl;
+    string outFile = "gnuplotOutput/" + outFileName;
+    file(OPEN, outFile);
+    
+    remove_vertices_max = _remove_vertices_max;
+    
+    S1_greedy(true, threads, min_L1, max_L1);
     //outfile<<setfill(' ')<<setw(5)<<0<<setfill(' ')<<setw(16)<<igraph_ecount(H)<<endl;
     //outfile<<0<<" "<<igraph_ecount(H)<<endl;
     //read_levels();
     
-    //solutions.clear();
-    // remove mappings that don't work
-    for (int i = 0; i < remove_vertices_max; i++) {
-        // remove mappings that don't work
-        clean_solutions();
-        lift_vertex(/*maxL1*/);
-        
-        // Add edges until we reach the target sec lvl
-        // remove mappings that don't work
-        clean_solutions();
-        if (maxL1 > min_L1)
-            S1_greedy(threads, min_L1, maxL1);
-        
-        //write to file
-        //outfile<<setfill(' ')<<setw(5)<<i+1<<setfill(' ')<<setw(16)<<igraph_ecount(H)<<endl;
-        //outfile<<i+1<<" "<<igraph_ecount(H)<<endl;
-    }
+    //    solutions.clear();
+    //     remove mappings that don't work
+    //        for (int i = 0; i < remove_vertices_max; i++) {
+    //            // remove mappings that don't work
+    //            clean_solutions();
+    //            lift_vertex(/*maxL1*/);
+    //
+    //            // Add edges until we reach the target sec lvl
+    //            // remove mappings that don't work
+    //            clean_solutions();
+    //            if (maxL1 > min_L1)
+    //                S1_greedy(threads, min_L1, maxL1);
+    //
+    //            //write to file
+    //            //outfile<<setfill(' ')<<setw(5)<<i+1<<setfill(' ')<<setw(16)<<igraph_ecount(H)<<endl;
+    //            //outfile<<i+1<<" "<<igraph_ecount(H)<<endl;
+    //        }
     
-    //outfile.close();
+    file(CLOSE);
 }
 
 void Security::lift_vertex(/*int max_L1*/) {
@@ -3434,7 +3488,7 @@ void Security::lift_vertex(/*int max_L1*/) {
     
     int index = -1;
     int max_L1 = maxL1;
-    int min_L1 = maxL1;
+    //int min_L1 = maxL1;
     //cout<<"level: "<<max_L1<<endl;
     for (int i = 0; i < igraph_vcount(H); i++) {
         vector<int> deleted;
@@ -3466,13 +3520,13 @@ void Security::lift_vertex(/*int max_L1*/) {
                 max_L1 = level;
                 index = i;
             } /*else if (level == max_L1) {
-                cout<<levels[i]<<endl;
-                if (levels[i] <= min_L1) {
-                    min_L1 = levels[i];
-                    index = i;
-                }
-                max_L1 = level;
-            }*/
+               cout<<levels[i]<<endl;
+               if (levels[i] <= min_L1) {
+               min_L1 = levels[i];
+               index = i;
+               }
+               max_L1 = level;
+               }*/
             // Unlift the vertex
             SETVAN(H, "Lifted", i, NotLifted);
             // add back removed edges
@@ -3500,6 +3554,45 @@ void Security::lift_vertex(/*int max_L1*/) {
     //temp
     //L1_state.max_L1 = max_L1;
     maxL1 = max_L1;
+}
+
+void Security::lift_vertex(int min_L1, int threads) {
+    for (int i = 0; i < remove_vertices_max; i++) {
+        // remove mappings that don't work
+        clean_solutions();
+        lift_vertex();
+        
+        // Add edges until we reach the target sec lvl
+        // remove mappings that don't work
+        clean_solutions();
+        if (maxL1 > min_L1)
+            S1_greedy(false, threads, min_L1, maxL1);
+        
+        //write to file
+        //outfile<<setfill(' ')<<setw(5)<<i+1<<setfill(' ')<<setw(16)<<igraph_ecount(H)<<endl;
+        //outfile<<i+1<<" "<<igraph_ecount(H)<<endl;
+    }
+    
+}
+
+void Security::file(actions action, string outFileName) {
+    switch (action) {
+        case OPEN:
+            koutfile.open(outFileName.c_str());
+            koutfile<<"# security"<<"     "<<"# lifted e"<<endl;
+            break;
+            
+        case WRITE:
+            koutfile<<setfill(' ')<<setw(5)<<maxL1<<setfill(' ')<<setw(11)<<igraph_ecount(G)-igraph_ecount(H)<<endl;
+            break;
+            
+        case CLOSE:
+            koutfile.close();
+            break;
+            
+        default:
+            break;
+    }
 }
 
 void Security::init_maap() {
@@ -3541,7 +3634,7 @@ void Security::write_levels(int vid2, int l) {
         perror("Error un-mmapping the file");
     }
     close(fd);
-
+    
 }
 
 void Security::read_levels() {

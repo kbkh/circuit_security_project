@@ -109,9 +109,9 @@ int main(int argc, char **argv) {
     //bool kdone = false;
     //int loop = 2;
     //int kmax = 0;
-    //string outFile = "gnuplotOutput/c432_" + outName;
-    //ofstream koutfile(outFile.c_str());
-    //koutfile<<"security"<<"     "<<"# unlifted e"<<endl;
+//    string outFile = "gnuplotOutput/c432_" + outName;
+//    ofstream koutfile(outFile.c_str());
+//    koutfile<<"security"<<"     "<<"# unlifted e"<<endl;
     //while(!kdone) {
     ////////////////
         string circuit_filename, circuit_name, tech_filename, tech_name, working_dir, report_filename;

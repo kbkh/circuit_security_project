@@ -12,7 +12,7 @@
 
 #include "circuit.hpp"
 //#define NotLifted false
-//#define DEBUG
+//#define DEBUG //
 
 
 

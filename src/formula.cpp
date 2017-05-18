@@ -10,7 +10,7 @@
 
 #include "formula.hpp"
 #include <sstream>
-using namespace formula;
+using namespace formula; //
 
 //#define DEBUG
 

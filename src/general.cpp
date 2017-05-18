@@ -11,7 +11,7 @@
 // http://www.ros.org/wiki/CppStyleGuide
 
 #include "general.hpp"
-//#define DEBUG
+//#define DEBUG //
 
 
 /*************************************************************************//**
