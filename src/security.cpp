@@ -3409,14 +3409,14 @@ void Security::S1_greedy (bool save_state, int threads, int min_L1, int max_L1, 
             vector<long> solutions_add;
             //temp_solutions = solutions;
             cout<<"here solutions"<<endl;
-            for (int i = 0; i < solutions.size(); i++) {
-                temp_solutions.push_back(new igraph_vector_t());
-                *temp_solutions[i] = *solutions[i];
-                cout<<solutions[i]<<endl;
-                solutions_add.push_back((long)solutions[i]);
-                cout<<solutions_add[i]<<endl;
-                //memcpy(temp_solutions[i], solutions[i], sizeof(igraph_vector_t));
-            }
+//            for (int i = 0; i < solutions.size(); i++) {
+//                temp_solutions.push_back(new igraph_vector_t());
+//                *temp_solutions[i] = *solutions[i];
+//                cout<<solutions[i]<<endl;
+//                solutions_add.push_back((long)solutions[i]);
+//                cout<<solutions_add[i]<<endl;
+//                //memcpy(temp_solutions[i], solutions[i], sizeof(igraph_vector_t));
+//            }
             //cout<<setfill('/')<<setw(200)<<temp_solutions[0]<<" "<<solutions[0]<<endl;
             // Lift vertices after best edge added
             cout<<setfill('/')<<setw(200)<<"lift"<<endl;
@@ -3433,22 +3433,22 @@ void Security::S1_greedy (bool save_state, int threads, int min_L1, int max_L1, 
             //            cout<<setfill('/')<<setw(300)<<"H after"<<endl;
             H->copy(&temp_H);
             //            H->print();
-            //solutions.clear();
+            solutions.clear();
             //            solutions.resize(temp_solutions.size());
-            for (int i = 0; i < temp_solutions.size(); i++) {
-                //                if (i >= temp_solutions.size()) {
-                //                    int index = i==temp_solutions.size()?i:index;
-                //                    delete solutions.
-                //                }
-                //                else
-                //solutions.push_back(new igraph_vector_t());
-                solutions[i] = (igraph_vector_t*)solutions_add[i];
-                cout<<solutions[i]<<endl;
-                *solutions[i] = *temp_solutions[i];
-                //memcpy(temp_solutions[i], solutions[i], sizeof(igraph_vector_t));
-            }
-            while (solutions.size() > temp_solutions.size())
-                solutions.pop_back();
+//            for (int i = 0; i < temp_solutions.size(); i++) {
+//                //                if (i >= temp_solutions.size()) {
+//                //                    int index = i==temp_solutions.size()?i:index;
+//                //                    delete solutions.
+//                //                }
+//                //                else
+//                //solutions.push_back(new igraph_vector_t());
+//                solutions[i] = (igraph_vector_t*)solutions_add[i];
+//                cout<<solutions[i]<<endl;
+//                *solutions[i] = *temp_solutions[i];
+//                //memcpy(temp_solutions[i], solutions[i], sizeof(igraph_vector_t));
+//            }
+//            while (solutions.size() > temp_solutions.size())
+//                solutions.pop_back();
             //solutions.clear();
             //clean_solutions();
         }
