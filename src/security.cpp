@@ -3423,9 +3423,10 @@ void Security::S1_greedy (bool save_state, int threads, int min_L1, int max_L1, 
             lift_vertex(maxL1, threads);
             cout<<setfill('/')<<setw(200)<<"done"<<endl;
             // Write to file
+            file(WRITE);
             if (maxL1 == temp_maxL1)
-                file(WRITE);
-            else koutfile<<setfill(' ')<<setw(5)<<temp_maxL1<<setfill(' ')<<setw(11)<<temp_lifted<<endl;
+                k3outfile<<setfill(' ')<<setw(5)<<maxL1<<setfill(' ')<<setw(11)<<igraph_ecount(G)-igraph_ecount(H)<<endl;
+            else k3outfile<<setfill(' ')<<setw(5)<<temp_maxL1<<setfill(' ')<<setw(11)<<temp_lifted<<endl;
             // Reload old netlist
             //            cout<<setfill('/')<<setw(300)<<"G after"<<endl;
             G->copy(&temp_G);
@@ -3611,6 +3612,9 @@ void Security::file(actions action, string outFileName) {
             
             k2outfile.open(string(outFileName.substr(0,outFileName.rfind('.')) + "_no_lifting.txt").c_str());
             k2outfile<<"# security"<<"     "<<"# lifted e"<<endl;
+            
+            k3outfile.open(string(outFileName.substr(0,outFileName.rfind('.')) + "_exact_sec_lvl.txt").c_str());
+            k3outfile<<"# security"<<"     "<<"# lifted e"<<endl;
             break;
             
         case WRITE:

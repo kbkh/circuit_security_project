@@ -156,6 +156,7 @@ private:
     int remove_vertices_max;
     ofstream koutfile;
     ofstream k2outfile;
+    ofstream k3outfile;
     ////////////////
     
     friend class C_SAT;
