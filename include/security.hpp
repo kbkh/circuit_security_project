@@ -64,6 +64,12 @@ using namespace formula;
  * Defs
  ****************************************************************************/
 
+typedef enum {
+    OPEN,
+    WRITE,
+    CLOSE
+} actions;
+
 
 /*****************************************************************************
  * Prototypes
@@ -136,8 +142,6 @@ public:
     L1_Thread () : vf2(false), test_edge(NULL) {};
 };
 
-
-
 class Security {
 private:
     Isosat *isosat;
@@ -149,6 +153,9 @@ private:
     int fd;
     int *maap;
     int result;
+    int remove_vertices_max;
+    ofstream koutfile;
+    ofstream k2outfile;
     ////////////////
     
     friend class C_SAT;
@@ -163,9 +170,13 @@ public:
     Security (Circuit *G, Circuit *H);
     // Added by Karl
     /* Compute the security level for the whole Graph. Called from main */
-    void L1_main (string outFileName, int remove_vertices_max, int threads=1, int min_L1=2, int max_L1=-1, bool quite = true);
+    void L1_main (string outFileName, int _remove_vertices_max, int threads=1, int min_L1=2, int max_L1=-1, bool quite = true);
     /* Lift the vertex that increases the level the most */
-    void lift_vertex(/*int max_L1*/);
+    void lift_vertex();
+    /* Lift vertices until budget exhausted */
+    void lift_vertex(int min_L1, int threads);
+    /* Open, write and close file */
+    void file(actions action, string outFileName = "out2.txt");
     /* initialize the maap */
     void init_maap();
     /* save the level of every vertex */
@@ -183,7 +194,7 @@ public:
     void L1 (string label);
     
     void S1_rand    (int threads=1, int min_L1=2, bool quite = true);
-    void S1_greedy  (int threads=1, int min_L1=2, int max_L1=-1, bool quite = true); // Added by Karl (int remove_vertex_max = 0)
+    void S1_greedy  (bool save_state = true, int threads=1, int min_L1=2, int max_L1=-1, bool quite = true); // Added by Karl (int remove_vertex_max = 0)
     void kiso(int min_L1, int max_L1);
     void df(igraph_vector_t* v, igraph_t* vect, int vert1, int vert, int d);
     void p1(igraph_t* G, igraph_vector_t* ids, int min_L1);

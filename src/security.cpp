@@ -2976,6 +2976,13 @@ void Security::S1_greedy (bool save_state, int threads, int min_L1, int max_L1, 
     /******************************
      * Setup
      ******************************/
+    // Added by Karl
+//    if(save_state) {
+//        k2outfile.open("gnuplotOutput/test.txt");
+//        k2outfile<<"# security"<<"     "<<"# lifted e"<<endl;
+//    }
+    ////////////////
+    
     if (max_L1 == -1) max_L1 = G->max_L1();
     if (igraph_ecount(H) == 0) add_free_edges(max_L1);
     
@@ -3386,41 +3393,54 @@ void Security::S1_greedy (bool save_state, int threads, int min_L1, int max_L1, 
         // Added by Karl
         // To be done only for the first iteration not the ones used inside the lift vertex thing. Add a bool
         if (save_state) {
+            k2outfile<<maxL1<<" "<<igraph_ecount(G)-igraph_ecount(H)<<endl;
+            int temp_maxL1 = maxL1;
+            int temp_lifted = igraph_ecount(G)-igraph_ecount(H);
             // Save netlist
             Circuit temp_H, temp_G;
             temp_H.copy(H);
             temp_G.copy(G);
+            //            cout<<setfill('/')<<setw(300)<<"G"<<endl;
+            //            G->print();
+            //            cout<<setfill('/')<<setw(300)<<"H"<<endl;
+            //            H->print();
             //clean_solutions();
             vector<igraph_vector_t*> temp_solutions;
             //temp_solutions = solutions;
             cout<<"here solutions"<<endl;
-//            for (int i = 0; i < solutions.size(); i++) {
-//                temp_solutions.push_back(new igraph_vector_t());
-//                *temp_solutions[i] = *solutions[i];
-//                //memcpy(temp_solutions[i], solutions[i], sizeof(igraph_vector_t));
-//            }
+            //            for (int i = 0; i < solutions.size(); i++) {
+            //                temp_solutions.push_back(new igraph_vector_t());
+            //                *temp_solutions[i] = *solutions[i];
+            //                //memcpy(temp_solutions[i], solutions[i], sizeof(igraph_vector_t));
+            //            }
             //cout<<setfill('/')<<setw(200)<<temp_solutions[0]<<" "<<solutions[0]<<endl;
             // Lift vertices after best edge added
             cout<<setfill('/')<<setw(200)<<"lift"<<endl;
             lift_vertex(maxL1, threads);
             cout<<setfill('/')<<setw(200)<<"done"<<endl;
             // Write to file
-            file(WRITE);
+            if (maxL1 == temp_maxL1)
+                file(WRITE);
+            else koutfile<<setfill(' ')<<setw(5)<<temp_maxL1<<setfill(' ')<<setw(11)<<temp_lifted<<endl;
             // Reload old netlist
+            //            cout<<setfill('/')<<setw(300)<<"G after"<<endl;
             G->copy(&temp_G);
+            //            G->print();
+            //            cout<<setfill('/')<<setw(300)<<"H after"<<endl;
             H->copy(&temp_H);
+            //            H->print();
             solutions.clear();
-//            solutions.resize(temp_solutions.size());
-//            for (int i = 0; i < temp_solutions.size(); i++) {
-////                if (i >= temp_solutions.size()) {
-////                    int index = i==temp_solutions.size()?i:index;
-////                    delete solutions.
-////                }
-////                else
-//                //solutions.push_back(new igraph_vector_t());
-//                    *solutions[i] = *temp_solutions[i];
-//                //memcpy(temp_solutions[i], solutions[i], sizeof(igraph_vector_t));
-//            }
+            //            solutions.resize(temp_solutions.size());
+            //            for (int i = 0; i < temp_solutions.size(); i++) {
+            ////                if (i >= temp_solutions.size()) {
+            ////                    int index = i==temp_solutions.size()?i:index;
+            ////                    delete solutions.
+            ////                }
+            ////                else
+            //                //solutions.push_back(new igraph_vector_t());
+            //                    *solutions[i] = *temp_solutions[i];
+            //                //memcpy(temp_solutions[i], solutions[i], sizeof(igraph_vector_t));
+            //            }
             //solutions.clear();
             //clean_solutions();
         }
@@ -3448,9 +3468,9 @@ void Security::L1_main (string outFileName, int _remove_vertices_max, int thread
     //levels.resize(igraph_vcount(H));
     // Add edges until target sec lvl reached
     //read_levels();
-//    string outFile = "gnuplotOutput/" + outFileName;
-//    ofstream koutfile(outFile.c_str());
-//    koutfile<<"# security"<<"     "<<"# lifted e"<<endl;
+    //    string outFile = "gnuplotOutput/" + outFileName;
+    //    ofstream koutfile(outFile.c_str());
+    //    koutfile<<"# security"<<"     "<<"# lifted e"<<endl;
     string outFile = "gnuplotOutput/" + outFileName;
     file(OPEN, outFile);
     
@@ -3580,6 +3600,9 @@ void Security::file(actions action, string outFileName) {
         case OPEN:
             koutfile.open(outFileName.c_str());
             koutfile<<"# security"<<"     "<<"# lifted e"<<endl;
+            
+            k2outfile.open(string(outFileName.substr(0,outFileName.rfind('.')) + "_no_lifting.txt").c_str());
+            k2outfile<<"# security"<<"     "<<"# lifted e"<<endl;
             break;
             
         case WRITE:
