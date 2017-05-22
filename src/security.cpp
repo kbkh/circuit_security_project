@@ -27,6 +27,7 @@ using namespace formula;
 using namespace std;
 
 vector<int> added_edges;
+vector<int> L1_start;
 
 /************************************************************//**
                                                                * @brief
@@ -3397,8 +3398,10 @@ void Security::S1_greedy (bool save_state, int threads, int min_L1, int max_L1, 
         
         // Added by Karl
         // To be done only for the first iteration not the ones used inside the lift vertex thing. Add a bool
-        if (save_state)
+        if (save_state) {
             k2outfile<<setfill(' ')<<setw(4)<<maxL1<<" "<<setfill(' ')<<setw(15)<<igraph_ecount(G)-igraph_ecount(H)<<endl;
+            L1_start.push_back(maxL1);
+        }
         //            int temp_maxL1 = maxL1;
         //            int temp_lifted = igraph_ecount(G)-igraph_ecount(H);
         //            // Save netlist
@@ -3660,6 +3663,10 @@ void print_added_edges() {
 
 int get_added_edges_size() {
     return added_edges.size();
+}
+
+int get_L1_start(int index) {
+    return L1_start[index];
 }
 
 void Security::add_prev_edges(int add_edges) {

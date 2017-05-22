@@ -439,7 +439,9 @@ int main(int argc, char **argv) {
             security = new Security(&G, &H);
             security->setConfBudget(budget);
             security->add_prev_edges(add_edges);
-            max_L1 = security->L1();
+            if (!first)
+                max_L1 = get_L1_start(add_edges-1);
+            //max_L1 = security->L1();
             
             string output;
             output = "S1_greedy ("  + G.get_name() + ")";

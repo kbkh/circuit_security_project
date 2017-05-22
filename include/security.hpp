@@ -90,6 +90,8 @@ int  set_L1 (const Circuit *G, const vector<EdgeInfo> &edge_set);
 void print_added_edges();
 /* Get how many edges were added during the first iteration */
 int get_added_edges_size();
+/* Get sec lvl of circuit with this many edges */
+int get_L1_start(int index);
 
 
 /*****************************************************************************
