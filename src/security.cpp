@@ -26,6 +26,8 @@
 using namespace formula;
 using namespace std;
 
+vector<int> added_edges;
+
 /************************************************************//**
                                                                * @brief
                                                                * @return            string representation of connective
@@ -3280,6 +3282,8 @@ void Security::S1_greedy (bool save_state, int threads, int min_L1, int max_L1, 
         
         // add to graph, remove from list, reset edges
         add_edge(best_edge->eid);
+        if (save_state)
+            added_edges.push_back(best_edge->eid);
         max_L1 = best_edge->L1();
         // Added by Karl
         //L1_state.max_L1 = max_L1;
@@ -3463,7 +3467,7 @@ void Security::S1_greedy (bool save_state, int threads, int min_L1, int max_L1, 
 }
 
 // Added by Karl
-void Security::L1_main (string outFileName, int _remove_vertices_max, int threads, int min_L1, int max_L1, bool quite) {
+void Security::L1_main (bool first, string outFileName, int _remove_vertices_max, int threads, int min_L1, int max_L1, bool quite) {
     // create and open file
     //string outFile = "gnuplotOutput/v_" + outFileName + "_" + to_string(min_L1);
     //ofstream outfile(outFile.c_str());
@@ -3485,7 +3489,7 @@ void Security::L1_main (string outFileName, int _remove_vertices_max, int thread
     
     remove_vertices_max = _remove_vertices_max;
     
-    S1_greedy(true, threads, min_L1, max_L1);
+    S1_greedy(first, threads, min_L1, max_L1);
     //outfile<<setfill(' ')<<setw(5)<<0<<setfill(' ')<<setw(16)<<igraph_ecount(H)<<endl;
     //outfile<<0<<" "<<igraph_ecount(H)<<endl;
     //read_levels();
@@ -3628,6 +3632,20 @@ void Security::file(actions action, string outFileName) {
         default:
             break;
     }
+}
+
+void print_added_edges() {
+    for (int i = 0; i < added_edges.size(); i++)
+        cout<<"a "<<added_edges[i]<<endl;
+}
+
+int get_added_edges_size() {
+    return added_edges.size();
+}
+
+void Security::add_prev_edges(int add_edges) {
+    //for (int i = 0; i < add_edges; i++)
+        //
 }
 
 //void Security::init_maap() {

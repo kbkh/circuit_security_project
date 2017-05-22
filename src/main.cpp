@@ -106,13 +106,14 @@ int main(int argc, char **argv) {
     }
     
     // Added by Karl
-    //bool kdone = false;
-    //int loop = 2;
+    bool kdone = false;
+    bool first = true;
+    int add_edges = 0;
     //int kmax = 0;
 //    string outFile = "gnuplotOutput/c432_" + outName;
 //    ofstream koutfile(outFile.c_str());
 //    koutfile<<"security"<<"     "<<"# unlifted e"<<endl;
-    //while(!kdone) {
+    while(!kdone) {
     ////////////////
         string circuit_filename, circuit_name, tech_filename, tech_name, working_dir, report_filename;
         
@@ -348,6 +349,8 @@ int main(int argc, char **argv) {
             //kmax = max_L1;
             H.copy(&G);
             H.rand_del_edges((float) 1.0);
+            //add_prev_edges(add_edges);
+            
             bool done(false);
             
             if ( test_args.size() == 3 ) {
@@ -442,7 +445,7 @@ int main(int argc, char **argv) {
             if (!done)
             {
                 clock_t tic = clock();
-                security->L1_main(outName, remove_vertices_max, num_threads, /*loop*/min_L1, max_L1); // Added by Karl (true, remove_vertices_max)
+                security->L1_main(first, outName, remove_vertices_max, num_threads, /*loop*/min_L1, max_L1); // Added by Karl (true, remove_vertices_max)
                 clock_t toc = clock();
                 cout << endl << "Heuristic took: ";
                 cout << (double) (toc-tic)/CLOCKS_PER_SEC << endl;
@@ -845,19 +848,24 @@ int main(int argc, char **argv) {
         //printf("\n\ndone 0 \n");
         //cout<<loop<<endl;
         //cout<<kmax+1<<endl;
+        // Added by Karl
+        if (first)
+            first = false;
         
-        //loop++;
-        //if (loop == kmax+1)
-          //  kdone = true;
-    //}
+        print_added_edges();
+        
+        if (add_edges == get_added_edges_size())
+            kdone = true;
+        
+        cout<<"eyy: "<<add_edges<<endl;
+        add_edges++;
+        ////////////////
+    }
     //koutfile.close();
+    // Added by Karl
+//    for (int i = 0; i < added_edges.size(); i++)
+//        cout<<"a "<<added_edges[i]<<endl;
+    print_added_edges();
+    ////////////////
     return 0;
 }
-
-
-
-
-
-
-
-

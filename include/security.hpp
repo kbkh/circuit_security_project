@@ -86,6 +86,10 @@ bool parse (string line, Circuit *G, int &L1, int &L0, Edge &edge);
 bool parse (string line, igraph_vector_t *soln);
 bool l1_edge_lt (const L1_Edge* rhs, const L1_Edge* lhs);
 int  set_L1 (const Circuit *G, const vector<EdgeInfo> &edge_set);
+/* Print the edges added during the first iteration where no vertex was lifted */
+void print_added_edges();
+/* Get how many edges were added during the first iteration */
+int get_added_edges_size();
 
 
 /*****************************************************************************
@@ -171,7 +175,7 @@ public:
     Security (Circuit *G, Circuit *H);
     // Added by Karl
     /* Compute the security level for the whole Graph. Called from main */
-    void L1_main (string outFileName, int _remove_vertices_max, int threads=1, int min_L1=2, int max_L1=-1, bool quite = true);
+    void L1_main (bool first, string outFileName, int _remove_vertices_max, int threads=1, int min_L1=2, int max_L1=-1, bool quite = true);
     /* Lift the vertex that increases the level the most */
     void lift_vertex();
     /* Lift vertices until budget exhausted */
@@ -184,6 +188,8 @@ public:
     void write_levels(int vid2, int l);
     /* get the level of every vertex */
     void read_levels();
+    /* Add add_edges previously removed edges to an empty H graph before lifting a vertex */
+    void add_prev_edges(int add_edges);
     ////////////////
     void setConfBudget(int budget) { isosat->setConfBudget(budget); };
     void setPropBudget(int budget) { isosat->setPropBudget(budget); };
