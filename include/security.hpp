@@ -154,6 +154,9 @@ private:
     L1_struct L1_state;
     // Added by Karl
     int maxL1;
+    int lifted_edges;
+    int maxL1_raw;
+    int lifted_edges_raw;
     int fd;
     int *maap;
     int result;
@@ -190,6 +193,14 @@ public:
     void read_levels();
     /* Add add_edges previously removed edges to an empty H graph before lifting a vertex */
     void add_prev_edges(int add_edges);
+    /* Get the acheived L1 */
+    int get_L1();
+    /* Get the number of edges lifted */
+    int get_lifted_edges();
+    /* Get the raw acheived L1 */
+    int get_L1_raw();
+    /* Get the raw number of edges lifted */
+    int get_lifted_edges_raw();
     ////////////////
     void setConfBudget(int budget) { isosat->setConfBudget(budget); };
     void setPropBudget(int budget) { isosat->setPropBudget(budget); };

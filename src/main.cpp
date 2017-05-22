@@ -110,9 +110,13 @@ int main(int argc, char **argv) {
     bool first = true;
     int add_edges = 0;
     //int kmax = 0;
-//    string outFile = "gnuplotOutput/c432_" + outName;
-//    ofstream koutfile(outFile.c_str());
-//    koutfile<<"security"<<"     "<<"# unlifted e"<<endl;
+    string outFile = "gnuplotOutput/" + outName;
+    ofstream koutfile(outFile.c_str());
+    koutfile<<"security"<<"     "<<"# lifted e"<<endl;
+
+    string outFileRaw = "gnuplotOutput/raw_" + outName;
+    ofstream k2outfile(outFileRaw.c_str());
+    k2outfile<<"security"<<"     "<<"# lifted e"<<endl;
     while(!kdone) {
     ////////////////
         string circuit_filename, circuit_name, tech_filename, tech_name, working_dir, report_filename;
@@ -451,7 +455,10 @@ int main(int argc, char **argv) {
                 cout << endl << "Heuristic took: ";
                 cout << (double) (toc-tic)/CLOCKS_PER_SEC << endl;
             }
-            //koutfile<<setfill(' ')<<setw(4)<<loop<<setfill(' ')<<setw(15)<<igraph_ecount(&H)<<endl;
+            if (!first) {
+                koutfile<<setfill(' ')<<setw(4)<<security->get_L1()<<setfill(' ')<<setw(15)<<security->get_lifted_edges()<<endl;
+                k2outfile<<setfill(' ')<<setw(4)<<security->get_L1_raw()<<setfill(' ')<<setw(15)<<security->get_lifted_edges_raw()<<endl;
+            }
         }
         
         
@@ -864,7 +871,8 @@ int main(int argc, char **argv) {
         add_edges++;
         ////////////////
     }
-    //koutfile.close();
+    koutfile.close();
+    k2outfile.close();
     // Added by Karl
 //    for (int i = 0; i < added_edges.size(); i++)
 //        cout<<"a "<<added_edges[i]<<endl;
