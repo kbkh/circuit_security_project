@@ -3511,7 +3511,7 @@ void Security::L1_main (bool first, string outFileName, int _remove_vertices_max
             lift_vertex(/*maxL1*/);
             cout<<"e in H: "<<igraph_ecount(H)<<endl;
             cout<<"L1: "<<maxL1<<endl;
-            cout<<"target: "<<min_L1<<endl;3
+            cout<<"target: "<<min_L1<<endl;
             // Add edges until we reach the target sec lvl
             // remove mappings that don't work
             clean_solutions();
