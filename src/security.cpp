@@ -3644,8 +3644,8 @@ int get_added_edges_size() {
 }
 
 void Security::add_prev_edges(int add_edges) {
-    //for (int i = 0; i < add_edges; i++)
-        //
+    for (int i = 0; i < add_edges; i++)
+        add_edge(added_edges[i]);
 }
 
 //void Security::init_maap() {

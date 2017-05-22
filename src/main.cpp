@@ -349,7 +349,6 @@ int main(int argc, char **argv) {
             //kmax = max_L1;
             H.copy(&G);
             H.rand_del_edges((float) 1.0);
-            //add_prev_edges(add_edges);
             
             bool done(false);
             
@@ -435,6 +434,8 @@ int main(int argc, char **argv) {
             
             security = new Security(&G, &H);
             security->setConfBudget(budget);
+            security->add_prev_edges(add_edges);
+            max_L1 = security->L1();
             
             string output;
             output = "S1_greedy ("  + G.get_name() + ")";
@@ -849,15 +850,17 @@ int main(int argc, char **argv) {
         //cout<<loop<<endl;
         //cout<<kmax+1<<endl;
         // Added by Karl
-        if (first)
+        if (first) {
             first = false;
+            print_added_edges();
+        }
         
-        print_added_edges();
+//        print_added_edges();
         
         if (add_edges == get_added_edges_size())
             kdone = true;
         
-        cout<<"eyy: "<<add_edges<<endl;
+//        cout<<"eyy: "<<add_edges<<endl;
         add_edges++;
         ////////////////
     }
@@ -865,7 +868,7 @@ int main(int argc, char **argv) {
     // Added by Karl
 //    for (int i = 0; i < added_edges.size(); i++)
 //        cout<<"a "<<added_edges[i]<<endl;
-    print_added_edges();
+//    print_added_edges();
     ////////////////
     return 0;
 }
