@@ -3410,9 +3410,16 @@ void Security::S1_greedy (bool save_state, int threads, int min_L1, int max_L1, 
                     igraph_delete_edges(H, igraph_ess_1(eid));
                 }
             
+            // Add back all lifted edges due to lifting vertices
+            for (int i = 0; i < LiftedVnE.liftedEIDs.size(); i++)
+                if (EAN(G, "Lifted", i) == Lifted) { // Security check
+                    add_edge(i);
+                    SETEAN(G, "Lifted", i, NotLifted);
+                }
             
             LiftedVnE.vertexIDs.clear();
             LiftedVnE.edgeIDs.clear();
+            LiftedVnE.liftedEIDs.clear();
             //            k2outfile<<maxL1<<" "<<igraph_ecount(G)-igraph_ecount(H)<<endl;
             //            int temp_maxL1 = maxL1;
             //            int temp_lifted = igraph_ecount(G)-igraph_ecount(H);
