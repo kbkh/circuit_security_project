@@ -3420,7 +3420,8 @@ void Security::S1_greedy (bool save_state, int threads, int min_L1, int max_L1, 
             LiftedVnE.vertexIDs.clear();
             LiftedVnE.edgeIDs.clear();
             LiftedVnE.liftedEIDs.clear();
-            //            k2outfile<<maxL1<<" "<<igraph_ecount(G)-igraph_ecount(H)<<endl;
+            
+            k2outfile<<setfill(' ')<<setw(6)<<maxL1<<setfill(' ')<<setw(15)<<igraph_ecount(G)-igraph_ecount(H)<<endl;
             //            int temp_maxL1 = maxL1;
             //            int temp_lifted = igraph_ecount(G)-igraph_ecount(H);
             //            // Save netlist
@@ -3634,18 +3635,18 @@ void Security::lift_vertex(int min_L1, int threads) {
 void Security::file(actions action, string outFileName) {
     switch (action) {
         case OPEN:
-            koutfile.open(outFileName.c_str());
-            koutfile<<"# security"<<"     "<<"# lifted e"<<endl;
+//            koutfile.open(outFileName.c_str());
+//            koutfile<<"# security"<<"     "<<"# lifted e"<<endl;
             
             k2outfile.open(string(outFileName.substr(0,outFileName.rfind('.')) + "_no_lifting.txt").c_str());
             k2outfile<<"# security"<<"     "<<"# lifted e"<<endl;
             
-            k3outfile.open(string(outFileName.substr(0,outFileName.rfind('.')) + "_exact_sec_lvl.txt").c_str());
-            k3outfile<<"# security"<<"     "<<"# lifted e"<<endl;
+//            k3outfile.open(string(outFileName.substr(0,outFileName.rfind('.')) + "_exact_sec_lvl.txt").c_str());
+//            k3outfile<<"# security"<<"     "<<"# lifted e"<<endl;
             break;
             
         case WRITE:
-            koutfile<<setfill(' ')<<setw(5)<<maxL1<<setfill(' ')<<setw(11)<<igraph_ecount(G)-igraph_ecount(H)<<endl;
+//            koutfile<<setfill(' ')<<setw(5)<<maxL1<<setfill(' ')<<setw(11)<<igraph_ecount(G)-igraph_ecount(H)<<endl;
             break;
             
         case CLOSE:
