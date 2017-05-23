@@ -3402,70 +3402,76 @@ void Security::S1_greedy (bool save_state, int threads, int min_L1, int max_L1, 
             
             // Remove all added edges
             for (int i = 0; i < LiftedVnE.edgeIDs.size(); i++)
-                if (H->test_edge(G->get_edge(eid))) // Security check to make sure the edge is in H
-                    
+                if (H->test_edge(G->get_edge(i))) { // Security check to make sure the edge is in H
+                    int from, to;
+                    igraph_edge(G,i,&from,&to);
+                    int eid;
+                    igraph_get_eid(H, &eid, from, to, IGRAPH_DIRECTED, 1); // get id of the edge in H
+                    igraph_delete_edges(H, igraph_ess_1(eid));
+                }
+            
             
             LiftedVnE.vertexIDs.clear();
             LiftedVnE.edgeIDs.clear();
-//            k2outfile<<maxL1<<" "<<igraph_ecount(G)-igraph_ecount(H)<<endl;
-//            int temp_maxL1 = maxL1;
-//            int temp_lifted = igraph_ecount(G)-igraph_ecount(H);
-//            // Save netlist
-//            Circuit temp_H, temp_G;
-//            temp_H.copy(H);
-//            temp_G.copy(G);
-//            //            cout<<setfill('/')<<setw(300)<<"G"<<endl;
-//            //            G->print();
-//            //            cout<<setfill('/')<<setw(300)<<"H"<<endl;
-//            //            H->print();
-//            //clean_solutions();
-//            vector<igraph_vector_t*> temp_solutions;
-//            vector<long> solutions_add;
-//            //temp_solutions = solutions;
-//            cout<<"here solutions"<<endl;
-////            for (int i = 0; i < solutions.size(); i++) {
-////                temp_solutions.push_back(new igraph_vector_t());
-////                *temp_solutions[i] = *solutions[i];
-////                cout<<solutions[i]<<endl;
-////                solutions_add.push_back((long)solutions[i]);
-////                cout<<solutions_add[i]<<endl;
-////                //memcpy(temp_solutions[i], solutions[i], sizeof(igraph_vector_t));
-////            }
-//            //cout<<setfill('/')<<setw(200)<<temp_solutions[0]<<" "<<solutions[0]<<endl;
-//            // Lift vertices after best edge added
-//            cout<<setfill('/')<<setw(200)<<"lift"<<endl;
-//            lift_vertex(maxL1, threads);
-//            cout<<setfill('/')<<setw(200)<<"done"<<endl;
-//            // Write to file
-//            file(WRITE);
-//            if (maxL1 == temp_maxL1)
-//                k3outfile<<setfill(' ')<<setw(5)<<maxL1<<setfill(' ')<<setw(11)<<igraph_ecount(G)-igraph_ecount(H)<<endl;
-//            else k3outfile<<setfill(' ')<<setw(5)<<temp_maxL1<<setfill(' ')<<setw(11)<<temp_lifted<<endl;
-//            // Reload old netlist
-//            //            cout<<setfill('/')<<setw(300)<<"G after"<<endl;
-//            G->copy(&temp_G);
-//            //            G->print();
-//            //            cout<<setfill('/')<<setw(300)<<"H after"<<endl;
-//            H->copy(&temp_H);
-//            //            H->print();
-//            solutions.clear();
-//            //            solutions.resize(temp_solutions.size());
-////            for (int i = 0; i < temp_solutions.size(); i++) {
-////                //                if (i >= temp_solutions.size()) {
-////                //                    int index = i==temp_solutions.size()?i:index;
-////                //                    delete solutions.
-////                //                }
-////                //                else
-////                //solutions.push_back(new igraph_vector_t());
-////                solutions[i] = (igraph_vector_t*)solutions_add[i];
-////                cout<<solutions[i]<<endl;
-////                *solutions[i] = *temp_solutions[i];
-////                //memcpy(temp_solutions[i], solutions[i], sizeof(igraph_vector_t));
-////            }
-////            while (solutions.size() > temp_solutions.size())
-////                solutions.pop_back();
-//            //solutions.clear();
-//            //clean_solutions();
+            //            k2outfile<<maxL1<<" "<<igraph_ecount(G)-igraph_ecount(H)<<endl;
+            //            int temp_maxL1 = maxL1;
+            //            int temp_lifted = igraph_ecount(G)-igraph_ecount(H);
+            //            // Save netlist
+            //            Circuit temp_H, temp_G;
+            //            temp_H.copy(H);
+            //            temp_G.copy(G);
+            //            //            cout<<setfill('/')<<setw(300)<<"G"<<endl;
+            //            //            G->print();
+            //            //            cout<<setfill('/')<<setw(300)<<"H"<<endl;
+            //            //            H->print();
+            //            //clean_solutions();
+            //            vector<igraph_vector_t*> temp_solutions;
+            //            vector<long> solutions_add;
+            //            //temp_solutions = solutions;
+            //            cout<<"here solutions"<<endl;
+            ////            for (int i = 0; i < solutions.size(); i++) {
+            ////                temp_solutions.push_back(new igraph_vector_t());
+            ////                *temp_solutions[i] = *solutions[i];
+            ////                cout<<solutions[i]<<endl;
+            ////                solutions_add.push_back((long)solutions[i]);
+            ////                cout<<solutions_add[i]<<endl;
+            ////                //memcpy(temp_solutions[i], solutions[i], sizeof(igraph_vector_t));
+            ////            }
+            //            //cout<<setfill('/')<<setw(200)<<temp_solutions[0]<<" "<<solutions[0]<<endl;
+            //            // Lift vertices after best edge added
+            //            cout<<setfill('/')<<setw(200)<<"lift"<<endl;
+            //            lift_vertex(maxL1, threads);
+            //            cout<<setfill('/')<<setw(200)<<"done"<<endl;
+            //            // Write to file
+            //            file(WRITE);
+            //            if (maxL1 == temp_maxL1)
+            //                k3outfile<<setfill(' ')<<setw(5)<<maxL1<<setfill(' ')<<setw(11)<<igraph_ecount(G)-igraph_ecount(H)<<endl;
+            //            else k3outfile<<setfill(' ')<<setw(5)<<temp_maxL1<<setfill(' ')<<setw(11)<<temp_lifted<<endl;
+            //            // Reload old netlist
+            //            //            cout<<setfill('/')<<setw(300)<<"G after"<<endl;
+            //            G->copy(&temp_G);
+            //            //            G->print();
+            //            //            cout<<setfill('/')<<setw(300)<<"H after"<<endl;
+            //            H->copy(&temp_H);
+            //            //            H->print();
+            //            solutions.clear();
+            //            //            solutions.resize(temp_solutions.size());
+            ////            for (int i = 0; i < temp_solutions.size(); i++) {
+            ////                //                if (i >= temp_solutions.size()) {
+            ////                //                    int index = i==temp_solutions.size()?i:index;
+            ////                //                    delete solutions.
+            ////                //                }
+            ////                //                else
+            ////                //solutions.push_back(new igraph_vector_t());
+            ////                solutions[i] = (igraph_vector_t*)solutions_add[i];
+            ////                cout<<solutions[i]<<endl;
+            ////                *solutions[i] = *temp_solutions[i];
+            ////                //memcpy(temp_solutions[i], solutions[i], sizeof(igraph_vector_t));
+            ////            }
+            ////            while (solutions.size() > temp_solutions.size())
+            ////                solutions.pop_back();
+            //            //solutions.clear();
+            //            //clean_solutions();
         }
         ////////////////
     }
@@ -3655,35 +3661,35 @@ void Security::file(actions action, string outFileName) {
 //        perror("Error opening file for writing");
 //        exit(EXIT_FAILURE);
 //    }
-//    
+//
 //    result = lseek(fd, igraph_vcount(H), SEEK_SET);
 //    if (result == -1) {
 //        close(fd);
 //        perror("Error calling lseek() to 'stretch' the file");
 //        exit(EXIT_FAILURE);
 //    }
-//    
+//
 //    result = write(fd, "", 1);
 //    if (result != 1) {
 //        close(fd);
 //        perror("Error writing last byte of the file");
 //        exit(EXIT_FAILURE);
 //    }
-//    
+//
 //    maap = (int*)mmap(0, igraph_vcount(H), PROT_READ | PROT_WRITE, MAP_SHARED, fd, 0);
 //    if (maap == MAP_FAILED) {
 //        close(fd);
 //        perror("Error mmapping the file");
 //        exit(EXIT_FAILURE);
 //    }
-//    
+//
 //    maap[vid2] = l;
-//    
+//
 //    if (munmap(maap, igraph_vcount(H)) == -1) {
 //        perror("Error un-mmapping the file");
 //    }
 //    close(fd);
-//    
+//
 //}
 //
 //void Security::read_levels() {
