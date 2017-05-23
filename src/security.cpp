@@ -18,7 +18,7 @@
 #define DEBUG
 //#define PRINT_SOLUTION
 //#define MEASURE_TIME
-//#define MEASURE_TIME_S1
+//#define MEASURE_TIME_S13
 #define USE_SOLNS
 //#define NRAND
 //#define VF2
@@ -27,6 +27,8 @@ using namespace formula;
 using namespace std;
 
 LiftingInfo LiftedVnE;
+vector<int> added_edges;
+vector<int> L1_start;
 
 /************************************************************//**
                                                                * @brief
@@ -2973,7 +2975,7 @@ void Security::p2(igraph_t* G, igraph_vector_t* ids, int min_L1)
                                                                             * @brief
                                                                             * @version						v0.01b
                                                                             ****************************************************************************/
-void Security::S1_greedy (bool save_state, int threads, int min_L1, int max_L1, bool quite) { // Added by Karl (int remove_vertex_max)
+void Security::S1_greedy (bool first, bool save_state, int threads, int min_L1, int max_L1, bool quite) { // Added by Karl (int remove_vertex_max)
     
     /******************************
      * Setup
@@ -3283,9 +3285,14 @@ void Security::S1_greedy (bool save_state, int threads, int min_L1, int max_L1, 
         
         // add to graph, remove from list, reset edges
         add_edge(best_edge->eid);
-        if (!save_state)
+        if (!save_state && first)
             LiftedVnE.edgeIDs.push_back(best_edge->eid);
-        else SETEAN(G, "Original", best_edge->eid, Original);
+        else if (save_state && first)
+            SETEAN(G, "Original", best_edge->eid, Original);
+        
+        if (first && save_state)
+            added_edges.push_back(best_edge->eid);
+        
         max_L1 = best_edge->L1();
         // Added by Karl
         //L1_state.max_L1 = max_L1;
@@ -3397,8 +3404,13 @@ void Security::S1_greedy (bool save_state, int threads, int min_L1, int max_L1, 
         cout << endl << output;
         
         // Added by Karl
+        if (first && save_state) {
+            k4outfile<<setfill(' ')<<setw(4)<<maxL1<<" "<<setfill(' ')<<setw(15)<<igraph_ecount(G)-igraph_ecount(H)<<endl;
+            L1_start.push_back(maxL1);
+        }
+        
         // To be done only for the first iteration not the ones used inside the lift vertex thing. Add a bool
-        if (save_state) {
+        if (save_state && first) {
             //cout<<setfill('/')<<setw(260)<<igraph_ecount(H)<<" "<<++count<<endl;
             LiftedVnE.vertexIDs.clear();
             LiftedVnE.edgeIDs.clear();
@@ -3433,7 +3445,7 @@ void Security::S1_greedy (bool save_state, int threads, int min_L1, int max_L1, 
                         // Lift vertices after best edge added
 //                        cout<<setfill('/')<<setw(200)<<"lift"<<endl;
             clean_solutions();
-            lift_vertex(maxL1, threads);
+            lift_vertex(first, maxL1, threads);
 //                        cout<<setfill('/')<<setw(200)<<"done"<<endl;
             // Write to file
             file(WRITE);
@@ -3473,6 +3485,7 @@ void Security::S1_greedy (bool save_state, int threads, int min_L1, int max_L1, 
             LiftedVnE.liftedEIDs.clear();
             
             clean_solutions();
+            //solutions.clear();
                         // Reload old netlist
                         //            cout<<setfill('/')<<setw(300)<<"G after"<<endl;
                         //G->copy(&temp_G);
@@ -3509,7 +3522,7 @@ void Security::S1_greedy (bool save_state, int threads, int min_L1, int max_L1, 
 }
 
 // Added by Karl
-void Security::L1_main (string outFileName, int _remove_vertices_max, int threads, int min_L1, int max_L1, bool quite) {
+void Security::L1_main (bool first, string outFileName, int _remove_vertices_max, int threads, int min_L1, int max_L1, bool quite) {
     // create and open file
     //string outFile = "gnuplotOutput/v_" + outFileName + "_" + to_string(min_L1);
     //ofstream outfile(outFile.c_str());
@@ -3527,11 +3540,56 @@ void Security::L1_main (string outFileName, int _remove_vertices_max, int thread
     //    ofstream koutfile(outFile.c_str());
     //    koutfile<<"# security"<<"     "<<"# lifted e"<<endl;
     string outFile = "gnuplotOutput/" + outFileName;
-    file(OPEN, outFile);
+    string out = "gnuplotOutput/old/" + outFileName;
+    
+    if (first) {
+        k4outfile.open(string(out.substr(0,outFileName.rfind('.')) + "_no_lifting.txt").c_str());
+        k4outfile<<"# security"<<"     "<<"# lifted e"<<endl;
+        
+        file(OPEN, outFile);
+    }
     
     remove_vertices_max = _remove_vertices_max;
-    
-    S1_greedy(true, threads, min_L1, max_L1);
+    if (first)
+        S1_greedy(first, true, threads, min_L1, max_L1);
+    else {
+        //cout<<"maxL1 = "<<maxL1<<endl;
+        //outfile<<setfill(' ')<<setw(5)<<0<<setfill(' ')<<setw(16)<<igraph_ecount(H)<<endl;
+        //outfile<<0<<" "<<igraph_ecount(H)<<endl;
+        //read_levels();
+        
+        //solutions.clear();
+        //remove mappings that don't work
+        maxL1 = max_L1;
+        int temp_maxL1 = maxL1;
+        min_L1 = maxL1;
+        lifted_edges = igraph_ecount(G) - igraph_ecount(H);
+        int temp_lifted_edges = lifted_edges;
+        for (int i = 0; i < remove_vertices_max; i++) {
+            // remove mappings that don't work
+            clean_solutions();
+            lift_vertex(/*maxL1*/);
+//            cout<<"e in H: "<<igraph_ecount(H)<<endl;
+//            cout<<"L1: "<<maxL1<<endl;
+//            cout<<"target: "<<min_L1<<endl;
+            // Add edges until we reach the target sec lvl
+            // remove mappings that don't work
+            clean_solutions();
+            if (maxL1 >= min_L1)
+                S1_greedy(first, false, threads, min_L1, maxL1);
+            
+            //write to file
+            //outfile<<setfill(' ')<<setw(5)<<i+1<<setfill(' ')<<setw(16)<<igraph_ecount(H)<<endl;
+            //outfile<<i+1<<" "<<igraph_ecount(H)<<endl;
+        }
+        maxL1_raw = maxL1;
+        lifted_edges_raw = igraph_ecount(G) - igraph_ecount(H);
+        
+        if (maxL1 != min_L1) {
+            maxL1 = temp_maxL1;
+            lifted_edges = temp_lifted_edges;
+        } else lifted_edges = igraph_ecount(G) - igraph_ecount(H);
+    }
     //outfile<<setfill(' ')<<setw(5)<<0<<setfill(' ')<<setw(16)<<igraph_ecount(H)<<endl;
     //outfile<<0<<" "<<igraph_ecount(H)<<endl;
     //read_levels();
@@ -3612,6 +3670,7 @@ void Security::lift_vertex(/*int max_L1*/) {
     
     if (index >= 0) {
         SETVAN(H, "Lifted", index, Lifted);
+
         LiftedVnE.vertexIDs.push_back(index);
     }
     
@@ -3637,7 +3696,7 @@ void Security::lift_vertex(/*int max_L1*/) {
     maxL1 = max_L1;
 }
 
-void Security::lift_vertex(int min_L1, int threads) {
+void Security::lift_vertex(bool first, int min_L1, int threads) {
     for (int i = 0; i < remove_vertices_max; i++) {
         // remove mappings that don't work
         clean_solutions();
@@ -3646,8 +3705,8 @@ void Security::lift_vertex(int min_L1, int threads) {
         // Add edges until we reach the target sec lvl
         // remove mappings that don't work
         clean_solutions();
-        if (maxL1 > min_L1)
-            S1_greedy(false, threads, min_L1, maxL1);
+        if (maxL1 >= min_L1)
+            S1_greedy(first, false, threads, min_L1, maxL1);
         
         //write to file
         //outfile<<setfill(' ')<<setw(5)<<i+1<<setfill(' ')<<setw(16)<<igraph_ecount(H)<<endl;
@@ -3680,6 +3739,40 @@ void Security::file(actions action, string outFileName) {
         default:
             break;
     }
+}
+
+void print_added_edges() {
+    for (int i = 0; i < added_edges.size(); i++)
+        cout<<"a "<<added_edges[i]<<endl;
+}
+
+int get_added_edges_size() {
+    return added_edges.size();
+}
+
+int get_L1_start(int index) {
+    return L1_start[index];
+}
+
+void Security::add_prev_edges(int add_edges) {
+    for (int i = 0; i < add_edges; i++)
+        add_edge(added_edges[i]);
+}
+
+int Security::get_L1() {
+    return maxL1;
+}
+
+int Security::get_lifted_edges() {
+    return lifted_edges;
+}
+
+int Security::get_L1_raw() {
+    return maxL1_raw;
+}
+
+int Security::get_lifted_edges_raw() {
+    return lifted_edges_raw;
 }
 
 //void Security::init_maap() {

@@ -87,6 +87,12 @@ bool parse (string line, Circuit *G, int &L1, int &L0, Edge &edge);
 bool parse (string line, igraph_vector_t *soln);
 bool l1_edge_lt (const L1_Edge* rhs, const L1_Edge* lhs);
 int  set_L1 (const Circuit *G, const vector<EdgeInfo> &edge_set);
+/* Print the edges added during the first iteration where no vertex was lifted */
+void print_added_edges();
+/* Get how many edges were added during the first iteration */
+int get_added_edges_size();
+/* Get sec lvl of circuit with this many edges */
+int get_L1_start(int index);
 
 
 /*****************************************************************************
@@ -157,6 +163,9 @@ private:
     L1_struct L1_state;
     // Added by Karl
     int maxL1;
+    int lifted_edges;
+    int maxL1_raw;
+    int lifted_edges_raw;
     int fd;
     int *maap;
     int result;
@@ -164,6 +173,7 @@ private:
     ofstream koutfile;
     ofstream k2outfile;
     ofstream k3outfile;
+    ofstream k4outfile;
     ////////////////
     
     friend class C_SAT;
@@ -178,11 +188,11 @@ public:
     Security (Circuit *G, Circuit *H);
     // Added by Karl
     /* Compute the security level for the whole Graph. Called from main */
-    void L1_main (string outFileName, int _remove_vertices_max, int threads=1, int min_L1=2, int max_L1=-1, bool quite = true);
+    void L1_main (bool first, string outFileName, int _remove_vertices_max, int threads=1, int min_L1=2, int max_L1=-1, bool quite = true);
     /* Lift the vertex that increases the level the most */
     void lift_vertex();
     /* Lift vertices until budget exhausted */
-    void lift_vertex(int min_L1, int threads);
+    void lift_vertex(bool first, int min_L1, int threads);
     /* Open, write and close file */
     void file(actions action, string outFileName = "out2.txt");
     /* initialize the maap */
@@ -191,6 +201,16 @@ public:
     void write_levels(int vid2, int l);
     /* get the level of every vertex */
     void read_levels();
+    /* Add add_edges previously removed edges to an empty H graph before lifting a vertex */
+    void add_prev_edges(int add_edges);
+    /* Get the acheived L1 */
+    int get_L1();
+    /* Get the number of edges lifted */
+    int get_lifted_edges();
+    /* Get the raw acheived L1 */
+    int get_L1_raw();
+    /* Get the raw number of edges lifted */
+    int get_lifted_edges_raw();
     ////////////////
     void setConfBudget(int budget) { isosat->setConfBudget(budget); };
     void setPropBudget(int budget) { isosat->setPropBudget(budget); };
@@ -202,7 +222,7 @@ public:
     void L1 (string label);
     
     void S1_rand    (int threads=1, int min_L1=2, bool quite = true);
-    void S1_greedy  (bool save_state = true, int threads=1, int min_L1=2, int max_L1=-1, bool quite = true); // Added by Karl (int remove_vertex_max = 0)
+    void S1_greedy  (bool first = true, bool save_state = true, int threads=1, int min_L1=2, int max_L1=-1, bool quite = true); // Added by Karl (int remove_vertex_max = 0)
     void kiso(int min_L1, int max_L1);
     void df(igraph_vector_t* v, igraph_t* vect, int vert1, int vert, int d);
     void p1(igraph_t* G, igraph_vector_t* ids, int min_L1);
