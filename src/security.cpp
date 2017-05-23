@@ -2984,6 +2984,7 @@ void Security::S1_greedy (bool save_state, int threads, int min_L1, int max_L1, 
     //        k2outfile<<"# security"<<"     "<<"# lifted e"<<endl;
     //    }
     ////////////////
+    int count = 0;
     
     if (max_L1 == -1) max_L1 = G->max_L1();
     if (igraph_ecount(H) == 0) add_free_edges(max_L1);
@@ -3282,6 +3283,9 @@ void Security::S1_greedy (bool save_state, int threads, int min_L1, int max_L1, 
         
         // add to graph, remove from list, reset edges
         add_edge(best_edge->eid);
+        if (save_state)
+            H_edges.insert(best_edge->eid);
+            // LiftedVnE.edgeIDs.push_back(best_edge->eid);
         max_L1 = best_edge->L1();
         // Added by Karl
         //L1_state.max_L1 = max_L1;
@@ -3395,48 +3399,28 @@ void Security::S1_greedy (bool save_state, int threads, int min_L1, int max_L1, 
         // Added by Karl
         // To be done only for the first iteration not the ones used inside the lift vertex thing. Add a bool
         if (save_state) {
-            // Unlift all vertices to go back to "original" circuit
-            for (int i = 0; i < LiftedVnE.vertexIDs.size(); i++)
-                if (VAN(H,"Lifted",i) == Lifted) // Security check
-                    SETVAN(H, "Lifted", i, NotLifted);
-            
-            // Remove all added edges
-            for (int i = 0; i < LiftedVnE.edgeIDs.size(); i++)
-                if (H->test_edge(G->get_edge(i))) { // Security check to make sure the edge is in H
-                    int from, to;
-                    igraph_edge(G,i,&from,&to);
-                    int eid;
-                    igraph_get_eid(H, &eid, from, to, IGRAPH_DIRECTED, 1); // get id of the edge in H
-                    igraph_delete_edges(H, igraph_ess_1(eid));
-                }
-            
-            // Add back all lifted edges due to lifting vertices
-            for (int i = 0; i < LiftedVnE.liftedEIDs.size(); i++)
-                if (EAN(G, "Lifted", i) == Lifted) { // Security check
-                    add_edge(i);
-                    SETEAN(G, "Lifted", i, NotLifted);
-                }
-            
+            cout<<setfill('/')<<setw(260)<<igraph_ecount(H)<<" "<<++count<<endl;
             LiftedVnE.vertexIDs.clear();
-            LiftedVnE.edgeIDs.clear();
-            LiftedVnE.liftedEIDs.clear();
+            //LiftedVnE.edgeIDs.clear();
+            //LiftedVnE.liftedEIDs.clear();
             
             k2outfile<<setfill(' ')<<setw(6)<<maxL1<<setfill(' ')<<setw(15)<<igraph_ecount(G)-igraph_ecount(H)<<endl;
-            //            int temp_maxL1 = maxL1;
-            //            int temp_lifted = igraph_ecount(G)-igraph_ecount(H);
-            //            // Save netlist
-            //            Circuit temp_H, temp_G;
-            //            temp_H.copy(H);
-            //            temp_G.copy(G);
-            //            //            cout<<setfill('/')<<setw(300)<<"G"<<endl;
-            //            //            G->print();
-            //            //            cout<<setfill('/')<<setw(300)<<"H"<<endl;
-            //            //            H->print();
-            //            //clean_solutions();
-            //            vector<igraph_vector_t*> temp_solutions;
-            //            vector<long> solutions_add;
-            //            //temp_solutions = solutions;
-            //            cout<<"here solutions"<<endl;
+            
+            int temp_maxL1 = maxL1;
+            int temp_lifted = igraph_ecount(G)-igraph_ecount(H);
+//                        // Save netlist
+//                        Circuit temp_H, temp_G;
+//                        temp_H.copy(H);
+//                        temp_G.copy(G);
+                        //            cout<<setfill('/')<<setw(300)<<"G"<<endl;
+                        //            G->print();
+                        //            cout<<setfill('/')<<setw(300)<<"H"<<endl;
+                        //            H->print();
+                        //clean_solutions();
+//                        vector<igraph_vector_t*> temp_solutions;
+//                        vector<long> solutions_add;
+                        //temp_solutions = solutions;
+//                        cout<<"here solutions"<<endl;
             ////            for (int i = 0; i < solutions.size(); i++) {
             ////                temp_solutions.push_back(new igraph_vector_t());
             ////                *temp_solutions[i] = *solutions[i];
@@ -3445,24 +3429,72 @@ void Security::S1_greedy (bool save_state, int threads, int min_L1, int max_L1, 
             ////                cout<<solutions_add[i]<<endl;
             ////                //memcpy(temp_solutions[i], solutions[i], sizeof(igraph_vector_t));
             ////            }
-            //            //cout<<setfill('/')<<setw(200)<<temp_solutions[0]<<" "<<solutions[0]<<endl;
-            //            // Lift vertices after best edge added
-            //            cout<<setfill('/')<<setw(200)<<"lift"<<endl;
-            //            lift_vertex(maxL1, threads);
-            //            cout<<setfill('/')<<setw(200)<<"done"<<endl;
-            //            // Write to file
-            //            file(WRITE);
-            //            if (maxL1 == temp_maxL1)
-            //                k3outfile<<setfill(' ')<<setw(5)<<maxL1<<setfill(' ')<<setw(11)<<igraph_ecount(G)-igraph_ecount(H)<<endl;
-            //            else k3outfile<<setfill(' ')<<setw(5)<<temp_maxL1<<setfill(' ')<<setw(11)<<temp_lifted<<endl;
-            //            // Reload old netlist
-            //            //            cout<<setfill('/')<<setw(300)<<"G after"<<endl;
-            //            G->copy(&temp_G);
-            //            //            G->print();
-            //            //            cout<<setfill('/')<<setw(300)<<"H after"<<endl;
-            //            H->copy(&temp_H);
-            //            //            H->print();
-            //            solutions.clear();
+                        //cout<<setfill('/')<<setw(200)<<temp_solutions[0]<<" "<<solutions[0]<<endl;
+                        // Lift vertices after best edge added
+//                        cout<<setfill('/')<<setw(200)<<"lift"<<endl;
+            clean_solutions();
+            lift_vertex(maxL1, threads);
+//                        cout<<setfill('/')<<setw(200)<<"done"<<endl;
+            // Write to file
+            file(WRITE);
+            if (maxL1 == temp_maxL1)
+                k3outfile<<setfill(' ')<<setw(5)<<maxL1<<setfill(' ')<<setw(11)<<igraph_ecount(G)-igraph_ecount(H)<<endl;
+            else k3outfile<<setfill(' ')<<setw(5)<<temp_maxL1<<setfill(' ')<<setw(11)<<temp_lifted<<endl;
+            
+            cout<<setfill('/')<<setw(260)<<igraph_ecount(H)<<endl;
+            
+            // Unlift all vertices to go back to "original" circuit
+            for (int i = 0; i < LiftedVnE.vertexIDs.size(); i++)
+                if (VAN(H,"Lifted",LiftedVnE.vertexIDs[i]) == Lifted) // Security check
+                    SETVAN(H, "Lifted", LiftedVnE.vertexIDs[i], NotLifted);
+            
+            // Put back the edges as they were using the map and the fact that they're in H
+            for (int i = 0; i < igrah_ecount(G); i++) {
+                int from, to;
+                igraph_edge(H,i,&from,&to);
+                int eid;
+                igraph_get_eid(G, &eid, from, to, IGRAPH_DIRECTED, 1); // get id of the edge in H
+                
+                unordered_set<int>::const_iterator got = myset.find(eid);
+                
+                if (/*element not in set*/) {
+                    igraph_delete_edges(H, igraph_ess_1(i));
+                    i--;
+                }
+            }
+            
+//            // Remove all added edges
+//            for (int i = 0; i < LiftedVnE.edgeIDs.size(); i++)
+//                if (H->test_edge(G->get_edge(LiftedVnE.edgeIDs[i]))) { // Security check to make sure the edge is in H
+//                    int from, to;
+//                    igraph_edge(G,LiftedVnE.edgeIDs[i],&from,&to);
+//                    int eid;
+//                    igraph_get_eid(H, &eid, from, to, IGRAPH_DIRECTED, 1); // get id of the edge in H
+//                    igraph_delete_edges(H, igraph_ess_1(eid));
+//                }
+//            
+//            // Add back all lifted edges due to lifting vertices
+//            for (int i = 0; i < LiftedVnE.liftedEIDs.size(); i++)
+//                if (EAN(G, "Lifted", LiftedVnE.liftedEIDs[i]) == Lifted) { // Security check
+//                    add_edge(LiftedVnE.liftedEIDs[i]);
+//                    SETEAN(G, "Lifted", LiftedVnE.liftedEIDs[i], NotLifted);
+                }
+            
+            cout<<setfill('/')<<setw(260)<<igraph_ecount(H)<<endl;
+            
+            LiftedVnE.vertexIDs.clear();
+            //LiftedVnE.edgeIDs.clear();
+            //LiftedVnE.liftedEIDs.clear();
+            
+            clean_solutions();
+                        // Reload old netlist
+                        //            cout<<setfill('/')<<setw(300)<<"G after"<<endl;
+                        //G->copy(&temp_G);
+                        //            G->print();
+                        //            cout<<setfill('/')<<setw(300)<<"H after"<<endl;
+                        //H->copy(&temp_H);
+                        //            H->print();
+                        //solutions.clear();
             //            //            solutions.resize(temp_solutions.size());
             ////            for (int i = 0; i < temp_solutions.size(); i++) {
             ////                //                if (i >= temp_solutions.size()) {
@@ -3591,8 +3623,10 @@ void Security::lift_vertex(/*int max_L1*/) {
                 add_edge(deleted[j]);
         }
     }
-    if (index >= 0)
+    if (index >= 0) {
         SETVAN(H, "Lifted", index, Lifted);
+        LiftedVnE.vertexIDs.push_back(index);
+    }
     
     // delete edges from H and change value of lifted vertex in G
     for (int j = 0; j < igraph_ecount(G); j++) { // G not H because we want to delete the edges in H and when doing so the ids will get rearranged so we can get segmentation falt. Also, when we add back the edges we are adding them back from G so we need to know their id in G.
@@ -3605,6 +3639,7 @@ void Security::lift_vertex(/*int max_L1*/) {
                 igraph_delete_edges(H, igraph_ess_1(eid));
                 //igraph_get_eid(G, &eid, from, to, IGRAPH_DIRECTED, 1); // get id of the edge in H
                 SETEAN(G, "Lifted", j, Lifted);
+                //LiftedVnE.liftedEIDs.push_back(j);
             }
         }
     }
@@ -3618,7 +3653,7 @@ void Security::lift_vertex(int min_L1, int threads) {
         // remove mappings that don't work
         clean_solutions();
         lift_vertex();
-        
+        cout<<setfill('/')<<setw(260)<<"vertex #"<<i<<endl;
         // Add edges until we reach the target sec lvl
         // remove mappings that don't work
         clean_solutions();
@@ -3635,18 +3670,18 @@ void Security::lift_vertex(int min_L1, int threads) {
 void Security::file(actions action, string outFileName) {
     switch (action) {
         case OPEN:
-//            koutfile.open(outFileName.c_str());
-//            koutfile<<"# security"<<"     "<<"# lifted e"<<endl;
+            koutfile.open(string(outFileName.substr(0,outFileName.rfind('.')) + "_raw.txt").c_str());
+            koutfile<<"# security"<<"     "<<"# lifted e"<<endl;
             
             k2outfile.open(string(outFileName.substr(0,outFileName.rfind('.')) + "_no_lifting.txt").c_str());
             k2outfile<<"# security"<<"     "<<"# lifted e"<<endl;
             
-//            k3outfile.open(string(outFileName.substr(0,outFileName.rfind('.')) + "_exact_sec_lvl.txt").c_str());
-//            k3outfile<<"# security"<<"     "<<"# lifted e"<<endl;
+            k3outfile.open(outFileName.c_str());
+            k3outfile<<"# security"<<"     "<<"# lifted e"<<endl;
             break;
             
         case WRITE:
-//            koutfile<<setfill(' ')<<setw(5)<<maxL1<<setfill(' ')<<setw(11)<<igraph_ecount(G)-igraph_ecount(H)<<endl;
+            koutfile<<setfill(' ')<<setw(5)<<maxL1<<setfill(' ')<<setw(11)<<igraph_ecount(G)-igraph_ecount(H)<<endl;
             break;
             
         case CLOSE:

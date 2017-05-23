@@ -22,6 +22,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
+#include <unordered_set>
 #include <queue>
 #include <string>
 #include <iostream>
@@ -95,8 +96,10 @@ int  set_L1 (const Circuit *G, const vector<EdgeInfo> &edge_set);
 class LiftingInfo {
 public:
     vector<int> vertexIDs;
-    vector<int> edgeIDs; // Id of edges in G
-    vector<int> liftedEIDs; // Id of edges in G
+    unordered_set<int> H_edges;
+    // map where the ids of the edges in original H are stored
+    // vector<int> edgeIDs; // Id of edges in G
+    // vector<int> liftedEIDs; // Id of edges in G
 };
 
 
