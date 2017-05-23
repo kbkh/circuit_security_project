@@ -3283,9 +3283,9 @@ void Security::S1_greedy (bool save_state, int threads, int min_L1, int max_L1, 
         
         // add to graph, remove from list, reset edges
         add_edge(best_edge->eid);
-        if (save_state)
-            H_edges.insert(best_edge->eid);
-            // LiftedVnE.edgeIDs.push_back(best_edge->eid);
+        if (!save_state)
+            LiftedVnE.edgeIDs.push_back(best_edge->eid);
+        else SETEAN(G, "Original", best_edge->eid, Original);
         max_L1 = best_edge->L1();
         // Added by Karl
         //L1_state.max_L1 = max_L1;
@@ -3399,10 +3399,10 @@ void Security::S1_greedy (bool save_state, int threads, int min_L1, int max_L1, 
         // Added by Karl
         // To be done only for the first iteration not the ones used inside the lift vertex thing. Add a bool
         if (save_state) {
-            cout<<setfill('/')<<setw(260)<<igraph_ecount(H)<<" "<<++count<<endl;
+            //cout<<setfill('/')<<setw(260)<<igraph_ecount(H)<<" "<<++count<<endl;
             LiftedVnE.vertexIDs.clear();
-            //LiftedVnE.edgeIDs.clear();
-            //LiftedVnE.liftedEIDs.clear();
+            LiftedVnE.edgeIDs.clear();
+            LiftedVnE.liftedEIDs.clear();
             
             k2outfile<<setfill(' ')<<setw(6)<<maxL1<<setfill(' ')<<setw(15)<<igraph_ecount(G)-igraph_ecount(H)<<endl;
             
@@ -3441,50 +3441,36 @@ void Security::S1_greedy (bool save_state, int threads, int min_L1, int max_L1, 
                 k3outfile<<setfill(' ')<<setw(5)<<maxL1<<setfill(' ')<<setw(11)<<igraph_ecount(G)-igraph_ecount(H)<<endl;
             else k3outfile<<setfill(' ')<<setw(5)<<temp_maxL1<<setfill(' ')<<setw(11)<<temp_lifted<<endl;
             
-            cout<<setfill('/')<<setw(260)<<igraph_ecount(H)<<endl;
+            //cout<<setfill('/')<<setw(260)<<igraph_ecount(H)<<endl;
             
             // Unlift all vertices to go back to "original" circuit
             for (int i = 0; i < LiftedVnE.vertexIDs.size(); i++)
                 if (VAN(H,"Lifted",LiftedVnE.vertexIDs[i]) == Lifted) // Security check
                     SETVAN(H, "Lifted", LiftedVnE.vertexIDs[i], NotLifted);
             
-            // Put back the edges as they were using the map and the fact that they're in H
-            for (int i = 0; i < igrah_ecount(G); i++) {
-                int from, to;
-                igraph_edge(H,i,&from,&to);
-                int eid;
-                igraph_get_eid(G, &eid, from, to, IGRAPH_DIRECTED, 1); // get id of the edge in H
-                
-                unordered_set<int>::const_iterator got = myset.find(eid);
-                
-                if (/*element not in set*/) {
-                    igraph_delete_edges(H, igraph_ess_1(i));
-                    i--;
-                }
-            }
-            
-//            // Remove all added edges
-//            for (int i = 0; i < LiftedVnE.edgeIDs.size(); i++)
-//                if (H->test_edge(G->get_edge(LiftedVnE.edgeIDs[i]))) { // Security check to make sure the edge is in H
-//                    int from, to;
-//                    igraph_edge(G,LiftedVnE.edgeIDs[i],&from,&to);
-//                    int eid;
-//                    igraph_get_eid(H, &eid, from, to, IGRAPH_DIRECTED, 1); // get id of the edge in H
-//                    igraph_delete_edges(H, igraph_ess_1(eid));
-//                }
-//            
-//            // Add back all lifted edges due to lifting vertices
-//            for (int i = 0; i < LiftedVnE.liftedEIDs.size(); i++)
-//                if (EAN(G, "Lifted", LiftedVnE.liftedEIDs[i]) == Lifted) { // Security check
-//                    add_edge(LiftedVnE.liftedEIDs[i]);
-//                    SETEAN(G, "Lifted", LiftedVnE.liftedEIDs[i], NotLifted);
+            // Remove all added edges
+            for (int i = 0; i < LiftedVnE.edgeIDs.size(); i++)
+                if (H->test_edge(G->get_edge(LiftedVnE.edgeIDs[i]))) { // Security check to make sure the edge is in H
+                    int from, to;
+                    igraph_edge(G,LiftedVnE.edgeIDs[i],&from,&to);
+                    int eid;
+                    igraph_get_eid(H, &eid, from, to, IGRAPH_DIRECTED, 1); // get id of the edge in H
+                    igraph_delete_edges(H, igraph_ess_1(eid));
                 }
             
-            cout<<setfill('/')<<setw(260)<<igraph_ecount(H)<<endl;
+            // Add back all lifted edges due to lifting vertices
+            for (int i = 0; i < LiftedVnE.liftedEIDs.size(); i++)
+                if (EAN(G, "Lifted", LiftedVnE.liftedEIDs[i]) == Lifted &&
+                    EAN(G, "Original", LiftedVnE.liftedEIDs[i]) == Original) { // Security check
+                    add_edge(LiftedVnE.liftedEIDs[i]);
+                    SETEAN(G, "Lifted", LiftedVnE.liftedEIDs[i], NotLifted);
+                }
+            
+            //cout<<setfill('/')<<setw(260)<<igraph_ecount(H)<<endl;
             
             LiftedVnE.vertexIDs.clear();
-            //LiftedVnE.edgeIDs.clear();
-            //LiftedVnE.liftedEIDs.clear();
+            LiftedVnE.edgeIDs.clear();
+            LiftedVnE.liftedEIDs.clear();
             
             clean_solutions();
                         // Reload old netlist
@@ -3623,6 +3609,7 @@ void Security::lift_vertex(/*int max_L1*/) {
                 add_edge(deleted[j]);
         }
     }
+    
     if (index >= 0) {
         SETVAN(H, "Lifted", index, Lifted);
         LiftedVnE.vertexIDs.push_back(index);
@@ -3639,7 +3626,9 @@ void Security::lift_vertex(/*int max_L1*/) {
                 igraph_delete_edges(H, igraph_ess_1(eid));
                 //igraph_get_eid(G, &eid, from, to, IGRAPH_DIRECTED, 1); // get id of the edge in H
                 SETEAN(G, "Lifted", j, Lifted);
-                //LiftedVnE.liftedEIDs.push_back(j);
+                
+                if (EAN(G, "Original", j) == Original)
+                    LiftedVnE.liftedEIDs.push_back(j);
             }
         }
     }
@@ -3653,7 +3642,7 @@ void Security::lift_vertex(int min_L1, int threads) {
         // remove mappings that don't work
         clean_solutions();
         lift_vertex();
-        cout<<setfill('/')<<setw(260)<<"vertex #"<<i<<endl;
+        //cout<<setfill('/')<<setw(260)<<"vertex #"<<i<<endl;
         // Add edges until we reach the target sec lvl
         // remove mappings that don't work
         clean_solutions();

@@ -45,6 +45,9 @@ using namespace std;
 /* Lifted attributes values */
 #define Lifted 1
 #define NotLifted 0
+
+#define Original 1
+#define NotOriginal 0
 ////////////////
 
 
