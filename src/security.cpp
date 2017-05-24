@@ -3378,14 +3378,9 @@ void Security::S1_greedy (bool save_state, int threads, int min_L1, int max_L1, 
                     SETEAN(G, "Lifted", LiftedVnE.liftedEIDs[i], NotLifted);
                 }
             
-            if (maxL1 != temp_maxL1) {
+            if (maxL1 != temp_maxL1)
                 // Save netlist
-                for (int i = 0; i < igraph_vcount(G); i++)
-                    if (i < igraph_vcount(H) && VAN(H,"Lifted",i) == Lifted)
-                        igraph_delete_vertices(H,igraph_vss_1(i--)); // this will move all next vertices one inde to the left, this is why we do i--
-                
                 H->save( working_dir + "/lifting/" + SSTR(count).c_str() + "H_circuit.gml" );
-            }
             
             LiftedVnE.vertexIDs.clear();
             LiftedVnE.edgeIDs.clear();
