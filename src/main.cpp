@@ -398,6 +398,7 @@ int main(int argc, char **argv) {
         if (!done)
         {
             clock_t tic = clock();
+            set_wdir(working_dir);
             security->L1_main(outName, remove_vertices_max, num_threads, min_L1, max_L1); // Added by Karl (true, remove_vertices_max)
             clock_t toc = clock();
             cout << endl << "Heuristic took: ";

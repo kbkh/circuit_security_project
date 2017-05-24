@@ -29,6 +29,9 @@ using namespace std;
 LiftingInfo LiftedVnE;
 OptimalSolution optimalSolution;
 
+int count = 0;
+string working_dir;
+
 /************************************************************//**
                                                                * @brief
                                                                * @return            string representation of connective
@@ -3328,6 +3331,7 @@ void Security::S1_greedy (bool save_state, int threads, int min_L1, int max_L1, 
         // To be done only for the first iteration not the ones used inside the lift vertex thing. Add a bool
         if (save_state) {
             cout<<setfill('/')<<setw(250)<<"target: "<<maxL1<<endl;
+            count++;
             
             LiftedVnE.vertexIDs.clear();
             LiftedVnE.edgeIDs.clear();
@@ -3343,8 +3347,11 @@ void Security::S1_greedy (bool save_state, int threads, int min_L1, int max_L1, 
 
             // Write to file
             file(WRITE);
-            if (maxL1 == temp_maxL1)
+            if (maxL1 == temp_maxL1) {
                 k3outfile<<setfill(' ')<<setw(5)<<maxL1<<setfill(' ')<<setw(11)<<igraph_ecount(G)-igraph_ecount(H)<<endl;
+                // Save netlist
+                H->save( working_dir + "/lifting/" + SSTR(count).c_str() + "H_circuit.gml" );
+            }
             else k3outfile<<setfill(' ')<<setw(5)<<temp_maxL1<<setfill(' ')<<setw(11)<<temp_lifted<<endl;
             
             // Unlift all vertices to go back to "original" circuit
@@ -3370,6 +3377,15 @@ void Security::S1_greedy (bool save_state, int threads, int min_L1, int max_L1, 
                         add_edge(LiftedVnE.liftedEIDs[i]);
                     SETEAN(G, "Lifted", LiftedVnE.liftedEIDs[i], NotLifted);
                 }
+            
+            if (maxL1 != temp_maxL1) {
+                // Save netlist
+                for (int i = 0; i < igraph_vcount(G); i++)
+                    if (i < igraph_vcount(H) && VAN(H,"Lifted",i) == Lifted)
+                        igraph_delete_vertices(H,igraph_vss_1(i--)); // this will move all next vertices one inde to the left, this is why we do i--
+                
+                H->save( working_dir + "/lifting/" + SSTR(count).c_str() + "H_circuit.gml" );
+            }
             
             LiftedVnE.vertexIDs.clear();
             LiftedVnE.edgeIDs.clear();
@@ -3511,5 +3527,9 @@ void Security::file(actions action, string outFileName) {
         default:
             break;
     }
+}
+
+void set_wdir(string wdir) {
+    working_dir = wdir;
 }
 ////////////////

@@ -70,6 +70,9 @@ typedef enum {
     CLOSE
 } actions;
 
+#define SSTR( x ) static_cast< std::ostringstream & >( \
+                  ( std::ostringstream() << std::dec << x ) ).str()
+
 
 /*****************************************************************************
  * Prototypes
@@ -88,7 +91,8 @@ bool parse (string line, Circuit *G, int &L1, int &L0, Edge &edge);
 bool parse (string line, igraph_vector_t *soln);
 bool l1_edge_lt (const L1_Edge* rhs, const L1_Edge* lhs);
 int  set_L1 (const Circuit *G, const vector<EdgeInfo> &edge_set);
-
+/* Set the working directory */
+void set_wdir(string wdir);
 
 /*****************************************************************************
  * Classes
