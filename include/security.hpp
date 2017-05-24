@@ -95,10 +95,12 @@ int  set_L1 (const Circuit *G, const vector<EdgeInfo> &edge_set);
  ****************************************************************************/
 class OptimalSolution {
 public:
-    int targetEdgeID;
-    vector<int> addedEdgesIDs;
-    vector<int> liftedVerticesIDs;
-    vector<int> liftedEdgesIDs;
+//    int targetEdgeID;
+//    vector<int> addedEdgesIDs;
+//    vector<int> liftedVerticesIDs;
+//    vector<int> liftedEdgesIDs;
+    int L1;
+    int liftedEdges;
     bool changed;
 };
 
