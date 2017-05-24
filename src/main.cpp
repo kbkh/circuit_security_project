@@ -783,6 +783,8 @@ int main(int argc, char **argv) {
         ///////////////
         H.save( working_dir + "/H_circuit.gml" );
         delete security;
+        
+        G.save( working_dir + "/G2_circuit.gml" );
     }
     
     if (print_gate)

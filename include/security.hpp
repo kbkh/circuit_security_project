@@ -100,10 +100,13 @@ void set_wdir(string wdir);
 class OptimalSolution {
 public:
     int targetEdgeID;
+    int liftedEdgesNumber;
+    int liftedVertexID;
     vector<int> addedEdgesIDs;
-    vector<int> liftedVerticesIDs;
     vector<int> liftedEdgesIDs;
     bool changed;
+    
+    OptimalSolution(int v) : liftedVertexID(v) {};
 };
 
 class LiftingInfo {
