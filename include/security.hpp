@@ -77,6 +77,7 @@ typedef enum {
 
 class Security;
 class LiftingInfo;
+class OptimalSolution;
 struct L1_Edge;
 struct EdgeInfo;
 
@@ -92,6 +93,15 @@ int  set_L1 (const Circuit *G, const vector<EdgeInfo> &edge_set);
 /*****************************************************************************
  * Classes
  ****************************************************************************/
+class OptimalSolution {
+public:
+    int targetEdgeID;
+    vector<int> addedEdgesIDs;
+    vector<int> liftedVerticesIDs;
+    vector<int> liftedEdgesIDs;
+    bool changed;
+};
+
 class LiftingInfo {
 public:
     vector<int> vertexIDs;

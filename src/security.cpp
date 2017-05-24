@@ -27,6 +27,7 @@ using namespace formula;
 using namespace std;
 
 LiftingInfo LiftedVnE;
+OptimalSolution optimalSolution;
 
 /************************************************************//**
                                                                * @brief
@@ -2978,6 +2979,7 @@ void Security::S1_greedy (bool save_state, int threads, int min_L1, int max_L1, 
     /******************************
      * Setup
      ******************************/
+    
     int count = 0;
     
     if (max_L1 == -1) max_L1 = G->max_L1();
@@ -3021,6 +3023,16 @@ void Security::S1_greedy (bool save_state, int threads, int min_L1, int max_L1, 
     myfile.open ("tradeoff.dat");
     
     while ((max_L1 >= min_L1 || max_L1 == -2) && edge_list.size() > 0) { // Added by Karl: || max_L1 == -2 to account for inf lvl graphs
+        
+        // Added by Karl
+        if (save_state) {
+            optimalSolution.changed = false;
+            optimalSolution.targetEdgeID = -1;
+            optimalSolution.addedEdgesIDs.clear();
+            cout<<setfill('/')<<setw(250)<<"in"<<endl;
+        }
+        ////////////////
+        
         
         cout << "  E(" << edge_list.size() << ") ";
         cout.flush();
@@ -3190,6 +3202,14 @@ void Security::S1_greedy (bool save_state, int threads, int min_L1, int max_L1, 
                         }
                         
                         // Store best results
+                        // Added by Karl
+                        // if this edge can get us to the target
+                        if (!save_state && test_edge->L1() == min_L1) {
+                            cout<<setfill('/')<<setw(225)<<"L1: "<<test_edge->L1()<<" target: "<<min_L1<<" ID: "<<test_edge->eid<<endl;
+                            optimalSolution.targetEdgeID = test_edge->eid;
+                            optimalSolution.changed = true;
+                        }
+                        ////////////////
                         if ((test_edge->L1() > best_edge->L1()) || (test_edge->L1() != best_edge->L1() && test_edge->L1() == -2)) { //Added by Karl: || (test_edge->L1() != best_edge->L1() && test_edge->L1() == -2. We want them to be different when == -2 because if it's the same it means that both are inf lvl so no need to update, we can use the old edge.
                             best_edge = test_edge;
                         }
@@ -3253,6 +3273,19 @@ void Security::S1_greedy (bool save_state, int threads, int min_L1, int max_L1, 
         // add to graph, remove from list, reset edges
         add_edge(best_edge->eid);
         // Added by Karl
+        cout<<setfill('/')<<setw(250)<<optimalSolution.targetEdgeID<<endl;
+        cout<<setfill('/')<<setw(250)<<optimalSolution.addedEdgesIDs.size()<<endl;
+        cout<<setfill('/')<<setw(250)<<optimalSolution.changed<<endl;
+        
+        if (!save_state && optimalSolution.changed) {
+            optimalSolution.addedEdgesIDs.clear();
+            if (best_edge->L1() != min_L1)
+                optimalSolution.addedEdgesIDs.push_back(best_edge->eid);
+        } else if (!save_state)
+            optimalSolution.addedEdgesIDs.push_back(best_edge->eid);
+        
+        cout<<setfill('/')<<setw(250)<<optimalSolution.addedEdgesIDs.size()<<endl;
+        
         if (!save_state)
             LiftedVnE.edgeIDs.push_back(best_edge->eid);
         else SETEAN(G, "Original", best_edge->eid, Original);
@@ -3294,6 +3327,8 @@ void Security::S1_greedy (bool save_state, int threads, int min_L1, int max_L1, 
         // Added by Karl
         // To be done only for the first iteration not the ones used inside the lift vertex thing. Add a bool
         if (save_state) {
+            cout<<setfill('/')<<setw(250)<<"target: "<<maxL1<<endl;
+            
             LiftedVnE.vertexIDs.clear();
             LiftedVnE.edgeIDs.clear();
             LiftedVnE.liftedEIDs.clear();
@@ -3331,7 +3366,8 @@ void Security::S1_greedy (bool save_state, int threads, int min_L1, int max_L1, 
             for (int i = 0; i < LiftedVnE.liftedEIDs.size(); i++)
                 if (EAN(G, "Lifted", LiftedVnE.liftedEIDs[i]) == Lifted &&
                     EAN(G, "Original", LiftedVnE.liftedEIDs[i]) == Original) { // Security check
-                    add_edge(LiftedVnE.liftedEIDs[i]);
+                    if (!H->test_edge(G->get_edge(LiftedVnE.liftedEIDs[i])))
+                        add_edge(LiftedVnE.liftedEIDs[i]);
                     SETEAN(G, "Lifted", LiftedVnE.liftedEIDs[i], NotLifted);
                 }
             
@@ -3353,6 +3389,8 @@ void Security::S1_greedy (bool save_state, int threads, int min_L1, int max_L1, 
 // Added by Karl
 void Security::L1_main (string outFileName, int _remove_vertices_max, int threads, int min_L1, int max_L1, bool quite) {
     maxL1 = -1;
+    optimalSolution.changed = false;
+    optimalSolution.targetEdgeID = -1;
 
     string outFile = "gnuplotOutput/" + outFileName;
     file(OPEN, outFile);
@@ -3407,6 +3445,8 @@ void Security::lift_vertex(/*int max_L1*/) {
         }
     }
     
+    cout<<"max: "<<max_L1<<endl;
+    
     if (index >= 0) {
         SETVAN(H, "Lifted", index, Lifted);
         LiftedVnE.vertexIDs.push_back(index);
@@ -3434,6 +3474,7 @@ void Security::lift_vertex(/*int max_L1*/) {
 
 void Security::lift_vertex(int min_L1, int threads) {
     for (int i = 0; i < remove_vertices_max; i++) {
+//        cout<<"target: "<<min_L1<<endl;
         // remove mappings that don't work
         clean_solutions();
         lift_vertex();
@@ -3444,7 +3485,6 @@ void Security::lift_vertex(int min_L1, int threads) {
         if (maxL1 > min_L1)
             S1_greedy(false, threads, min_L1, maxL1);
     }
-    
 }
 
 void Security::file(actions action, string outFileName) {
