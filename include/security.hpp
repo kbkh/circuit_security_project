@@ -180,6 +180,8 @@ public:
     void lift_vertex();
     /* Lift vertices until budget exhausted */
     void lift_vertex(int min_L1, int threads);
+    /* Open, write and close file */
+    void file(actions action, string outFileName = "out2.txt");
     ////////////////
     void setConfBudget(int budget) { isosat->setConfBudget(budget); };
     void setPropBudget(int budget) { isosat->setPropBudget(budget); };
