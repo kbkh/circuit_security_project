@@ -2978,12 +2978,6 @@ void Security::S1_greedy (bool save_state, int threads, int min_L1, int max_L1, 
     /******************************
      * Setup
      ******************************/
-    // Added by Karl
-    //    if(save_state) {
-    //        k2outfile.open("gnuplotOutput/test.txt");
-    //        k2outfile<<"# security"<<"     "<<"# lifted e"<<endl;
-    //    }
-    ////////////////
     int count = 0;
     
     if (max_L1 == -1) max_L1 = G->max_L1();
@@ -3026,17 +3020,6 @@ void Security::S1_greedy (bool save_state, int threads, int min_L1, int max_L1, 
     ofstream myfile;
     myfile.open ("tradeoff.dat");
     
-    /*
-     // Added by Karl
-     L1_Edge *worst_edge = edge_list[0];
-     bool find_worst = false;
-     int remove_vertex = 0;
-     //int remove_vertex_max = 2;
-     
-     if (remove_vertex_max)
-     find_worst = true;
-     ////////////////
-     */
     while ((max_L1 >= min_L1 || max_L1 == -2) && edge_list.size() > 0) { // Added by Karl: || max_L1 == -2 to account for inf lvl graphs
         
         cout << "  E(" << edge_list.size() << ") ";
@@ -3088,10 +3071,8 @@ void Security::S1_greedy (bool save_state, int threads, int min_L1, int max_L1, 
 #ifdef MEASURE_TIME_S1
                     clock_t tic = clock();
 #endif
-                    //if (!((test_edge->edge.first == 1) || (test_edge->edge.second == 1))) {
+                    
                     add_edge(test_edge->eid);
-                    //} else
-                    //  cout<<"Vertex 1"<<endl;
                     
 #ifdef DEBUG
                     cout << endl;
@@ -3212,13 +3193,7 @@ void Security::S1_greedy (bool save_state, int threads, int min_L1, int max_L1, 
                         if ((test_edge->L1() > best_edge->L1()) || (test_edge->L1() != best_edge->L1() && test_edge->L1() == -2)) { //Added by Karl: || (test_edge->L1() != best_edge->L1() && test_edge->L1() == -2. We want them to be different when == -2 because if it's the same it means that both are inf lvl so no need to update, we can use the old edge.
                             best_edge = test_edge;
                         }
-                        /*
-                         // Added by Karl
-                         if ((test_edge->L1() < worst_edge->L1()) && find_worst) {
-                         worst_edge = test_edge;
-                         }
-                         ////////////////
-                         */
+                        
                         if (busy_threads[j]->vf2)
                             cout << 'v';
                         else
@@ -3247,15 +3222,9 @@ void Security::S1_greedy (bool save_state, int threads, int min_L1, int max_L1, 
                         cout << (double) (toc-tic)/CLOCKS_PER_SEC << endl;
 #endif
                     }
-                    //if (best_edge->L1() == max_L1) break;
                 }
-                //if (best_edge->L1() == max_L1) break;
                 
             } while (free_threads.size() == 0);
-            
-            // were done, clean up threads
-            //if (best_edge->L1() == max_L1)
-            //  break;
         }
         
         // empty left over threads
@@ -3283,101 +3252,27 @@ void Security::S1_greedy (bool save_state, int threads, int min_L1, int max_L1, 
         
         // add to graph, remove from list, reset edges
         add_edge(best_edge->eid);
+        // Added by Karl
         if (!save_state)
             LiftedVnE.edgeIDs.push_back(best_edge->eid);
         else SETEAN(G, "Original", best_edge->eid, Original);
+        ////////////////
+    
         max_L1 = best_edge->L1();
+        
         // Added by Karl
-        //L1_state.max_L1 = max_L1;
         maxL1 = max_L1;
         ////////////////
-        /*
-         // Added by Karl
-         int vid = -1, vid_1 = -1, vid_2 = -1;
-         //vector<int> indexes;
-         vector<L1_Edge*> edge_list_updated;
-         if (find_worst) {
-         if ((worst_edge->edge.first == best_edge->edge.first)
-         || (worst_edge->edge.first == best_edge->edge.second))
-         vid = worst_edge->edge.second;
-         else if ((worst_edge->edge.second == best_edge->edge.first)
-         || (worst_edge->edge.second == best_edge->edge.second))
-         vid = worst_edge->edge.first;
-         else {
-         srand(time(NULL));
-         if(rand() % 2)
-         vid = worst_edge->edge.second;
-         else vid = worst_edge->edge.first;
-         }
-         #ifdef DEBUG
-         cout<<"Vertex removed: "<<vid<<endl;
-         #endif
-         
-         // If it works, make a function
-         // delete vertex with id vid.
-         // igraph_delete_vertices(H, igraph_vss_1(vid));
-         // H->update();
-         }
-         ////////////////
-         */
+        
         int best_edge_index(-1);
         for (unsigned int i=0; i<edge_list.size(); i++) {
             if ( edge_list[i] == best_edge) best_edge_index = i;
             if ( edge_list[i]->L1() > 0 )   edge_list[i]->L1_prev = edge_list[i]->L1();
-            /*
-             // Added by Karl
-             //            if (find_worst && ((edge_list[i]->edge.first == vid) || (edge_list[i]->edge.second == vid))) {
-             //                indexes.push_back(i);
-             //            }
-             //            if ((!(find_worst && ((edge_list[i]->edge.first == vid) || (edge_list[i]->edge.second == vid))))
-             //                || (!(edge_list[i] == best_edge))) {
-             //                edge_list_updated.push_back(edge_list[i]);
-             //            }
-             if (find_worst)
-             if (!((edge_list[i]->edge.first == vid) || (edge_list[i]->edge.second == vid))
-             && !(edge_list[i] == best_edge)) {
-             #ifdef DEBUG
-             cout<<edge_list[i]->edge.first<<"   "<<edge_list[i]->edge.second<<endl;
-             #endif
-             edge_list_updated.push_back(edge_list[i]);
-             #ifdef DEBUG
-             cout<<edge_list_updated.back()->edge.first<<"   "<<edge_list_updated.back()->edge.second<<endl<<endl;
-             #endif
-             }
-             ////////////////
-             */
+
             edge_list[i]->L1_sat = -1;
             edge_list[i]->L1_vf2 = -1;
         }
-        /*
-         // Added by Karl
-         if (!find_worst) //////////
-         */
         edge_list.erase(edge_list.begin()+best_edge_index);
-        /*
-         // Added by Karl
-         else {
-         for (int i = 0; i < edge_list_updated.size(); i++)
-         edge_list[i] = edge_list_updated[i];
-         
-         edge_list.erase(edge_list.begin()+edge_list_updated.size(), edge_list.end());
-         }
-         ////////////////
-         */
-        /*
-         // Added by Karl
-         //        cout<<"OKAAY"<<endl;
-         //        for (int i = 0; i < indexes.size(); i++)
-         //            edge_list.erase(edge_list.begin()+indexes[i]);
-         //
-         //        cout<<"OKAAY    2"<<endl;
-         // Delete corresponding vertex and check that the security computation still works. Otherwise, delete the edge when saving the circuit.
-         //igraph_delete_vertices(H, igraph_vss_1(vid));
-         remove_vertex++;
-         if (remove_vertex >= remove_vertex_max)
-         find_worst = false;
-         ////////////////
-         */
         
 #ifdef MEASURE_TIME_S1
         clock_t tic = clock();
@@ -3399,7 +3294,6 @@ void Security::S1_greedy (bool save_state, int threads, int min_L1, int max_L1, 
         // Added by Karl
         // To be done only for the first iteration not the ones used inside the lift vertex thing. Add a bool
         if (save_state) {
-            //cout<<setfill('/')<<setw(260)<<igraph_ecount(H)<<" "<<++count<<endl;
             LiftedVnE.vertexIDs.clear();
             LiftedVnE.edgeIDs.clear();
             LiftedVnE.liftedEIDs.clear();
@@ -3408,40 +3302,15 @@ void Security::S1_greedy (bool save_state, int threads, int min_L1, int max_L1, 
             
             int temp_maxL1 = maxL1;
             int temp_lifted = igraph_ecount(G)-igraph_ecount(H);
-//                        // Save netlist
-//                        Circuit temp_H, temp_G;
-//                        temp_H.copy(H);
-//                        temp_G.copy(G);
-                        //            cout<<setfill('/')<<setw(300)<<"G"<<endl;
-                        //            G->print();
-                        //            cout<<setfill('/')<<setw(300)<<"H"<<endl;
-                        //            H->print();
-                        //clean_solutions();
-//                        vector<igraph_vector_t*> temp_solutions;
-//                        vector<long> solutions_add;
-                        //temp_solutions = solutions;
-//                        cout<<"here solutions"<<endl;
-            ////            for (int i = 0; i < solutions.size(); i++) {
-            ////                temp_solutions.push_back(new igraph_vector_t());
-            ////                *temp_solutions[i] = *solutions[i];
-            ////                cout<<solutions[i]<<endl;
-            ////                solutions_add.push_back((long)solutions[i]);
-            ////                cout<<solutions_add[i]<<endl;
-            ////                //memcpy(temp_solutions[i], solutions[i], sizeof(igraph_vector_t));
-            ////            }
-                        //cout<<setfill('/')<<setw(200)<<temp_solutions[0]<<" "<<solutions[0]<<endl;
-                        // Lift vertices after best edge added
-//                        cout<<setfill('/')<<setw(200)<<"lift"<<endl;
+
             clean_solutions();
             lift_vertex(maxL1, threads);
-//                        cout<<setfill('/')<<setw(200)<<"done"<<endl;
+
             // Write to file
             file(WRITE);
             if (maxL1 == temp_maxL1)
                 k3outfile<<setfill(' ')<<setw(5)<<maxL1<<setfill(' ')<<setw(11)<<igraph_ecount(G)-igraph_ecount(H)<<endl;
             else k3outfile<<setfill(' ')<<setw(5)<<temp_maxL1<<setfill(' ')<<setw(11)<<temp_lifted<<endl;
-            
-            //cout<<setfill('/')<<setw(260)<<igraph_ecount(H)<<endl;
             
             // Unlift all vertices to go back to "original" circuit
             for (int i = 0; i < LiftedVnE.vertexIDs.size(); i++)
@@ -3466,38 +3335,11 @@ void Security::S1_greedy (bool save_state, int threads, int min_L1, int max_L1, 
                     SETEAN(G, "Lifted", LiftedVnE.liftedEIDs[i], NotLifted);
                 }
             
-            //cout<<setfill('/')<<setw(260)<<igraph_ecount(H)<<endl;
-            
             LiftedVnE.vertexIDs.clear();
             LiftedVnE.edgeIDs.clear();
             LiftedVnE.liftedEIDs.clear();
             
             clean_solutions();
-                        // Reload old netlist
-                        //            cout<<setfill('/')<<setw(300)<<"G after"<<endl;
-                        //G->copy(&temp_G);
-                        //            G->print();
-                        //            cout<<setfill('/')<<setw(300)<<"H after"<<endl;
-                        //H->copy(&temp_H);
-                        //            H->print();
-                        //solutions.clear();
-            //            //            solutions.resize(temp_solutions.size());
-            ////            for (int i = 0; i < temp_solutions.size(); i++) {
-            ////                //                if (i >= temp_solutions.size()) {
-            ////                //                    int index = i==temp_solutions.size()?i:index;
-            ////                //                    delete solutions.
-            ////                //                }
-            ////                //                else
-            ////                //solutions.push_back(new igraph_vector_t());
-            ////                solutions[i] = (igraph_vector_t*)solutions_add[i];
-            ////                cout<<solutions[i]<<endl;
-            ////                *solutions[i] = *temp_solutions[i];
-            ////                //memcpy(temp_solutions[i], solutions[i], sizeof(igraph_vector_t));
-            ////            }
-            ////            while (solutions.size() > temp_solutions.size())
-            ////                solutions.pop_back();
-            //            //solutions.clear();
-            //            //clean_solutions();
         }
         ////////////////
     }
@@ -3510,67 +3352,29 @@ void Security::S1_greedy (bool save_state, int threads, int min_L1, int max_L1, 
 
 // Added by Karl
 void Security::L1_main (string outFileName, int _remove_vertices_max, int threads, int min_L1, int max_L1, bool quite) {
-    // create and open file
-    //string outFile = "gnuplotOutput/v_" + outFileName + "_" + to_string(min_L1);
-    //ofstream outfile(outFile.c_str());
-    //outfile<<"# lifted v"<<"     "<<"# unlifted e"<<endl;
-    // initialise L1 max in strcut
-    //L1_state.max_L1 = -1;
     maxL1 = -1;
-    //init_maap();
-    //for (int i = 0; i < igraph_vcount(H); i++)
-    //  levels.push_back(0);
-    //levels.resize(igraph_vcount(H));
-    // Add edges until target sec lvl reached
-    //read_levels();
-    //    string outFile = "gnuplotOutput/" + outFileName;
-    //    ofstream koutfile(outFile.c_str());
-    //    koutfile<<"# security"<<"     "<<"# lifted e"<<endl;
+
     string outFile = "gnuplotOutput/" + outFileName;
     file(OPEN, outFile);
     
     remove_vertices_max = _remove_vertices_max;
     
     S1_greedy(true, threads, min_L1, max_L1);
-    //outfile<<setfill(' ')<<setw(5)<<0<<setfill(' ')<<setw(16)<<igraph_ecount(H)<<endl;
-    //outfile<<0<<" "<<igraph_ecount(H)<<endl;
-    //read_levels();
-    
-    //    solutions.clear();
-    //     remove mappings that don't work
-    //        for (int i = 0; i < remove_vertices_max; i++) {
-    //            // remove mappings that don't work
-    //            clean_solutions();
-    //            lift_vertex(/*maxL1*/);
-    //
-    //            // Add edges until we reach the target sec lvl
-    //            // remove mappings that don't work
-    //            clean_solutions();
-    //            if (maxL1 > min_L1)
-    //                S1_greedy(threads, min_L1, maxL1);
-    //
-    //            //write to file
-    //            //outfile<<setfill(' ')<<setw(5)<<i+1<<setfill(' ')<<setw(16)<<igraph_ecount(H)<<endl;
-    //            //outfile<<i+1<<" "<<igraph_ecount(H)<<endl;
-    //        }
     
     file(CLOSE);
 }
 
 void Security::lift_vertex(/*int max_L1*/) {
     
-    //read_levels();
-    
     int index = -1;
     int max_L1 = maxL1;
-    //int min_L1 = maxL1;
-    //cout<<"level: "<<max_L1<<endl;
+
     for (int i = 0; i < igraph_vcount(H); i++) {
         vector<int> deleted;
         if (VAN(H,"Lifted",i) == NotLifted) {
             // remove mappings that don't work
             clean_solutions();
-            //solutions.clear();
+
             // Lift the vertex
             SETVAN(H, "Lifted", i, Lifted);
             // remove the edges before
@@ -3594,14 +3398,7 @@ void Security::lift_vertex(/*int max_L1*/) {
             if (level >= max_L1) {
                 max_L1 = level;
                 index = i;
-            } /*else if (level == max_L1) {
-               cout<<levels[i]<<endl;
-               if (levels[i] <= min_L1) {
-               min_L1 = levels[i];
-               index = i;
-               }
-               max_L1 = level;
-               }*/
+            }
             // Unlift the vertex
             SETVAN(H, "Lifted", i, NotLifted);
             // add back removed edges
@@ -3632,8 +3429,6 @@ void Security::lift_vertex(/*int max_L1*/) {
             }
         }
     }
-    //temp
-    //L1_state.max_L1 = max_L1;
     maxL1 = max_L1;
 }
 
@@ -3642,16 +3437,12 @@ void Security::lift_vertex(int min_L1, int threads) {
         // remove mappings that don't work
         clean_solutions();
         lift_vertex();
-        //cout<<setfill('/')<<setw(260)<<"vertex #"<<i<<endl;
+        
         // Add edges until we reach the target sec lvl
         // remove mappings that don't work
         clean_solutions();
         if (maxL1 > min_L1)
             S1_greedy(false, threads, min_L1, maxL1);
-        
-        //write to file
-        //outfile<<setfill(' ')<<setw(5)<<i+1<<setfill(' ')<<setw(16)<<igraph_ecount(H)<<endl;
-        //outfile<<i+1<<" "<<igraph_ecount(H)<<endl;
     }
     
 }
@@ -3681,72 +3472,4 @@ void Security::file(actions action, string outFileName) {
             break;
     }
 }
-
-//void Security::init_maap() {
-//    for (int i = 0; i < igraph_vcount(H); i++)
-//        write_levels(i, -5);
-//}
-//
-//void Security::write_levels(int vid2, int l) {
-//    fd = open(FILEPATH, O_RDWR | O_CREAT | O_TRUNC, (mode_t)0600);
-//    if (fd == -1) {
-//        perror("Error opening file for writing");
-//        exit(EXIT_FAILURE);
-//    }
-//
-//    result = lseek(fd, igraph_vcount(H), SEEK_SET);
-//    if (result == -1) {
-//        close(fd);
-//        perror("Error calling lseek() to 'stretch' the file");
-//        exit(EXIT_FAILURE);
-//    }
-//
-//    result = write(fd, "", 1);
-//    if (result != 1) {
-//        close(fd);
-//        perror("Error writing last byte of the file");
-//        exit(EXIT_FAILURE);
-//    }
-//
-//    maap = (int*)mmap(0, igraph_vcount(H), PROT_READ | PROT_WRITE, MAP_SHARED, fd, 0);
-//    if (maap == MAP_FAILED) {
-//        close(fd);
-//        perror("Error mmapping the file");
-//        exit(EXIT_FAILURE);
-//    }
-//
-//    maap[vid2] = l;
-//
-//    if (munmap(maap, igraph_vcount(H)) == -1) {
-//        perror("Error un-mmapping the file");
-//    }
-//    close(fd);
-//
-//}
-//
-//void Security::read_levels() {
-//    fd = open(FILEPATH, O_RDONLY);
-//    if (fd == -1) {
-//        perror("Error opening file for reading");
-//        exit(EXIT_FAILURE);
-//    }
-//    
-//    maap = (int*)mmap(0, igraph_vcount(H), PROT_READ, MAP_SHARED, fd, 0);
-//    if (maap == MAP_FAILED) {
-//        close(fd);
-//        perror("Error mmapping the file");
-//        exit(EXIT_FAILURE);
-//    }
-//    
-//    /* Read the file int-by-int from the mmap
-//     */
-//    for (int i = 0; i <=igraph_vcount(H); i++) {
-//        cout<<i<<" "<<maap[i]<<endl;
-//    }
-//    
-//    if (munmap(maap, igraph_vcount(H)) == -1) {
-//        perror("Error un-mmapping the file");
-//    }
-//    close(fd);
-//}
 ////////////////

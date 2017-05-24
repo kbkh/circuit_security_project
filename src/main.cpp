@@ -105,15 +105,6 @@ int main(int argc, char **argv) {
         return 0;
     }
     
-    // Added by Karl
-    //bool kdone = false;
-    //int loop = 2;
-    //int kmax = 0;
-    //    string outFile = "gnuplotOutput/c432_" + outName;
-    //    ofstream koutfile(outFile.c_str());
-    //    koutfile<<"security"<<"     "<<"# unlifted e"<<endl;
-    //while(!kdone) {
-    ////////////////
     string circuit_filename, circuit_name, tech_filename, tech_name, working_dir, report_filename;
     
     // input circuit
@@ -153,7 +144,6 @@ int main(int argc, char **argv) {
      ******************************/
     string outfile = working_dir + circuit_filename.substr(circuit_filename.rfind('/'));
     cout << "Outfile : " << outfile << "\n";
-    // sis_convert(circuit_filename, tech_filename, outfile);
     cout << "I'm here!\n";
     circuit_filename = outfile;
     // copy tech_lib
@@ -368,9 +358,6 @@ int main(int argc, char **argv) {
             try {
                 file.open(filename.c_str());
                 
-                //		int last_sec;
-                //		Edge prev_edge;
-                //		bool first = true;
                 while (file.good()) {
                     string line;
                     int L0, L1;
@@ -385,44 +372,11 @@ int main(int argc, char **argv) {
                             break;
                         }
                         
-                        //			if (first) { last_sec = L1; first = false; prev_edge = edge;}
-                        //			else
-                        //			{
-                        //				if (last_sec != L1)
-                        //				{
-                        
-                        
-                        //					H.del_edge(prev_edge);
-                        //					string gmlfilename;
-                        //					char num[3];
-                        //					sprintf(num, "%d", last_sec);
-                        //					gmlfilename = working_dir + "/H_circuit_" + num + ".gml";
-                        //					string gvfilename = working_dir + "/H_circuit_" + num + ".gv";
-                        //					string psfilename = working_dir + "/H_circuit_" + num + ".ps";
-                        //H.save( gmlfilename );
-                        //					G.save( gmlfilename );
-                        
-                        //					H.add_edge(prev_edge);
-                        //					string command = "gml2gv -o" + gvfilename + " " + gmlfilename;
-                        //					system(command.c_str());
-                        //					command = "dot -Tps -Nstyle=filled -Ncolorscheme=accent8 -Nshape=circle -Nlabel=\"\" -o " + psfilename + " " + gvfilename;
-                        //					system(command.c_str());
-                        //					last_sec = L1;
-                        //				}
-                        //				prev_edge = edge;
-                        //				int eid;
-                        //				igraph_get_eid(&G, &eid, edge.first, edge.second, true, false);
-                        //				SETEAS(&G, "style", eid, "solid");
-                        
-                        //			}
-                        
-                        
                         H.add_edge(edge);
                         max_L1 = L1;
                         cout << "L1 = " << max_L1 << ", +<" << edge.first << "," << edge.second << ">" << endl;
                     }
                 }
-                //		return 0;
             } catch(...) {}
         }
         
@@ -444,12 +398,11 @@ int main(int argc, char **argv) {
         if (!done)
         {
             clock_t tic = clock();
-            security->L1_main(outName, remove_vertices_max, num_threads, /*loop*/min_L1, max_L1); // Added by Karl (true, remove_vertices_max)
+            security->L1_main(outName, remove_vertices_max, num_threads, min_L1, max_L1); // Added by Karl (true, remove_vertices_max)
             clock_t toc = clock();
             cout << endl << "Heuristic took: ";
             cout << (double) (toc-tic)/CLOCKS_PER_SEC << endl;
         }
-        //koutfile<<setfill(' ')<<setw(4)<<loop<<setfill(' ')<<setw(15)<<igraph_ecount(&H)<<endl;
     }
     
     
@@ -843,16 +796,6 @@ int main(int argc, char **argv) {
     if (print_verilog)
         security->print_solutions();
     
-    
-    //printf("\n\ndone 0 \n");
-    //cout<<loop<<endl;
-    //cout<<kmax+1<<endl;
-    
-    //loop++;
-    //if (loop == kmax+1)
-    //  kdone = true;
-    //}
-    //koutfile.close();
     return 0;
 }
 

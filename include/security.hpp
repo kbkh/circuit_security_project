@@ -157,9 +157,6 @@ private:
     L1_struct L1_state;
     // Added by Karl
     int maxL1;
-    int fd;
-    int *maap;
-    int result;
     int remove_vertices_max;
     ofstream koutfile;
     ofstream k2outfile;
@@ -183,14 +180,6 @@ public:
     void lift_vertex();
     /* Lift vertices until budget exhausted */
     void lift_vertex(int min_L1, int threads);
-    /* Open, write and close file */
-    void file(actions action, string outFileName = "out2.txt");
-    /* initialize the maap */
-    void init_maap();
-    /* save the level of every vertex */
-    void write_levels(int vid2, int l);
-    /* get the level of every vertex */
-    void read_levels();
     ////////////////
     void setConfBudget(int budget) { isosat->setConfBudget(budget); };
     void setPropBudget(int budget) { isosat->setPropBudget(budget); };
