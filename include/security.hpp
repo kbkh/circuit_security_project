@@ -101,6 +101,7 @@ public:
 //    vector<int> liftedEdgesIDs;
     int L1;
     int liftedEdges;
+    int liftedVertices;
     bool changed;
 };
 
