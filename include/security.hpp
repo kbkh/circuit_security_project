@@ -173,6 +173,7 @@ private:
     ofstream koutfile;
     ofstream k2outfile;
     ofstream k3outfile;
+    ofstream k4outfile;
     ////////////////
     
     friend class C_SAT;
