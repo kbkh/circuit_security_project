@@ -105,8 +105,6 @@ public:
     vector<int> addedEdgesIDs;
     vector<int> liftedEdgesIDs;
     bool changed;
-    
-    OptimalSolution(int v) : liftedVertexID(v) {};
 };
 
 class LiftingInfo {
