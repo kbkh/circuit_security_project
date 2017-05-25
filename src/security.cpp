@@ -2980,7 +2980,9 @@ void Security::S1_greedy (bool save_state, int threads, int min_L1, int max_L1, 
      * Setup
      ******************************/
     
+    // Added by Karl
     int count = 0;
+    ////////////////
     
     if (max_L1 == -1) max_L1 = G->max_L1();
     if (igraph_ecount(H) == 0) add_free_edges(max_L1);
@@ -3030,9 +3032,13 @@ void Security::S1_greedy (bool save_state, int threads, int min_L1, int max_L1, 
 //            optimalSolution.targetEdgeID = -1;
 //            optimalSolution.addedEdgesIDs.clear();
             optimalSolution.L1 = -1;
-            optimalSolution.liftedEdges = 0;
+            optimalSolution.liftedEdges = -1;
             cout<<setfill('/')<<setw(250)<<"in"<<endl;
         }
+        
+        int temp_opt_L1;
+        int temp_opt_lifted_edges;
+        bool temp_opt_changed = false;
         ////////////////
         
         
@@ -3209,9 +3215,9 @@ void Security::S1_greedy (bool save_state, int threads, int min_L1, int max_L1, 
                         if (!save_state && test_edge->L1() == min_L1) {
                             cout<<setfill('/')<<setw(225)<<"L1: "<<test_edge->L1()<<" target: "<<min_L1<<" ID: "<<test_edge->eid<<endl;
                             //optimalSolution.targetEdgeID = test_edge->eid;
-                            optimalSolution.L1 = min_L1;
-                            optimalSolution.liftedEdges = igraph_ecount(G) - (igraph_ecount(H)+1);
-                            optimalSolution.changed = true;
+                            temp_opt_L1 = min_L1;
+                            temp_opt_lifted_edges = igraph_ecount(G) - (igraph_ecount(H) + 1);
+                            temp_opt_changed = true;
                         }
                         ////////////////
                         if ((test_edge->L1() > best_edge->L1()) || (test_edge->L1() != best_edge->L1() && test_edge->L1() == -2)) { //Added by Karl: || (test_edge->L1() != best_edge->L1() && test_edge->L1() == -2. We want them to be different when == -2 because if it's the same it means that both are inf lvl so no need to update, we can use the old edge.
@@ -3276,7 +3282,23 @@ void Security::S1_greedy (bool save_state, int threads, int min_L1, int max_L1, 
         
         // add to graph, remove from list, reset edges
         add_edge(best_edge->eid);
+        
         // Added by Karl
+        if (!save_state && best_edge->L1() == min_L1) {
+            if ((optimalSolution.L1 != -1 && (optimalSolution.liftedEdges > (igraph_ecount(G) - igraph_ecount(H)))) || optimalSolution.L1 == -1) {
+                optimalSolution.L1 = best_edge->L1();
+                optimalSolution.liftedEdges = igraph_ecount(G) - igraph_ecount(H);
+                optimalSolution.changed = true;
+            }
+        }
+        
+        if (!save_state && temp_opt_changed && best_edge->L1() > min_L1) {
+            if ((optimalSolution.L1 != -1 && optimalSolution.liftedEdges > temp_opt_lifted_edges) || optimalSolution.L1 == -1) {
+                optimalSolution.L1 = temp_opt_L1;
+                optimalSolution.liftedEdges = temp_opt_lifted_edges;
+                optimalSolution.changed = temp_opt_changed;
+            }
+        }
 //        cout<<setfill('/')<<setw(250)<<optimalSolution.targetEdgeID<<endl;
 //        cout<<setfill('/')<<setw(250)<<optimalSolution.addedEdgesIDs.size()<<endl;
 //        cout<<setfill('/')<<setw(250)<<optimalSolution.changed<<endl;
@@ -3349,8 +3371,13 @@ void Security::S1_greedy (bool save_state, int threads, int min_L1, int max_L1, 
 
             // Write to file
             file(WRITE);
-            if (maxL1 == temp_maxL1)
-                k3outfile<<setfill(' ')<<setw(5)<<maxL1<<setfill(' ')<<setw(11)<<igraph_ecount(G)-igraph_ecount(H)<<endl;
+            if (maxL1 == temp_maxL1) {
+                if (optimalSolution.L1 != -1) {
+                    if (igraph_ecount(G)-igraph_ecount(H) < optimalSolution.liftedEdges)
+                        k3outfile<<setfill(' ')<<setw(5)<<maxL1<<setfill(' ')<<setw(11)<<igraph_ecount(G)-igraph_ecount(H)<<endl;
+                    else k3outfile<<setfill(' ')<<setw(5)<<maxL1<<setfill(' ')<<setw(11)<<optimalSolution.liftedEdges<<endl;
+                } else k3outfile<<setfill(' ')<<setw(5)<<maxL1<<setfill(' ')<<setw(11)<<igraph_ecount(G)-igraph_ecount(H)<<endl;
+            }
             else {
                 if (optimalSolution.L1 != -1) {
                     k3outfile<<setfill(' ')<<setw(5)<<optimalSolution.L1<<setfill(' ')<<setw(11)<<optimalSolution.liftedEdges<<endl;
@@ -3402,7 +3429,7 @@ void Security::L1_main (string outFileName, int _remove_vertices_max, int thread
     maxL1 = -1;
     optimalSolution.changed = false;
     optimalSolution.L1 = -1;
-    optimalSolution.liftedEdges = 0;
+    optimalSolution.liftedEdges = -1;
     //optimalSolution.targetEdgeID = -1;
 
     string outFile = "gnuplotOutput/" + outFileName;
