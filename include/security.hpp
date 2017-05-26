@@ -201,6 +201,8 @@ public:
     void lift_vertex(int min_L1, int threads);
     /* Open, write and close file */
     void file(actions action, string outFileName = "out2.txt");
+    /* Update optimal solution */
+    void updateOptimalSolution(int maxL1, int lifted_Edges, int vcount);
     ////////////////
     void setConfBudget(int budget) { isosat->setConfBudget(budget); };
     void setPropBudget(int budget) { isosat->setPropBudget(budget); };

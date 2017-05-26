@@ -2991,20 +2991,20 @@ void Security::S1_greedy (bool save_state, int threads, int min_L1, int max_L1, 
     
     vector<L1_Edge*> edges;
     vector<L1_Edge*> edge_list;
-    set<int> ids;
+//    set<int> ids;
     for (unsigned int eid = 0; eid < igraph_ecount(G); eid++) {
         if (!H->test_edge(G->get_edge(eid)) && !(EAN(G,"Lifted",eid) == Lifted)) {// edges already in H will not be considered in the list of candidates as well as edges that are connected to lifted vertices
             int from, to;
             igraph_edge(G, eid, &from, &to);
             edges.push_back( new L1_Edge(eid, Edge(from,to), max_L1) );
             edge_list.push_back( edges.back() );
-            cout<<from<<" "<<to<<endl;
+//            cout<<from<<" "<<to<<endl;
         }
-        if (H->test_edge(G->get_edge(eid))) {
-            int from, to;
-            igraph_edge(G, eid, &from, &to);
-            cout<<from<<" "<<to<<endl;
-        }
+//        if (H->test_edge(G->get_edge(eid))) {
+//            int from, to;
+//            igraph_edge(G, eid, &from, &to);
+//            cout<<from<<" "<<to<<endl;
+//        }
     }
     
 #ifndef NRAND
@@ -3299,23 +3299,16 @@ void Security::S1_greedy (bool save_state, int threads, int min_L1, int max_L1, 
             int lifted_edges = igraph_ecount(G) - igraph_ecount(H);
             
             if (optimalSolution.L1 != -1) {
-                if (lifted_edges < optimalSolution.liftedEdges) {
-                    optimalSolution.L1 = best_edge->L1();
-                    optimalSolution.liftedEdges = lifted_edges;
-                    optimalSolution.liftedVertices = vcount;
-                }
+                if (lifted_edges < optimalSolution.liftedEdges)
+                    updateOptimalSolution(best_edge->L1(), lifted_edges, vcount);
                 else if (lifted_edges == optimalSolution.liftedEdges) {
-                    if (best_edge->L1() > optimalSolution.L1) {
-                        optimalSolution.L1 = best_edge->L1();
-                        optimalSolution.liftedEdges = lifted_edges;
-                        optimalSolution.liftedVertices = vcount;
-                    }
+                    if (vcount < optimalSolution.liftedVertices)
+                        updateOptimalSolution(best_edge->L1(), lifted_edges, vcount);
+                    else if (vcount == optimalSolution.liftedVertices)
+                        if (best_edge->L1() > optimalSolution.L1)
+                            updateOptimalSolution(best_edge->L1(), lifted_edges, vcount);
                 }
-            } else {
-                optimalSolution.L1 = best_edge->L1();
-                optimalSolution.liftedEdges = lifted_edges;
-                optimalSolution.liftedVertices = vcount;
-            }
+            } else updateOptimalSolution(best_edge->L1(), lifted_edges, vcount);
         }
 //        if (!save_state && best_edge->L1() == min_L1) {
 //            if ((optimalSolution.L1 != -1 && (optimalSolution.liftedEdges > (igraph_ecount(G) - igraph_ecount(H)))) || optimalSolution.L1 == -1) {
@@ -3439,9 +3432,13 @@ void Security::S1_greedy (bool save_state, int threads, int min_L1, int max_L1, 
             if (temp_lifted < optimalSolution.liftedEdges)
                 k3outfile<<setfill(' ')<<setw(6)<<temp_maxL1<<setfill(' ')<<setw(15)<<temp_lifted<<setfill(' ')<<setw(15)<<"0"<<endl;
             else if (temp_lifted == optimalSolution.liftedEdges) {
-                if (temp_maxL1 >= optimalSolution.L1)
+                if (optimalSolution.liftedVertices > 0)
                     k3outfile<<setfill(' ')<<setw(6)<<temp_maxL1<<setfill(' ')<<setw(15)<<temp_lifted<<setfill(' ')<<setw(15)<<"0"<<endl;
-                else k3outfile<<setfill(' ')<<setw(6)<<optimalSolution.L1<<setfill(' ')<<setw(15)<<optimalSolution.liftedEdges<<setfill(' ')<<setw(15)<<optimalSolution.liftedVertices<<endl;
+                else if (optimalSolution.liftedVertices == 0) {
+                    if (temp_maxL1 >= optimalSolution.L1)
+                        k3outfile<<setfill(' ')<<setw(6)<<temp_maxL1<<setfill(' ')<<setw(15)<<temp_lifted<<setfill(' ')<<setw(15)<<"0"<<endl;
+                    else k3outfile<<setfill(' ')<<setw(6)<<optimalSolution.L1<<setfill(' ')<<setw(15)<<optimalSolution.liftedEdges<<setfill(' ')<<setw(15)<<optimalSolution.liftedVertices<<endl;
+                }
             }
             else if (optimalSolution.liftedEdges < temp_lifted) {
                 k3outfile<<setfill(' ')<<setw(6)<<optimalSolution.L1<<setfill(' ')<<setw(15)<<optimalSolution.liftedEdges<<setfill(' ')<<setw(15)<<optimalSolution.liftedVertices<<endl;
@@ -3639,15 +3636,6 @@ void Security::lift_vertex(/*int max_L1*/) {
                     int eid;
                     igraph_get_eid(H, &eid, from, to, IGRAPH_DIRECTED, 1); // get id of the edge in H
                     igraph_delete_edges(H, igraph_ess_1(eid));
-                    //            set<int>::const_iterator got = LiftedVnE.liftedEIDsSet.find(j);
-                    //            set<int>::const_iterator got1 = LiftedVnE.edgeIDsSet.find(j);
-                    //            if (got == LiftedVnE.liftedEIDsSet.end() && got1 == LiftedVnE.edgeIDsSet.end()) { // not in set
-                    //                LiftedVnE.liftedEIDsSet.insert(j);
-                    //                LiftedVnE.liftedEIDs.push_back(j);
-                    //            }
-                    //            if (vcount == 1)
-                    //                LiftedVnE.liftedEIDs.push_back(j);
-                    //igraph_get_eid(G, &eid, from, to, IGRAPH_DIRECTED, 1); // get id of the edge in H
                 }
             }
         }
@@ -3667,23 +3655,17 @@ void Security::lift_vertex(int min_L1, int threads) {
         int lifted_edges = igraph_ecount(G) - igraph_ecount(H);
         
         if (optimalSolution.L1 != -1) {
-            if (lifted_edges < optimalSolution.liftedEdges) {
-                optimalSolution.L1 = maxL1;
-                optimalSolution.liftedEdges = lifted_edges;
-                optimalSolution.liftedVertices = vcount;
-            }
+            if (lifted_edges < optimalSolution.liftedEdges)
+                updateOptimalSolution(maxL1, lifted_edges, vcount);
             else if (lifted_edges == optimalSolution.liftedEdges) {
-                if (maxL1 > optimalSolution.L1) {
-                    optimalSolution.L1 = maxL1;
-                    optimalSolution.liftedEdges = lifted_edges;
-                    optimalSolution.liftedVertices = vcount;
-                }
+                if (vcount < optimalSolution.liftedVertices)
+                    updateOptimalSolution(maxL1, lifted_edges, vcount);
+                else if (vcount == optimalSolution.liftedVertices)
+                    if (maxL1 > optimalSolution.L1)
+                        updateOptimalSolution(maxL1, lifted_edges, vcount);
             }
-        } else {
-            optimalSolution.L1 = maxL1;
-            optimalSolution.liftedEdges = lifted_edges;
-            optimalSolution.liftedVertices = vcount;
-        }
+        } else updateOptimalSolution(maxL1, lifted_edges, vcount);
+        
         cout<<setfill('/')<<setw(250)<<maxL1<<" "<<lifted_edges<<" "<<vcount<<endl;
         cout<<setfill('/')<<setw(250)<<optimalSolution.L1<<" "<<optimalSolution.liftedEdges<<" "<<optimalSolution.liftedVertices<<endl;
         // Add edges until we reach the target sec lvl
@@ -3722,5 +3704,11 @@ void Security::file(actions action, string outFileName) {
         default:
             break;
     }
+}
+
+void Security::updateOptimalSolution(int maxL1, int lifted_Edges, int vcount) {
+    optimalSolution.L1 = maxL1;
+    optimalSolution.liftedEdges = lifted_Edges;
+    optimalSolution.liftedVertices = vcount;
 }
 ////////////////
