@@ -2992,20 +2992,14 @@ void Security::S1_greedy (bool save_state, int threads, int min_L1, int max_L1, 
     
     vector<L1_Edge*> edges;
     vector<L1_Edge*> edge_list;
-//    set<int> ids;
+    
     for (unsigned int eid = 0; eid < igraph_ecount(G); eid++) {
         if (!H->test_edge(G->get_edge(eid)) && !(EAN(G,"Lifted",eid) == Lifted)) {// edges already in H will not be considered in the list of candidates as well as edges that are connected to lifted vertices
             int from, to;
             igraph_edge(G, eid, &from, &to);
             edges.push_back( new L1_Edge(eid, Edge(from,to), max_L1) );
             edge_list.push_back( edges.back() );
-//            cout<<from<<" "<<to<<endl;
         }
-//        if (H->test_edge(G->get_edge(eid))) {
-//            int from, to;
-//            igraph_edge(G, eid, &from, &to);
-//            cout<<from<<" "<<to<<endl;
-//        }
     }
     
 #ifndef NRAND
@@ -3039,18 +3033,11 @@ void Security::S1_greedy (bool save_state, int threads, int min_L1, int max_L1, 
         
         // Added by Karl
         if (save_state) {
-            optimalSolution.changed = false;
-//            optimalSolution.targetEdgeID = -1;
-//            optimalSolution.addedEdgesIDs.clear();
             optimalSolution.L1 = -1;
             optimalSolution.liftedEdges = -1;
             optimalSolution.liftedVertices = 0;
             cout<<setfill('/')<<setw(250)<<"in"<<endl;
         }
-        
-//        int temp_opt_L1;
-//        int temp_opt_lifted_edges;
-//        bool temp_opt_changed = false;
         ////////////////
         
         
@@ -3220,17 +3207,6 @@ void Security::S1_greedy (bool save_state, int threads, int min_L1, int max_L1, 
 #endif
                             
                         }
-                        
-                        // Store best results
-                        // Added by Karl
-                        // if this edge can get us to the target
-//                        if (!save_state && test_edge->L1() == min_L1) {
-//                            cout<<setfill('/')<<setw(225)<<"L1: "<<test_edge->L1()<<" target: "<<min_L1<<" ID: "<<test_edge->eid<<endl;
-//                            //optimalSolution.targetEdgeID = test_edge->eid;
-//                            temp_opt_L1 = min_L1;
-//                            temp_opt_lifted_edges = igraph_ecount(G) - (igraph_ecount(H) + 1);
-//                            temp_opt_changed = true;
-//                        }
                         ////////////////
                         if ((test_edge->L1() > best_edge->L1()) || (test_edge->L1() != best_edge->L1() && test_edge->L1() == -2)) { //Added by Karl: || (test_edge->L1() != best_edge->L1() && test_edge->L1() == -2. We want them to be different when == -2 because if it's the same it means that both are inf lvl so no need to update, we can use the old edge.
                             best_edge = test_edge;
@@ -3311,44 +3287,9 @@ void Security::S1_greedy (bool save_state, int threads, int min_L1, int max_L1, 
                 }
             } else updateOptimalSolution(best_edge->L1(), lifted_edges, vcount);
         }
-//        if (!save_state && best_edge->L1() == min_L1) {
-//            if ((optimalSolution.L1 != -1 && (optimalSolution.liftedEdges > (igraph_ecount(G) - igraph_ecount(H)))) || optimalSolution.L1 == -1) {
-//                optimalSolution.L1 = best_edge->L1();
-//                optimalSolution.liftedEdges = igraph_ecount(G) - igraph_ecount(H);
-//                optimalSolution.changed = true;
-//            }
-//        }
-//        
-//        if (!save_state && temp_opt_changed && best_edge->L1() > min_L1) {
-//            if ((optimalSolution.L1 != -1 && optimalSolution.liftedEdges > temp_opt_lifted_edges) || optimalSolution.L1 == -1) {
-//                optimalSolution.L1 = temp_opt_L1;
-//                optimalSolution.liftedEdges = temp_opt_lifted_edges;
-//                optimalSolution.changed = temp_opt_changed;
-//            }
-//        }
-//        cout<<setfill('/')<<setw(250)<<optimalSolution.targetEdgeID<<endl;
-//        cout<<setfill('/')<<setw(250)<<optimalSolution.addedEdgesIDs.size()<<endl;
-//        cout<<setfill('/')<<setw(250)<<optimalSolution.changed<<endl;
-//        
-//        if (!save_state && optimalSolution.changed) {
-//            optimalSolution.addedEdgesIDs.clear();
-//            if (best_edge->L1() != min_L1)
-//                optimalSolution.addedEdgesIDs.push_back(best_edge->eid);
-//        } else if (!save_state)
-//            optimalSolution.addedEdgesIDs.push_back(best_edge->eid);
-//        
-//        cout<<setfill('/')<<setw(250)<<optimalSolution.addedEdgesIDs.size()<<endl;
         
         cout<<setfill('/')<<setw(250)<<optimalSolution.L1<<" "<<optimalSolution.liftedEdges<<" "<<optimalSolution.liftedVertices<<endl;
         
-//        if (!save_state) {
-////            set<int>::const_iterator got = LiftedVnE.edgeIDsSet.find(best_edge->eid);
-////            set<int>::const_iterator got1 = LiftedVnE.liftedEIDsSet.find(best_edge->eid);
-////            if (got == LiftedVnE.edgeIDsSet.end() && got1 == LiftedVnE.liftedEIDsSet.end()) { // not in set
-////                LiftedVnE.edgeIDsSet.insert(best_edge->eid);
-////                LiftedVnE.edgeIDs.push_back(best_edge->eid);
-////            }
-//        }
         if (save_state) {
             SETEAN(G, "Original", best_edge->eid, Original);
             
@@ -3397,10 +3338,6 @@ void Security::S1_greedy (bool save_state, int threads, int min_L1, int max_L1, 
             cout<<setfill('/')<<setw(250)<<"target: "<<maxL1<<endl;
             
             LiftedVnE.vertexIDs.clear();
-//            LiftedVnE.edgeIDs.clear();
-//            LiftedVnE.liftedEIDs.clear();
-            //LiftedVnE.edgeIDsSet.clear();
-//            LiftedVnE.liftedEIDsSet.clear();
             LiftedVnE.lifted.clear();
             
             k2outfile<<setfill(' ')<<setw(6)<<maxL1<<setfill(' ')<<setw(15)<<igraph_ecount(G)-igraph_ecount(H)<<endl;
@@ -3429,6 +3366,7 @@ void Security::S1_greedy (bool save_state, int threads, int min_L1, int max_L1, 
             lift_vertex(maxL1, threads);
             cout<<setfill('.')<<setw(250)<<notLifted<<endl;
             cout<<setfill('/')<<setw(250)<<optimalSolution.L1<<" "<<optimalSolution.liftedEdges<<" "<<optimalSolution.liftedVertices<<endl;
+            
             // Write to file
             file(WRITE);
             if (temp_lifted < optimalSolution.liftedEdges)
@@ -3445,20 +3383,6 @@ void Security::S1_greedy (bool save_state, int threads, int min_L1, int max_L1, 
             }
             else if (optimalSolution.liftedEdges < temp_lifted)
                 k3outfile<<setfill(' ')<<setw(6)<<optimalSolution.L1<<setfill(' ')<<setw(15)<<optimalSolution.liftedEdges<<setfill(' ')<<setw(15)<<optimalSolution.liftedVertices<<endl;
-                
-//            if (maxL1 == temp_maxL1) {
-//                if (optimalSolution.L1 != -1) {
-//                    if (igraph_ecount(G)-igraph_ecount(H) < optimalSolution.liftedEdges)
-//                        k3outfile<<setfill(' ')<<setw(5)<<maxL1<<setfill(' ')<<setw(11)<<igraph_ecount(G)-igraph_ecount(H)<<endl;
-//                    else k3outfile<<setfill(' ')<<setw(5)<<maxL1<<setfill(' ')<<setw(11)<<optimalSolution.liftedEdges<<endl;
-//                } else k3outfile<<setfill(' ')<<setw(5)<<maxL1<<setfill(' ')<<setw(11)<<igraph_ecount(G)-igraph_ecount(H)<<endl;
-//            }
-//            else {
-//                if (optimalSolution.L1 != -1) {
-//                    k3outfile<<setfill(' ')<<setw(5)<<optimalSolution.L1<<setfill(' ')<<setw(11)<<optimalSolution.liftedEdges<<endl;
-//                }
-//                else k3outfile<<setfill(' ')<<setw(5)<<temp_maxL1<<setfill(' ')<<setw(11)<<temp_lifted<<endl;
-//            }
             
             // Unlift all vertices to go back to "original" circuit
             for (int i = 0; i < LiftedVnE.vertexIDs.size(); i++)
@@ -3478,7 +3402,6 @@ void Security::S1_greedy (bool save_state, int threads, int min_L1, int max_L1, 
                 cout<<"Id: "<<*it2<<endl;
             }
             // Bring back H to the way it was
-            //int edges = igraph_ecount(H);
             for (int i = 0; i < igraph_ecount(H); i++) {
                 cout<<i<<endl;
                 // Get ID in G
@@ -3514,37 +3437,9 @@ void Security::S1_greedy (bool save_state, int threads, int min_L1, int max_L1, 
                 cout<<"ID: "<<eid<<endl;
             }
             
-//            // Remove all added edges
-//            for (int i = 0; i < LiftedVnE.edgeIDs.size(); i++) {
-//                if (H->test_edge(G->get_edge(LiftedVnE.edgeIDs[i]))) {
-//                    //if (EAN(G, "Original", LiftedVnE.edgeIDs[i]) == NotOriginal) { // Security check to make sure the edge is in H
-//                        int from, to;
-//                        igraph_edge(G,LiftedVnE.edgeIDs[i],&from,&to);
-//                        int eid;
-//                        igraph_get_eid(H, &eid, from, to, IGRAPH_DIRECTED, 1); // get id of the edge in H
-//                        igraph_delete_edges(H, igraph_ess_1(eid));
-//                    //} //else SETEAN(G, "Lifted", LiftedVnE.edgeIDs[i], NotLifted);
-//                }
-//            }
-//            
-//            // Add back all lifted edges due to lifting vertices
-//            for (int i = 0; i < LiftedVnE.liftedEIDs.size(); i++) {
-////                if (EAN(G, "Lifted", LiftedVnE.liftedEIDs[i]) == Lifted &&
-////                    EAN(G, "Original", LiftedVnE.liftedEIDs[i]) == Original) { // Security check
-//                    if (!H->test_edge(G->get_edge(LiftedVnE.liftedEIDs[i])))
-//                        add_edge(LiftedVnE.liftedEIDs[i]);
-////                    SETEAN(G, "Lifted", LiftedVnE.liftedEIDs[i], NotLifted);
-////                }
-//                SETEAN(G, "Lifted", LiftedVnE.liftedEIDs[i], NotLifted);
-//            }
-            
             cout<<setfill(':')<<setw(225)<<igraph_ecount(H)<<" "<<LiftedVnE.edgeIDsSet.size()<<endl;
             
             LiftedVnE.vertexIDs.clear();
-//            LiftedVnE.edgeIDs.clear();
-//            LiftedVnE.liftedEIDs.clear();
-            //LiftedVnE.edgeIDsSet.clear();
-//            LiftedVnE.liftedEIDsSet.clear();
             LiftedVnE.lifted.clear();
             
             clean_solutions();
@@ -3561,11 +3456,9 @@ void Security::S1_greedy (bool save_state, int threads, int min_L1, int max_L1, 
 // Added by Karl
 void Security::L1_main (string outFileName, int _remove_vertices_max, int threads, int min_L1, int max_L1, bool quite) {
     maxL1 = -1;
-    optimalSolution.changed = false;
     optimalSolution.L1 = -1;
     optimalSolution.liftedEdges = -1;
     optimalSolution.liftedVertices = 0;
-    //optimalSolution.targetEdgeID = -1;
 
     string outFile = "gnuplotOutput/" + outFileName;
     file(OPEN, outFile);
@@ -3670,7 +3563,6 @@ void Security::lift_vertex(/*int max_L1*/) {
 
 void Security::lift_vertex(int min_L1, int threads) {
     for (int i = 0; i < remove_vertices_max; i++) {
-//        cout<<"target: "<<min_L1<<endl;
         // remove mappings that don't work
         vcount++;
         clean_solutions();
@@ -3692,8 +3584,8 @@ void Security::lift_vertex(int min_L1, int threads) {
         
         cout<<setfill('/')<<setw(250)<<maxL1<<" "<<lifted_edges<<" "<<vcount<<endl;
         cout<<setfill('/')<<setw(250)<<optimalSolution.L1<<" "<<optimalSolution.liftedEdges<<" "<<optimalSolution.liftedVertices<<endl;
+        
         // Add edges until we reach the target sec lvl
-        // remove mappings that don't work
         clean_solutions();
         if (maxL1 >= min_L1)
             S1_greedy(false, threads, min_L1, maxL1);
@@ -3737,7 +3629,6 @@ void Security::file(actions action, string outFileName) {
 void Security::updateOptimalSolution(int maxL1, int lifted_Edges, int vcount) {
     optimalSolution.L1 = maxL1;
     optimalSolution.liftedEdges = lifted_Edges;
-    optimalSolution.liftedEdges2 = lifted_Edges + notLifted;
     optimalSolution.liftedVertices = vcount;
 }
 ////////////////
