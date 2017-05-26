@@ -2986,6 +2986,7 @@ void Security::S1_greedy (bool save_state, int threads, int min_L1, int max_L1, 
     ////////////////
     
     if (max_L1 == -1) max_L1 = G->max_L1();
+    cout<<igraph_ecount(H)<<endl;
     if (igraph_ecount(H) == 0) add_free_edges(max_L1);
     
     vector<L1_Edge*> edges;
@@ -3338,9 +3339,21 @@ void Security::S1_greedy (bool save_state, int threads, int min_L1, int max_L1, 
         
         cout<<setfill('/')<<setw(250)<<optimalSolution.L1<<" "<<optimalSolution.liftedEdges<<" "<<optimalSolution.liftedVertices<<endl;
         
-        if (!save_state)
-            LiftedVnE.edgeIDs.push_back(best_edge->eid);
-        else SETEAN(G, "Original", best_edge->eid, Original);
+//        if (!save_state) {
+////            set<int>::const_iterator got = LiftedVnE.edgeIDsSet.find(best_edge->eid);
+////            set<int>::const_iterator got1 = LiftedVnE.liftedEIDsSet.find(best_edge->eid);
+////            if (got == LiftedVnE.edgeIDsSet.end() && got1 == LiftedVnE.liftedEIDsSet.end()) { // not in set
+////                LiftedVnE.edgeIDsSet.insert(best_edge->eid);
+////                LiftedVnE.edgeIDs.push_back(best_edge->eid);
+////            }
+//        }
+        if (save_state) {
+            SETEAN(G, "Original", best_edge->eid, Original);
+            
+            set<int>::const_iterator got = LiftedVnE.edgeIDsSet.find(best_edge->eid);
+            if (got == LiftedVnE.edgeIDsSet.end()) // not in set
+                LiftedVnE.edgeIDsSet.insert(best_edge->eid);
+        }
         ////////////////
     
         max_L1 = best_edge->L1();
@@ -3382,14 +3395,19 @@ void Security::S1_greedy (bool save_state, int threads, int min_L1, int max_L1, 
             cout<<setfill('/')<<setw(250)<<"target: "<<maxL1<<endl;
             
             LiftedVnE.vertexIDs.clear();
-            LiftedVnE.edgeIDs.clear();
-            LiftedVnE.liftedEIDs.clear();
+//            LiftedVnE.edgeIDs.clear();
+//            LiftedVnE.liftedEIDs.clear();
+            //LiftedVnE.edgeIDsSet.clear();
+//            LiftedVnE.liftedEIDsSet.clear();
+            LiftedVnE.lifted.clear();
             
             k2outfile<<setfill(' ')<<setw(6)<<maxL1<<setfill(' ')<<setw(15)<<igraph_ecount(G)-igraph_ecount(H)<<endl;
             
             int temp_maxL1 = maxL1;
             int temp_lifted = igraph_ecount(G)-igraph_ecount(H);
 
+            cout<<setfill(':')<<setw(225)<<igraph_ecount(H)<<" "<<LiftedVnE.edgeIDsSet.size()<<endl;
+            
             clean_solutions();
             vcount = 0;
             lift_vertex(maxL1, threads);
@@ -3400,7 +3418,7 @@ void Security::S1_greedy (bool save_state, int threads, int min_L1, int max_L1, 
             if (temp_lifted < optimalSolution.liftedEdges)
                 k3outfile<<setfill(' ')<<setw(6)<<temp_maxL1<<setfill(' ')<<setw(15)<<temp_lifted<<setfill(' ')<<setw(15)<<"0"<<endl;
             else if (temp_lifted == optimalSolution.liftedEdges) {
-                if (temp_maxL1 > optimalSolution.L1)
+                if (temp_maxL1 >= optimalSolution.L1)
                     k3outfile<<setfill(' ')<<setw(6)<<temp_maxL1<<setfill(' ')<<setw(15)<<temp_lifted<<setfill(' ')<<setw(15)<<"0"<<endl;
                 else k3outfile<<setfill(' ')<<setw(6)<<optimalSolution.L1<<setfill(' ')<<setw(15)<<optimalSolution.liftedEdges<<setfill(' ')<<setw(15)<<optimalSolution.liftedVertices<<endl;
             }
@@ -3426,28 +3444,71 @@ void Security::S1_greedy (bool save_state, int threads, int min_L1, int max_L1, 
                 if (VAN(H,"Lifted",LiftedVnE.vertexIDs[i]) == Lifted) // Security check
                     SETVAN(H, "Lifted", LiftedVnE.vertexIDs[i], NotLifted);
             
-            // Remove all added edges
-            for (int i = 0; i < LiftedVnE.edgeIDs.size(); i++)
-                if (H->test_edge(G->get_edge(LiftedVnE.edgeIDs[i]))) { // Security check to make sure the edge is in H
-                    int from, to;
-                    igraph_edge(G,LiftedVnE.edgeIDs[i],&from,&to);
-                    int eid;
-                    igraph_get_eid(H, &eid, from, to, IGRAPH_DIRECTED, 1); // get id of the edge in H
-                    igraph_delete_edges(H, igraph_ess_1(eid));
-                }
+            // Unlift all edges
+            for (int i = 0; i < LiftedVnE.lifted.size(); i++)
+                SETEAN(G, "Lifted", LiftedVnE.lifted[i], NotLifted);
             
-            // Add back all lifted edges due to lifting vertices
-            for (int i = 0; i < LiftedVnE.liftedEIDs.size(); i++)
-                if (EAN(G, "Lifted", LiftedVnE.liftedEIDs[i]) == Lifted &&
-                    EAN(G, "Original", LiftedVnE.liftedEIDs[i]) == Original) { // Security check
-                    if (!H->test_edge(G->get_edge(LiftedVnE.liftedEIDs[i])))
-                        add_edge(LiftedVnE.liftedEIDs[i]);
-                    SETEAN(G, "Lifted", LiftedVnE.liftedEIDs[i], NotLifted);
+            set<int> temp (LiftedVnE.edgeIDsSet);
+            cout<<setfill(':')<<setw(225)<<igraph_ecount(H)<<" "<<LiftedVnE.edgeIDsSet.size()<<" "<<temp.size()<<endl;
+            // Bring back H to the way it was
+            //int edges = igraph_ecount(H);
+            for (int i = 0; i < igraph_ecount(H); i++) {
+                cout<<i<<endl;
+                // Get ID in G
+                int from, to;
+                igraph_edge(H,i,&from,&to);
+                int eid;
+                igraph_get_eid(G, &eid, from, to, IGRAPH_DIRECTED, 1); // get id of the edge in H
+                
+                // In set?
+                set<int>::const_iterator got = temp.find(eid);
+                if (got == temp.end()) {// not in set
+                    igraph_delete_edges(H, igraph_ess_1(i));
+                    cout<<"not"<<endl;
+                    i--;
                 }
+                else {
+                    temp.erase(eid);
+                    cout<<"in"<<endl;
+                }
+            }
+            cout<<setfill(':')<<setw(225)<<igraph_ecount(H)<<" "<<LiftedVnE.edgeIDsSet.size()<<" "<<temp.size()<<endl;
+            std::set<int>::iterator it;
+            for (it = temp.begin(); it != temp.end(); it++)
+                add_edge(*it);
+            
+//            // Remove all added edges
+//            for (int i = 0; i < LiftedVnE.edgeIDs.size(); i++) {
+//                if (H->test_edge(G->get_edge(LiftedVnE.edgeIDs[i]))) {
+//                    //if (EAN(G, "Original", LiftedVnE.edgeIDs[i]) == NotOriginal) { // Security check to make sure the edge is in H
+//                        int from, to;
+//                        igraph_edge(G,LiftedVnE.edgeIDs[i],&from,&to);
+//                        int eid;
+//                        igraph_get_eid(H, &eid, from, to, IGRAPH_DIRECTED, 1); // get id of the edge in H
+//                        igraph_delete_edges(H, igraph_ess_1(eid));
+//                    //} //else SETEAN(G, "Lifted", LiftedVnE.edgeIDs[i], NotLifted);
+//                }
+//            }
+//            
+//            // Add back all lifted edges due to lifting vertices
+//            for (int i = 0; i < LiftedVnE.liftedEIDs.size(); i++) {
+////                if (EAN(G, "Lifted", LiftedVnE.liftedEIDs[i]) == Lifted &&
+////                    EAN(G, "Original", LiftedVnE.liftedEIDs[i]) == Original) { // Security check
+//                    if (!H->test_edge(G->get_edge(LiftedVnE.liftedEIDs[i])))
+//                        add_edge(LiftedVnE.liftedEIDs[i]);
+////                    SETEAN(G, "Lifted", LiftedVnE.liftedEIDs[i], NotLifted);
+////                }
+//                SETEAN(G, "Lifted", LiftedVnE.liftedEIDs[i], NotLifted);
+//            }
+            
+            cout<<setfill(':')<<setw(225)<<igraph_ecount(H)<<" "<<LiftedVnE.edgeIDsSet.size()<<endl;
             
             LiftedVnE.vertexIDs.clear();
-            LiftedVnE.edgeIDs.clear();
-            LiftedVnE.liftedEIDs.clear();
+//            LiftedVnE.edgeIDs.clear();
+//            LiftedVnE.liftedEIDs.clear();
+            //LiftedVnE.edgeIDsSet.clear();
+//            LiftedVnE.liftedEIDsSet.clear();
+            LiftedVnE.lifted.clear();
             
             clean_solutions();
         }
@@ -3510,7 +3571,7 @@ void Security::lift_vertex(/*int max_L1*/) {
             int level = L1();
             cout<<"index: "<<i<<" level: "<<level<<" max: "<<max_L1<<endl;
             // save result if > than the max_L1 acheived so far
-            if (level >= max_L1) {
+            if (level >= max_L1 || level == -2) {
                 max_L1 = level;
                 index = i;
             }
@@ -3527,25 +3588,36 @@ void Security::lift_vertex(/*int max_L1*/) {
     if (index >= 0) {
         SETVAN(H, "Lifted", index, Lifted);
         LiftedVnE.vertexIDs.push_back(index);
-    }
-    
-    // delete edges from H and change value of lifted vertex in G
-    for (int j = 0; j < igraph_ecount(G); j++) { // G not H because we want to delete the edges in H and when doing so the ids will get rearranged so we can get segmentation falt. Also, when we add back the edges we are adding them back from G so we need to know their id in G.
-        if (H->test_edge(G->get_edge(j))) { // If the edge is in H
+        
+        
+        // delete edges from H and change value of lifted vertex in G
+        for (int j = 0; j < igraph_ecount(G); j++) { // G not H because we want to delete the edges in H and when doing so the ids will get rearranged so we can get segmentation falt. Also, when we add back the edges we are adding them back from G so we need to know their id in G.
             int from, to;
             igraph_edge(G,j,&from,&to);
+            
             if (from == index || to == index) {
-                int eid;
-                igraph_get_eid(H, &eid, from, to, IGRAPH_DIRECTED, 1); // get id of the edge in H
-                igraph_delete_edges(H, igraph_ess_1(eid));
-                //igraph_get_eid(G, &eid, from, to, IGRAPH_DIRECTED, 1); // get id of the edge in H
                 SETEAN(G, "Lifted", j, Lifted);
+                LiftedVnE.lifted.push_back(j);
                 
-                if (EAN(G, "Original", j) == Original)
-                    LiftedVnE.liftedEIDs.push_back(j);
+                
+                if (H->test_edge(G->get_edge(j))) { // If the edge is in H
+                    int eid;
+                    igraph_get_eid(H, &eid, from, to, IGRAPH_DIRECTED, 1); // get id of the edge in H
+                    igraph_delete_edges(H, igraph_ess_1(eid));
+                    //            set<int>::const_iterator got = LiftedVnE.liftedEIDsSet.find(j);
+                    //            set<int>::const_iterator got1 = LiftedVnE.edgeIDsSet.find(j);
+                    //            if (got == LiftedVnE.liftedEIDsSet.end() && got1 == LiftedVnE.edgeIDsSet.end()) { // not in set
+                    //                LiftedVnE.liftedEIDsSet.insert(j);
+                    //                LiftedVnE.liftedEIDs.push_back(j);
+                    //            }
+                    //            if (vcount == 1)
+                    //                LiftedVnE.liftedEIDs.push_back(j);
+                    //igraph_get_eid(G, &eid, from, to, IGRAPH_DIRECTED, 1); // get id of the edge in H
+                }
             }
         }
     }
+    cout<<index<<" "<<igraph_ecount(H)<<endl;
     maxL1 = max_L1;
 }
 

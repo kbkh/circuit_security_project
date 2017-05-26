@@ -772,7 +772,7 @@ int main(int argc, char **argv) {
         security->L1(label);
     }
     
-    
+    G.save(working_dir + "/G2_circuit.gml");
     if ( test_args.size() >= 1 && atoi(test_args[0].c_str()) >= 0) {
         // Added by Karl
         // Delete lifted vertices

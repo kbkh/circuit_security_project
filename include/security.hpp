@@ -31,6 +31,7 @@
 #include <fcntl.h>
 #include <sys/ipc.h>
 #include <sys/shm.h>
+#include <set>
 
 #include <sys/stat.h>
 #include <sys/types.h>
@@ -108,8 +109,12 @@ public:
 class LiftingInfo {
 public:
     vector<int> vertexIDs;
-    vector<int> edgeIDs; // Id of edges in G
-    vector<int> liftedEIDs; // Id of edges in G
+    vector<int> lifted;
+    set<int> edgeIDsSet; // Id of edges in G
+    
+//    vector<int> edgeIDs; // Id of edges in G
+//    vector<int> liftedEIDs; // Id of edges in G
+//    set<int> liftedEIDsSet; // Id of edges in G
 };
 
 
