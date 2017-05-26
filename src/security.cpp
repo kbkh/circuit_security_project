@@ -29,6 +29,7 @@ using namespace std;
 LiftingInfo LiftedVnE;
 OptimalSolution optimalSolution;
 int vcount = 0;
+int notLifted = 0;
 
 /************************************************************//**
                                                                * @brief
@@ -3296,7 +3297,7 @@ void Security::S1_greedy (bool save_state, int threads, int min_L1, int max_L1, 
         
         // Added by Karl
         if (!save_state) {
-            int lifted_edges = igraph_ecount(G) - igraph_ecount(H);
+            int lifted_edges = igraph_ecount(G) - igraph_ecount(H) + notLifted;
             
             if (optimalSolution.L1 != -1) {
                 if (lifted_edges < optimalSolution.liftedEdges)
@@ -3424,6 +3425,7 @@ void Security::S1_greedy (bool save_state, int threads, int min_L1, int max_L1, 
             
             clean_solutions();
             vcount = 0;
+            notLifted = 0;
             lift_vertex(maxL1, threads);
 
             cout<<setfill('/')<<setw(250)<<optimalSolution.L1<<" "<<optimalSolution.liftedEdges<<" "<<optimalSolution.liftedVertices<<endl;
@@ -3465,6 +3467,8 @@ void Security::S1_greedy (bool save_state, int threads, int min_L1, int max_L1, 
             // Unlift all edges
             for (int i = 0; i < LiftedVnE.lifted.size(); i++)
                 SETEAN(G, "Lifted", LiftedVnE.lifted[i], NotLifted);
+            
+            notLifted = 0;
             
             set<int> temp (LiftedVnE.edgeIDsSet);
             cout<<setfill(':')<<setw(225)<<igraph_ecount(H)<<" "<<LiftedVnE.edgeIDsSet.size()<<" "<<temp.size()<<endl;
@@ -3644,6 +3648,9 @@ void Security::lift_vertex(/*int max_L1*/) {
             igraph_edge(G,j,&from,&to);
             
             if (from == index || to == index) {
+                if (EAN(G,"Lifted",j) == Lifted)
+                    notLifted++;
+                    
                 SETEAN(G, "Lifted", j, Lifted);
                 LiftedVnE.lifted.push_back(j);
                 
@@ -3668,7 +3675,7 @@ void Security::lift_vertex(int min_L1, int threads) {
         clean_solutions();
         lift_vertex();
         
-        int lifted_edges = igraph_ecount(G) - igraph_ecount(H);
+        int lifted_edges = igraph_ecount(G) - igraph_ecount(H) + notLifted;
         
         if (optimalSolution.L1 != -1) {
             if (lifted_edges < optimalSolution.liftedEdges)
@@ -3709,7 +3716,7 @@ void Security::file(actions action, string outFileName) {
             break;
             
         case WRITE:
-            koutfile<<setfill(' ')<<setw(6)<<maxL1<<setfill(' ')<<setw(15)<<igraph_ecount(G)-igraph_ecount(H)<<setfill(' ')<<setw(15)<<vcount<<endl;
+            koutfile<<setfill(' ')<<setw(6)<<maxL1<<setfill(' ')<<setw(15)<<igraph_ecount(G)-igraph_ecount(H) + notLifted<<setfill(' ')<<setw(15)<<vcount<<endl;
             k4outfile<<setfill(' ')<<setw(6)<<optimalSolution.L1<<setfill(' ')<<setw(15)<<optimalSolution.liftedEdges<<setfill(' ')<<setw(15)<<optimalSolution.liftedVertices<<endl;
             break;
             
