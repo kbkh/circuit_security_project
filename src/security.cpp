@@ -3621,6 +3621,22 @@ void Security::lift_vertex(/*int max_L1*/) {
         SETVAN(H, "Lifted", index, Lifted);
         LiftedVnE.vertexIDs.push_back(index);
         
+//        igraph_es_t es;
+//        igraph_integer_t vid = index;
+//        igraph_es_adj(&es, vid, IGRAPH_ALL);
+//        igraph_vector_t was;
+//        igraph_vector_init(&was, 0);
+//        while (!igraph_es_end(G, &es)) {
+//            igraph_vector_push_back(&was, igraph_es_adj_vertex(G, &es));
+//            igraph_es_next(G, &es);
+//        }
+        //igraph_es_adj(H, &es, &vid, IGRAPH_ALL);
+//        igraph_integer_t size;
+//        igraph_es_size(G, &es, &size);
+//        cout<<VECTOR(size)[0]<<endl;
+//        for (int k = 0; k < size; k++)
+//            cout<<VECTOR(es)[k];
+//        cout<<endl;
         
         // delete edges from H and change value of lifted vertex in G
         for (int j = 0; j < igraph_ecount(G); j++) { // G not H because we want to delete the edges in H and when doing so the ids will get rearranged so we can get segmentation falt. Also, when we add back the edges we are adding them back from G so we need to know their id in G.
