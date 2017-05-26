@@ -103,6 +103,7 @@ public:
     int L1;
     int liftedEdges;
     int liftedVertices;
+    int liftedEdges2;
     bool changed;
 };
 
@@ -180,6 +181,7 @@ private:
     ofstream k2outfile;
     ofstream k3outfile;
     ofstream k4outfile;
+    ofstream k5outfile;
     ////////////////
     
     friend class C_SAT;
