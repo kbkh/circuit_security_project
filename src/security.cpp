@@ -2991,13 +2991,21 @@ void Security::S1_greedy (bool save_state, int threads, int min_L1, int max_L1, 
     
     vector<L1_Edge*> edges;
     vector<L1_Edge*> edge_list;
-    for (unsigned int eid = 0; eid < igraph_ecount(G); eid++)
+    set<int> ids;
+    for (unsigned int eid = 0; eid < igraph_ecount(G); eid++) {
         if (!H->test_edge(G->get_edge(eid)) && !(EAN(G,"Lifted",eid) == Lifted)) {// edges already in H will not be considered in the list of candidates as well as edges that are connected to lifted vertices
             int from, to;
             igraph_edge(G, eid, &from, &to);
             edges.push_back( new L1_Edge(eid, Edge(from,to), max_L1) );
             edge_list.push_back( edges.back() );
+            cout<<from<<" "<<to<<endl;
         }
+        if (H->test_edge(G->get_edge(eid))) {
+            int from, to;
+            igraph_edge(G, eid, &from, &to);
+            cout<<from<<" "<<to<<endl;
+        }
+    }
     
 #ifndef NRAND
     random_shuffle(edge_list.begin(), edge_list.end());
@@ -3406,7 +3414,20 @@ void Security::S1_greedy (bool save_state, int threads, int min_L1, int max_L1, 
             int temp_maxL1 = maxL1;
             int temp_lifted = igraph_ecount(G)-igraph_ecount(H);
 
-            cout<<setfill(':')<<setw(225)<<igraph_ecount(H)<<" "<<LiftedVnE.edgeIDsSet.size()<<endl;
+            cout<<setfill(':')<<setw(225)<<igraph_ecount(H)<<" Id: "<<*LiftedVnE.edgeIDsSet.begin()<<" set: "<<LiftedVnE.edgeIDsSet.size()<<endl;
+            
+            std::set<int>::iterator it3;
+            for (it3 = LiftedVnE.edgeIDsSet.begin(); it3 != LiftedVnE.edgeIDsSet.end(); it3++) {
+                cout<<"Id: "<<*it3<<endl;
+            }
+            
+            for (int i = 0; i < igraph_ecount(H); i++) {
+                int from, to;
+                int eid;
+                igraph_edge(H,i,&from,&to);
+                igraph_get_eid(G, &eid, from, to, IGRAPH_DIRECTED, 1);
+                cout<<"ID: "<<eid<<endl;
+            }
             
             clean_solutions();
             vcount = 0;
@@ -3450,6 +3471,10 @@ void Security::S1_greedy (bool save_state, int threads, int min_L1, int max_L1, 
             
             set<int> temp (LiftedVnE.edgeIDsSet);
             cout<<setfill(':')<<setw(225)<<igraph_ecount(H)<<" "<<LiftedVnE.edgeIDsSet.size()<<" "<<temp.size()<<endl;
+            std::set<int>::iterator it2;
+            for (it2 = temp.begin(); it2 != temp.end(); it2++) {
+                cout<<"Id: "<<*it2<<endl;
+            }
             // Bring back H to the way it was
             //int edges = igraph_ecount(H);
             for (int i = 0; i < igraph_ecount(H); i++) {
@@ -3474,8 +3499,18 @@ void Security::S1_greedy (bool save_state, int threads, int min_L1, int max_L1, 
             }
             cout<<setfill(':')<<setw(225)<<igraph_ecount(H)<<" "<<LiftedVnE.edgeIDsSet.size()<<" "<<temp.size()<<endl;
             std::set<int>::iterator it;
-            for (it = temp.begin(); it != temp.end(); it++)
+            for (it = temp.begin(); it != temp.end(); it++) {
+                cout<<"Id: "<<*it<<endl;
                 add_edge(*it);
+            }
+            
+            for (int i = 0; i < igraph_ecount(H); i++) {
+                int from, to;
+                int eid;
+                igraph_edge(H,i,&from,&to);
+                igraph_get_eid(G, &eid, from, to, IGRAPH_DIRECTED, 1);
+                cout<<"ID: "<<eid<<endl;
+            }
             
 //            // Remove all added edges
 //            for (int i = 0; i < LiftedVnE.edgeIDs.size(); i++) {
