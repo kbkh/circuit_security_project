@@ -410,7 +410,7 @@ int main(int argc, char **argv) {
      * k-isomorphism
      ****************************************************************/
     if ( test_args.size() >= 1 && 10 == atoi(test_args[0].c_str())) {
-        
+        cout<<"Kisoooo"<<endl;
         int min_L1(2), max_L1 = G.max_L1();
         
         if ( test_args.size() == 3 ) {

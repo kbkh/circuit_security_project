@@ -2519,14 +2519,16 @@ void Security::kiso(int min_L1, int max_L1) {
     igraph_vector_init(&maxcount, 0);
     
     // cout << "Average vertex degree: " << maxPAGsize << endl;
-    igraph_vector_ptr_t vm;
-    igraph_vector_ptr_init(&vm, min_L1);
+    // Vertex Maping VM in paper. min_L1 == k -- Karl
+    igraph_vector_ptr_t vm; // vector of vectors -- Karl
+    igraph_vector_ptr_init(&vm, min_L1); // init colomns of VM in paper (g1,...,gk)
     
     for (int i = 0; i < igraph_vcount(G); i++) SETVAN(G, "removed", i, false);
     
+    // init rows of VM
     for (int i=0; i < min_L1; i++) {
         VECTOR(vm)[i] = new igraph_vector_t;
-        igraph_vector_init( (igraph_vector_t*) VECTOR(vm)[i], 0);
+        igraph_vector_init((igraph_vector_t*) VECTOR(vm)[i], 0);
     }
     
     while (igraph_vcount(G) != 0) {
@@ -2549,98 +2551,101 @@ void Security::kiso(int min_L1, int max_L1) {
             for (int mm = 0; mm < igraph_vcount(G); mm++) SETVAN(G, "traversed", mm, false);
             SETVAN(G, "traversed", i, true);
             
+            // Create PAG -- Karl
             df(&v, &res1, i, 0, maxPAGsize);
-            if (igraph_ecount(&res1) < maxPAGsize) continue;
+            if (igraph_ecount(&res1) < maxPAGsize) continue; // ? -- Karl
             //			igraph_vector_destroy(&vert);
             //			for (int j=0; j < igraph_vector_ptr_size(&v); j++)
+            //            {
+            //			igraph_vs_vector(&vs	, (igraph_vector_t*) VECTOR(v)[j]);
+            igraph_vs_vector(&vs	, &v);
+            //			igraph_t res1;
+            //			igraph_induced_subgraph(G, &res1, vs, IGRAPH_SUBGRAPH_CREATE_FROM_SCRATCH);
+            
+            bool found = false;
+            igraph_vector_t color11;
+            igraph_vector_init(&color11, 0);
+            VANV(&res1, "colour", (igraph_vector_t*) &color11);
+            igraph_vector_int_t color1;
+            igraph_vector_int_init(&color1, 0);
+            for (int m=0; m < igraph_vector_size(&color11); m++)
+                igraph_vector_int_push_back(&color1, VECTOR(color11)[m]);
+            igraph_vs_destroy(&vs);
+            // Embedding for a PAG -- Karl
+            for (int k=0; k < igraph_vector_ptr_size(&pags); k++)
             {
-                //			igraph_vs_vector(&vs	, (igraph_vector_t*) VECTOR(v)[j]);
-                igraph_vs_vector(&vs	, &v);
-                //			igraph_t res1;
-                //			igraph_induced_subgraph(G, &res1, vs, IGRAPH_SUBGRAPH_CREATE_FROM_SCRATCH);
+                if (igraph_vcount(&res1) != igraph_vcount((igraph_t*) VECTOR(pags)[k])) continue;
+                igraph_bool_t iso;
+                igraph_vector_t color22;
+                igraph_vector_init(&color22, 0);
+                VANV((igraph_t*) VECTOR(pags)[k], "colour", (igraph_vector_t*) &color22);
+                igraph_vector_int_t color2;
+                igraph_vector_int_init(&color2, 0);
+                for (int m=0; m < igraph_vector_size(&color22); m++)
+                    igraph_vector_int_push_back(&color2, VECTOR(color22)[m]);
                 
-                bool found = false;
-                igraph_vector_t color11;
-                igraph_vector_init(&color11, 0);
-                VANV(&res1, "colour", (igraph_vector_t*) &color11);
-                igraph_vector_int_t color1;
-                igraph_vector_int_init(&color1, 0);
-                for (int m=0; m < igraph_vector_size(&color11); m++)
-                    igraph_vector_int_push_back(&color1, VECTOR(color11)[m]);
-                igraph_vs_destroy(&vs);
-                for (int k=0; k < igraph_vector_ptr_size(&pags); k++)
+                igraph_vector_t* map12 = new igraph_vector_t;
+                igraph_vector_init(map12, 0);
+                //				if (igraph_vector_int_size(&color1) != igraph_vcount(&res1)) cout << 1 << " " << igraph_vector_size((igraph_vector_t*) &color1) << " " << igraph_vcount(&res1);
+                //				if (igraph_vector_int_size(&color2) != igraph_vcount((igraph_t*) VECTOR(pags)[k])) cout << 2; cout.flush();
+                igraph_isomorphic_vf2((igraph_t*) VECTOR(pags)[k], &res1, &color2, &color1, NULL, NULL, &iso, map12, NULL, NULL, NULL, NULL);
+                if (iso)
                 {
-                    if (igraph_vcount(&res1) != igraph_vcount( (igraph_t*) VECTOR(pags)[k])) continue;
-                    igraph_bool_t iso;
-                    igraph_vector_t color22;
-                    igraph_vector_init(&color22, 0);
-                    VANV((igraph_t*) VECTOR(pags)[k], "colour", (igraph_vector_t*) &color22);
-                    igraph_vector_int_t color2;
-                    igraph_vector_int_init(&color2, 0);
-                    for (int m=0; m < igraph_vector_size(&color22); m++)
-                        igraph_vector_int_push_back(&color2, VECTOR(color22)[m]);
-                    
-                    igraph_vector_t* map12 = new igraph_vector_t;
-                    igraph_vector_init(map12, 0);
-                    //				if (igraph_vector_int_size(&color1) != igraph_vcount(&res1)) cout << 1 << " " << igraph_vector_size((igraph_vector_t*) &color1) << " " << igraph_vcount(&res1);
-                    //				if (igraph_vector_int_size(&color2) != igraph_vcount((igraph_t*) VECTOR(pags)[k])) cout << 2; cout.flush();
-                    igraph_isomorphic_vf2((igraph_t*) VECTOR(pags)[k], &res1, &color2, &color1, NULL, NULL, &iso, map12, NULL, NULL, NULL, NULL);
-                    if (iso)
-                    {
-                        //					if (iso) cout << "true" << endl;
-                        found = true;
-                        igraph_vector_t* newv = (igraph_vector_t*) malloc(sizeof(igraph_vector_t));
-                        igraph_vector_copy(newv, &v);
-                        igraph_vector_ptr_t* embedsi = (igraph_vector_ptr_t*)VECTOR(embeds)[k];
-                        
-                        // igraph_vector_ptr_push_back(embedsi, newv);
-                        int hg = VECTOR(res)[(int) VECTOR(*newv)[0]];
-                        for (int h=1; h < igraph_vector_size(newv); h++)
-                            if (VECTOR(res)[(int) VECTOR(*newv)[h]] > hg) hg = VECTOR(res)[(int) VECTOR(*newv)[h]];
-                        int l;
-                        for (l=0; l < igraph_vector_ptr_size(embedsi); l++)
-                        {
-                            igraph_vector_t* fg = (igraph_vector_t*)VECTOR(*embedsi)[l];
-                            int hh = VECTOR(res)[(int) VECTOR(*fg)[0]];
-                            for (int h=1; h < igraph_vector_size(fg); h++)
-                                if (VECTOR(res)[(int) VECTOR(*fg)[h]] > hh) hh = VECTOR(res)[(int) VECTOR(*fg)[h]];
-                            if (hh > VECTOR(maxdeg)[k]) { VECTOR(maxcount)[k] = 1; VECTOR(maxdeg)[k] = hh; }
-                            if (hh == VECTOR(maxdeg)[k]) { VECTOR(maxcount)[k] += 1; }
-                            
-                            if (hh < hg) break;
-                        }
-                        if (l == igraph_vector_ptr_size(embedsi)) {
-                            igraph_vector_ptr_push_back(embedsi, newv);
-                            igraph_vector_ptr_push_back((igraph_vector_ptr_t*)VECTOR(maps)[k], map12);
-                        }
-                        else { igraph_vector_ptr_insert(embedsi, l, newv);
-                            igraph_vector_ptr_insert((igraph_vector_ptr_t*)VECTOR(maps)[k], l, map12); }
-                    }
-                    igraph_vector_int_destroy(&color2);
-                    igraph_vector_destroy(&color22);
-                }
-                if (!found) {
-                    igraph_t* temp = new igraph_t;
-                    igraph_copy(temp, &res1);
-                    igraph_vector_ptr_push_back(&pags, temp);
+                    //					if (iso) cout << "true" << endl;
+                    found = true;
                     igraph_vector_t* newv = (igraph_vector_t*) malloc(sizeof(igraph_vector_t));
                     igraph_vector_copy(newv, &v);
-                    igraph_vector_ptr_t* newvv = (igraph_vector_ptr_t*) malloc(sizeof(igraph_vector_ptr_t));
-                    igraph_vector_ptr_init(newvv,0);
-                    igraph_vector_ptr_push_back(newvv, newv);
-                    igraph_vector_ptr_push_back(&embeds, newvv);
-                    newv = (igraph_vector_t*) malloc(sizeof(igraph_vector_t));
-                    igraph_vector_init(newv, 0);
-                    for (int n=0; n < igraph_vcount(&res1); n++) igraph_vector_push_back(newv, n);
-                    newvv = (igraph_vector_ptr_t*) malloc(sizeof(igraph_vector_ptr_t));
-                    igraph_vector_ptr_init(newvv,0);
-                    igraph_vector_ptr_push_back(newvv, newv);
-                    igraph_vector_ptr_push_back(&maps, newvv);
+                    igraph_vector_ptr_t* embedsi = (igraph_vector_ptr_t*)VECTOR(embeds)[k];
+                    
+                    // igraph_vector_ptr_push_back(embedsi, newv);
+                    // find max degree -- Karl
+                    int hg = VECTOR(res)[(int) VECTOR(*newv)[0]];
+                    for (int h=1; h < igraph_vector_size(newv); h++)
+                        if (VECTOR(res)[(int) VECTOR(*newv)[h]] > hg) hg = VECTOR(res)[(int) VECTOR(*newv)[h]];
+                    int l;
+                    for (l=0; l < igraph_vector_ptr_size(embedsi); l++)
+                    {
+                        igraph_vector_t* fg = (igraph_vector_t*)VECTOR(*embedsi)[l];
+                        int hh = VECTOR(res)[(int) VECTOR(*fg)[0]];
+                        for (int h=1; h < igraph_vector_size(fg); h++)
+                            if (VECTOR(res)[(int) VECTOR(*fg)[h]] > hh) hh = VECTOR(res)[(int) VECTOR(*fg)[h]];
+                        if (hh > VECTOR(maxdeg)[k]) { VECTOR(maxcount)[k] = 1; VECTOR(maxdeg)[k] = hh; }
+                        if (hh == VECTOR(maxdeg)[k]) { VECTOR(maxcount)[k] += 1; }
+                        
+                        if (hh < hg) break; -- // if not the highest degree of all break and add
+                    }
+                    if (l == igraph_vector_ptr_size(embedsi)) {
+                        igraph_vector_ptr_push_back(embedsi, newv);
+                        igraph_vector_ptr_push_back((igraph_vector_ptr_t*)VECTOR(maps)[k], map12);
+                    }
+                    else { igraph_vector_ptr_insert(embedsi, l, newv);
+                        igraph_vector_ptr_insert((igraph_vector_ptr_t*)VECTOR(maps)[k], l, map12); }
                 }
-                igraph_destroy(&res1);
-                igraph_vector_int_destroy(&color1);
-                igraph_vector_destroy(&color11);
+                igraph_vector_int_destroy(&color2);
+                igraph_vector_destroy(&color22);
             }
+            if (!found) {
+                igraph_t* temp = new igraph_t;
+                igraph_copy(temp, &res1);
+                igraph_vector_ptr_push_back(&pags, temp);
+                igraph_vector_t* newv = (igraph_vector_t*) malloc(sizeof(igraph_vector_t));
+                igraph_vector_copy(newv, &v);
+                igraph_vector_ptr_t* newvv = (igraph_vector_ptr_t*) malloc(sizeof(igraph_vector_ptr_t));
+                igraph_vector_ptr_init(newvv,0);
+                igraph_vector_ptr_push_back(newvv, newv);
+                igraph_vector_ptr_push_back(&embeds, newvv);
+                newv = (igraph_vector_t*) malloc(sizeof(igraph_vector_t));
+                igraph_vector_init(newv, 0);
+                for (int n=0; n < igraph_vcount(&res1); n++) igraph_vector_push_back(newv, n);
+                newvv = (igraph_vector_ptr_t*) malloc(sizeof(igraph_vector_ptr_t));
+                igraph_vector_ptr_init(newvv,0);
+                igraph_vector_ptr_push_back(newvv, newv);
+                igraph_vector_ptr_push_back(&maps, newvv);
+            }
+            igraph_destroy(&res1);
+            igraph_vector_int_destroy(&color1);
+            igraph_vector_destroy(&color11);
+            //            }
             // for (int m=0; m<igraph_vector_ptr_size(&v); m++) igraph_vector_destroy((igraph_vector_t*)(VECTOR(v)[m]));
             igraph_vector_destroy(&v);
         }
@@ -2675,7 +2680,6 @@ void Security::kiso(int min_L1, int max_L1) {
                     }
                 }
             }
-            
         }
         
         //			cout << igraph_vector_ptr_size(&ids) << endl;
