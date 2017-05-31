@@ -217,7 +217,7 @@ int main(int argc, char **argv) {
      * L1
      ****************************************************************/
     if ( test_args.size() > 0 && 1 == atoi(test_args[0].c_str())) {
-        
+        cout<<"lolzi"<<endl;
         int max_L1(2);
         if (test_args.size() == 2)
             max_L1 = atoi(test_args[1].c_str());
@@ -410,7 +410,7 @@ int main(int argc, char **argv) {
      * k-isomorphism
      ****************************************************************/
     if ( test_args.size() >= 1 && 10 == atoi(test_args[0].c_str())) {
-        cout<<"Kisoooo"<<endl;
+        
         int min_L1(2), max_L1 = G.max_L1();
         
         if ( test_args.size() == 3 ) {
@@ -421,6 +421,7 @@ int main(int argc, char **argv) {
         
         igraph_vector_t match_vert;
         igraph_vector_init(&match_vert, 0);
+        
         for (int i = 0; i < igraph_vcount(&G); i++)
         {
             int color = VAN(&G, "colour", i);
@@ -662,7 +663,7 @@ int main(int argc, char **argv) {
      ****************************************************************/
     
     
-    if ( test_args.size() >= 1 && 10 == atoi(test_args[0].c_str())) {
+    if ( test_args.size() >= 1 && 11 == atoi(test_args[0].c_str())) {
         const double MAX_TEMP = 100000.0;
         const int MAX_ITERATIONS = 2000;
         const double TEMP_CHANGE = 0.98;

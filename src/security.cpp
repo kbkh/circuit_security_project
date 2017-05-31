@@ -2499,7 +2499,7 @@ void Security::kiso(int min_L1, int max_L1) {
         maxPAGsize+=igraph_vector_e(&res, i);
     maxPAGsize=maxPAGsize/igraph_vcount(G);
     //	maxPAGsize=10;
-    //	cout << "PAG size: " << maxPAGsize << endl;
+    cout << "PAG size: " << maxPAGsize << endl;
     
     
     igraph_vector_ptr_t pags;
@@ -2523,7 +2523,8 @@ void Security::kiso(int min_L1, int max_L1) {
     igraph_vector_ptr_t vm; // vector of vectors -- Karl
     igraph_vector_ptr_init(&vm, min_L1); // init colomns of VM in paper (g1,...,gk)
     
-    for (int i = 0; i < igraph_vcount(G); i++) SETVAN(G, "removed", i, false);
+    for (int i = 0; i < igraph_vcount(G); i++)
+        SETVAN(G, "removed", i, false);
     
     // init rows of VM
     for (int i=0; i < min_L1; i++) {
@@ -2612,7 +2613,7 @@ void Security::kiso(int min_L1, int max_L1) {
                         if (hh > VECTOR(maxdeg)[k]) { VECTOR(maxcount)[k] = 1; VECTOR(maxdeg)[k] = hh; }
                         if (hh == VECTOR(maxdeg)[k]) { VECTOR(maxcount)[k] += 1; }
                         
-                        if (hh < hg) break; -- // if not the highest degree of all break and add
+                        if (hh < hg) break; // if not the highest degree of all break and add -- Karl
                     }
                     if (l == igraph_vector_ptr_size(embedsi)) {
                         igraph_vector_ptr_push_back(embedsi, newv);
@@ -2705,12 +2706,29 @@ void Security::kiso(int min_L1, int max_L1) {
                     p1((igraph_t*) VECTOR(ids)[i], newv, min_L1);
                     if (igraph_vector_size(newv) >= min_L1) { foundy = true; break; }
                     
-                    for (int r=1; r <= min_L1; r++) { for (int k=1; k <= r; k++) { p2((igraph_t*) VECTOR(ids)[i], newv, min_L1); if (igraph_vector_size(newv) >= min_L1) { foundy=true; break; } } if (foundy) break; }
-                    if (foundy) break;
+                    for (int r=1; r <= min_L1; r++) {
+                        for (int k=1; k <= r; k++) {
+                            p2((igraph_t*) VECTOR(ids)[i], newv, min_L1);
+                            if (igraph_vector_size(newv) >= min_L1) {
+                                foundy = true;
+                                break;
+                            }
+                        }
+                        if (foundy)
+                            break;
+                    }
+                    if (foundy)
+                        break;
                     igraph_vector_ptr_push_back(&idss, newv);
                 }
                 
-                if (foundy) { igraph_vector_ptr_push_back(&vd_embeds, newv); for (int m=0; m < igraph_vector_ptr_size(&idss); m++) igraph_vector_destroy((igraph_vector_t*) VECTOR(idss)[m]); igraph_vector_ptr_destroy(&idss); continue; }
+                if (foundy) {
+                    igraph_vector_ptr_push_back(&vd_embeds, newv);
+                    for (int m=0; m < igraph_vector_ptr_size(&idss); m++)
+                        igraph_vector_destroy((igraph_vector_t*) VECTOR(idss)[m]);
+                    igraph_vector_ptr_destroy(&idss); continue;
+                }
+                
                 igraph_vector_t* result;
                 
                 // if (igraph_vector_ptr_size(&idss) == 0) cout << "yes" << endl; cout.flush();
@@ -2724,14 +2742,31 @@ void Security::kiso(int min_L1, int max_L1) {
                         igraph_vector_sort((igraph_vector_t*) VECTOR(idss)[k]); igraph_vector_sort((igraph_vector_t*) VECTOR(idss)[j]);
                         igraph_vector_intersect_sorted((igraph_vector_t*) VECTOR(idss)[k], (igraph_vector_t*) VECTOR(idss)[j], result);
                         p1((igraph_t*) VECTOR(ids)[i], result, min_L1);
-                        if (igraph_vector_size(result) >= min_L1) { found00 = 1; break; }
-                        for (int r=1; r <= min_L1; r++) { for (int l=1; l <= r; l++) { p2((igraph_t*) VECTOR(ids)[i], result, min_L1); if (igraph_vector_size(result) >= min_L1) { found00 = 1; break; } } if (found00) break; }
+                        if (igraph_vector_size(result) >= min_L1) {
+                            found00 = 1;
+                            break;
+                        }
+                        for (int r=1; r <= min_L1; r++) {
+                            for (int l=1; l <= r; l++) {
+                                p2((igraph_t*) VECTOR(ids)[i], result, min_L1);
+                                if (igraph_vector_size(result) >= min_L1) {
+                                    found00 = 1;
+                                    break;
+                                }
+                            }
+                            if (found00) break;
+                        }
                         if (found00) break;
+                        
                         igraph_vector_destroy(result);
                     }
                     if (found00) break;
                 }
-                if (found00) { igraph_vector_ptr_push_back(&vd_embeds, result); continue; }
+                if (found00) {
+                    igraph_vector_ptr_push_back(&vd_embeds, result);
+                    continue;
+                }
+                
                 igraph_vector_ptr_push_back(&vd_embeds, NULL);
                 //				cout << "NULL";
             }
@@ -2750,14 +2785,25 @@ void Security::kiso(int min_L1, int max_L1) {
             {
                 if (VECTOR(vd_embeds)[i] == NULL) continue;
                 found = true;
-                if (igraph_ecount((igraph_t*) VECTOR(pags)[i]) > maxe) { maxe = igraph_ecount((igraph_t*) VECTOR(pags)[i]); id = i; max = VECTOR(maxdeg)[i];  continue; }
+                if (igraph_ecount((igraph_t*) VECTOR(pags)[i]) > maxe) {
+                    maxe = igraph_ecount((igraph_t*) VECTOR(pags)[i]);
+                    id = i;
+                    max = VECTOR(maxdeg)[i];
+                    continue;
+                }
                 
                 if (igraph_ecount((igraph_t*) VECTOR(pags)[i]) == maxe) {
                     if (VECTOR(maxdeg)[i] > max) {  id = i; max = VECTOR(maxdeg)[i]; }
-                    else if (VECTOR(maxdeg)[i] == max) if (VECTOR(maxcount)[i] > VECTOR(maxcount)[id]) id = i; }
+                    else if (VECTOR(maxdeg)[i] == max)
+                        if (VECTOR(maxcount)[i] > VECTOR(maxcount)[id])
+                            id = i;
+                }
             }
             if (!found) {
-                for (int c=0; c < igraph_vector_ptr_size(&pags); c++) { igraph_destroy((igraph_t*) VECTOR(pags)[c]); igraph_destroy((igraph_t*) VECTOR(ids)[c]); }
+                for (int c=0; c < igraph_vector_ptr_size(&pags); c++) {
+                    igraph_destroy((igraph_t*) VECTOR(pags)[c]);
+                    igraph_destroy((igraph_t*) VECTOR(ids)[c]);
+                }
                 //				igraph_vector_ptr_destroy(&pags); igraph_vector_ptr_destroy(&ids);
                 //				igraph_vector_ptr_init(&pags, 0); igraph_vector_ptr_init(&ids, 0);
                 for (int c=0; c < igraph_vector_ptr_size(&embeds); c++)
@@ -2817,12 +2863,16 @@ void Security::kiso(int min_L1, int max_L1) {
                         {
                             for (int l=0; l < igraph_vector_size(one); l++)
                                 if (VECTOR(*(igraph_vector_t*) VECTOR(*(igraph_vector_ptr_t*) VECTOR(embeds)[j])[k])[h] ==
-                                    VECTOR(*one)[l])
-                                { igraph_vector_ptr_remove((igraph_vector_ptr_t*) VECTOR(embeds)[j], k);
+                                    VECTOR(*one)[l]) {
+                                    igraph_vector_ptr_remove((igraph_vector_ptr_t*) VECTOR(embeds)[j], k);
                                     igraph_vector_ptr_remove((igraph_vector_ptr_t*) VECTOR(maps)[j], k);
                                     igraph_vector_push_back(&vecto, k);
-                                    k--; found123 = true; break; }
-                            if (found123) break;
+                                    k--;
+                                    found123 = true;
+                                    break;
+                                }
+                            if (found123)
+                                break;
                         }
                     }
                     
@@ -2866,17 +2916,25 @@ void Security::kiso(int min_L1, int max_L1) {
                         for (int h=0; h < igraph_vector_size((igraph_vector_t*) VECTOR(*(igraph_vector_ptr_t*) VECTOR(embeds)[j])[k]); h++)
                         {
                             
-                            if (maxdegg < VECTOR(res)[(int) VECTOR(*(igraph_vector_t*) VECTOR(*(igraph_vector_ptr_t*) VECTOR(embeds)[j])[k])[h]]) maxdegg = VECTOR(res)[(int) VECTOR(*(igraph_vector_t*) VECTOR(*(igraph_vector_ptr_t*) VECTOR(embeds)[j])[k])[h]];
+                            if (maxdegg < VECTOR(res)[(int) VECTOR(*(igraph_vector_t*) VECTOR(*(igraph_vector_ptr_t*) VECTOR(embeds)[j])[k])[h]])
+                                maxdegg = VECTOR(res)[(int) VECTOR(*(igraph_vector_t*) VECTOR(*(igraph_vector_ptr_t*) VECTOR(embeds)[j])[k])[h]];
                         }
-                        if (maxdegg > maxdeggg) { maxdeggg = maxdegg; counto = 1; }
-                        if (maxdeggg == maxdegg) counto++;
+                        if (maxdegg > maxdeggg) {
+                            maxdeggg = maxdegg;
+                            counto = 1;
+                        }
+                        if (maxdeggg == maxdegg)
+                            counto++;
                     }
                     VECTOR(maxdeg)[j] = maxdeggg; VECTOR(maxcount)[j] = counto;
                 }
                 
             }
             
-            for (int m=0; m < igraph_vector_ptr_size(&vd_embeds); m++) if ( VECTOR(vd_embeds)[m] != NULL )igraph_vector_destroy((igraph_vector_t*) VECTOR(vd_embeds)[m]); igraph_vector_ptr_destroy(&vd_embeds);
+            for (int m=0; m < igraph_vector_ptr_size(&vd_embeds); m++)
+                if ( VECTOR(vd_embeds)[m] != NULL )
+                    igraph_vector_destroy((igraph_vector_t*) VECTOR(vd_embeds)[m]);
+            igraph_vector_ptr_destroy(&vd_embeds);
         }
         //		cout << "here" << endl;
         maxPAGsize--;
@@ -2884,9 +2942,15 @@ void Security::kiso(int min_L1, int max_L1) {
         
         bool found = false;
         int count = 0;
-        for (int c=0; c < igraph_vcount(G); c++) if (!VAN(G, "removed", c)) { found = true; count++; /* break; */ };
+        for (int c=0; c < igraph_vcount(G); c++)
+            if (!VAN(G, "removed", c)) {
+                found = true;
+                count++;
+                /* break; */
+            };
         //		cout << count << endl;
-        if (!found) break;
+        if (!found)
+            break;
     }
     
     //igraph_destroy(G);
@@ -2902,9 +2966,14 @@ void Security::kiso(int min_L1, int max_L1) {
             for (int i=0; i < min_L1; i++)
             {
                 igraph_get_eid(G, &eid, VECTOR(*(igraph_vector_t*) VECTOR(vm)[i])[j], VECTOR(*(igraph_vector_t*) VECTOR(vm)[i])[k], IGRAPH_DIRECTED, false);
-                if (eid == -1) { found = true; break; }
+                if (eid == -1) {
+                    found = true;
+                    break;
+                }
             }
-            if (!found) for (int i=0; i < min_L1; i++) igraph_add_edge(H, VECTOR(*(igraph_vector_t*) VECTOR(vm)[i])[j], VECTOR(*(igraph_vector_t*) VECTOR(vm)[i])[k]);
+            if (!found)
+                for (int i=0; i < min_L1; i++)
+                    igraph_add_edge(H, VECTOR(*(igraph_vector_t*) VECTOR(vm)[i])[j], VECTOR(*(igraph_vector_t*) VECTOR(vm)[i])[k]);
         }
     }
     
