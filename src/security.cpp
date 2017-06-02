@@ -29,10 +29,9 @@ using namespace std;
 // Added by Karl
 LiftingInfo LiftedVnE;
 OptimalSolution optimalSolution;
-BFS breadth;
-PAG pag;
 int vcount = 0;
 int notLifted = 0;
+vector<set<int> > edge_neighbors;
 ////////////////
 
 /************************************************************//**
@@ -2490,120 +2489,82 @@ void Security::df(igraph_vector_t* v, igraph_t* g, int vert, int vert1, int d)
     igraph_vector_destroy(&neis);
 }
 
-// Added By Karl
-void Security::bfs(igraph_t* g, int start) {
-    list<int> queue;
-    
-    // Mark it as visited
-    SETVAN(g, "Visited", start, Visited);
-    breadth.visited++;
-    
-    // Update not visited set
-    set<int>::const_iterator got = breadth.notvisited.find(start);
-    if (got != breadth.notvisited.end()) // make sure it's in the set
-        breadth.notvisited.erase(start);
-    
-    queue.push_back(start);
-    
-    while(!queue.empty()) {
-        int s = queue.front();
-        cout << s << " ";
-        queue.pop_front();
+void Security::get_edge_neighbors() {
+    for (int i = 0; i < igraph_ecount(G); i++) {
+        set<int> temp;
+        edge_neighbors.push_back(temp);
+        // Get vertices the edge is connected to
+        int from, to;
+        igraph_edge(G,i,&from,&to);
         
-        // find neighbors
-        igraph_vector_t neis;
-        igraph_vector_init(&neis, 0);
-        igraph_neighbors(g, &neis, s, IGRAPH_ALL);
+        // get neighbor vertices of the first vertex
+        igraph_vector_t nvids;
+        igraph_vector_init(&nvids, 0);
+        igraph_neighbors(G, &nvids, from, IGRAPH_ALL);
         
-        for (int i = 0; i < igraph_vector_size(&neis); i++) {
-            map<int, vector<PAGS> >::iterator it;
-            it = pag.pags.find(s);
-            if (it == pag.pags.end()) {
-                vector<PAGS> temp;
-                pag.pags.insert(pag.pags.begin(), pair<int,vector<PAGS> >(s, temp));
-            }
-    
-            igraph_t res1;
-            pag.pags.at(s).push_back(PAGS(res1));
-            igraph_empty(&res1, 2, IGRAPH_DIRECTED);
-            
-            SETVAN(&res1, "colour", 0, VAN(G, "colour", s));
-            SETVAN(&res1, "ID", 0,  VAN(G, "ID", s));
-            set<int>::iterator it2 = pag.pags.at(s)[pag.pags.at(s).size()-1].vertex_id.find(VAN(G, "ID", s));
-            if (it2 == pag.pags.at(s).vertex_id.end())
-                pag.pags.at(s).vertex_id.insert(VAN(G, "ID", s));
-            
-            SETVAN(&res1, "colour", 1, VAN(G, "colour", (int)VECTOR(neis)[i]));
-            SETVAN(&res1, "ID", 1, VAN(G, "ID", (int)VECTOR(neis)[i]));
-            it2 = pag.pags.at(s)[pag.pags.at(s).size()-1].vertex_id.find(VAN(G, "ID", (int)VECTOR(neis)[i]));
-            if (it2 == pag.pags.at(s).vertex_id.end())
-                pag.pags.at(s).vertex_id.insert(VAN(G, "ID", (int)VECTOR(neis)[i]));
-            
-            igraph_add_edge(g, 0, 1);
-            
-            set<int>::iterator it;
-            for (it = pag.to_process.begin(); it != pag.to_process.end(); it++) {
-                int t = *it;
-                set<int>::iterator iter = pag.pags.at(t)[pag.pags.at(s).size()-1].vertex_ids.find(s);
-                if (iter != pag.pags.at(t).vertex_ides.end()) { // in the set
-                    igraph_add_vertices(&pag.pags.at(t).pag, 1, 0);
-                    
-                    SETVAN(&pag.pags.at(t).pag, "colour", igraph_vcount(&pag.pags.at(t).pag) - 1, VAN(G, "colour", (int)VECTOR(neis)[i]));
-                    SETVAN(&pag.pags.at(t).pag, "ID", igraph_vcount(&pag.pags.at(t).pag) - 1,  VAN(G, "ID", (int)VECTOR(neis)[i]));
-                    set<int>::iterator it2 = pag.pags.at(t).vertex_id.find(VAN(G, "ID", (int)VECTOR(neis)[i]));
-                    if (it2 == pag.pags.at(t).vertex_id.end())
-                        pag.pags.at(t).vertex_id.insert(VAN(G, "ID", (int)VECTOR(neis)[i]));
-                }
-            }
-
-            if(VAN(g, "Visited", (int)VECTOR(neis)[i]) == NotVisited) {
-                SETVAN(g, "Visited", (int)VECTOR(neis)[i], Visited);
-                breadth.visited++;
+        for (int j = 0; j < igraph_vector_size(&nvids); j++) {
+            if (VECTOR(nvids)[j] != to) {
+                // get id of edge connecting the 2 vertices as it's a neighbor to the target edge
+                int eid;
+                int nto = VECTOR(nvids)[j];
+                igraph_get_eid(G, &eid, from, nto, IGRAPH_UNDIRECTED, 1);
                 
-                set<int>::const_iterator got = breadth.notvisited.find(i);
-                if (got != breadth.notvisited.end()) // make sure it's in the set
-                    breadth.notvisited.erase(i);
-                
-                queue.push_back((int)VECTOR(neis)[i]);
+                // Add the id of that edge to the set of neighbors of the target edge
+                set<int>::const_iterator got = edge_neighbors[i].find(eid);
+                if (got == edge_neighbors[i].end() && eid != i) // not in set + security check
+                    edge_neighbors[i].insert(eid);
             }
         }
         
-        set<int>::const_iterator got = pag.to_process.find(s);
-        if (got == pag.to_process.end())
-            pag.to_process.insert(s);
+        // get neighbor vertices of the first vertex
+        igraph_vector_destroy(&nvids);
+        igraph_vector_init(&nvids, 0);
+        igraph_neighbors(G, &nvids, to, IGRAPH_ALL);
         
-        
+        for (int j = 0; j < igraph_vector_size(&nvids); j++) {
+            if (VECTOR(nvids)[j] != from) {
+                // get id of edge connecting the 2 vertices as it's a neighbor to the target edge
+                int eid;
+                int nfrom = VECTOR(nvids)[j];
+                igraph_get_eid(G, &eid, nfrom, to, IGRAPH_UNDIRECTED, 1);
+                
+                // Add the id of that edge to the set of neighbors of the target edge
+                set<int>::const_iterator got = edge_neighbors[i].find(eid);
+                if (got == edge_neighbors[i].end() && eid != i) // not in set + security check
+                    edge_neighbors[i].insert(eid);
+            }
+        }
     }
 }
-////////////////
 
 void Security::kiso(int min_L1, int max_L1) {
     // Added by Karl
-    breadth.visited = 0;
+    get_edge_neighbors();
     
-    // Initialize set containig not visited vertices (All of them at this point)
-    for (int i = 0; i < original_vcount_G; i++) {
-        set<int>::const_iterator got = breadth.notvisited.find(i);
-        if (got == breadth.notvisited.end()) // not in set
-            breadth.notvisited.insert(i);
-    }
+    set<int> not_permitted;
     
-    // Start with a vertex (0) in this case
-    int f = 0;
-    if (!breadth.notvisited.empty())
-        f = *breadth.notvisited.begin();
-    
-    bfs(G, f);
-    
-    // Visit the reste of the disconnected subgraphs without counting the individual vertices added to have a multiple of k
-    while (breadth.visited < original_vcount_G) {
-        if (!breadth.notvisited.empty())
-            f = *breadth.notvisited.begin();
+    for (int i = 0; i < igraph_ecount(G); i++) {
+        set<int>::const_iterator got = not_permitted.find(i);
+        if (got == not_permitted.end()) // not in set
+            not_permitted.insert(i);
         
-        bfs(G,f);
+        vector<int> permitted_neighbors;
+        
+        std::set<int>::iterator it;
+        for (it = edge_neighbors[i].begin(); it != edge_neighbors[i].end(); it++) {
+            std::set<int>::iterator got = not_permitted.find(*it);
+            if (got == not_permitted.end()) // not in set
+                permitted_neighbors.push_back(*it);
+        }
     }
-
-    cout<<endl;
+    
+//    for (int i = 0; i < edge_neighbors.size(); i++) {
+//        cout<<i<<"'s neighbors:";
+//        std::set<int>::iterator it;
+//        for (it = edge_neighbors[i].begin(); it != edge_neighbors[i].end(); it++)
+//            cout<<" "<<*it;
+//        cout<<endl;
+//    }
     
     return;
     ////////////////

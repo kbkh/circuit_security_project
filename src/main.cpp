@@ -440,6 +440,7 @@ int main(int argc, char **argv) {
             VECTOR(match_vert)[color]++;
         }
         cout<<"vcount1: "<<igraph_vcount(&G)<<endl;
+        cout<<"ecount1: "<<igraph_ecount(&G)<<endl;
         igraph_t temp;
         //	igraph_copy(&temp, &G);
         //	igraph_destroy(&G);
@@ -459,7 +460,8 @@ int main(int argc, char **argv) {
             }
         }
         cout<<"vcount2: "<<igraph_vcount(&G)<<endl;
-
+        cout<<"ecount2: "<<igraph_ecount(&G)<<endl;
+        
         cout << count << " "<<endl;
         cout.flush();
         H.copy(&G);
@@ -478,7 +480,6 @@ int main(int argc, char **argv) {
         if (!done)
         {
             clock_t tic = clock();
-            security->set_original_vcount_G(original);
             security->kiso(min_L1, max_L1);
             clock_t toc = clock();
             //        cout << endl << "Heuristic took: ";

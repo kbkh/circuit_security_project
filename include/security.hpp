@@ -110,26 +110,6 @@ public:
     vector<int> lifted;
     set<int> edgeIDsSet; // Id of edges in G
 };
-
-class BFS {
-public:
-    int visited;
-    set<int> notvisited;
-};
-
-class PAGS {
-public:
-    igraph_t pag;
-    set<int> vertex_ids;
-    
-    PAGS(igraph_t graph) : pag(graph) {};
-};
-
-class PAG {
-public:
-    map<int, vector<PAGS> > pags;
-    set<int> to_process;
-};
 ////////////////
 
 struct EdgeInfo {
@@ -189,8 +169,7 @@ private:
     L1_struct L1_state;
     // Added by Karl
     int maxL1;
-    int remove_vertices_max;
-    int original_vcount_G;
+    int remove_vertices_max;;
     ofstream koutfile;
     ofstream k2outfile;
     ofstream k3outfile;
@@ -219,10 +198,8 @@ public:
     void file(actions action, string outFileName = "out2.txt");
     /* Update optimal solution */
     void updateOptimalSolution(int maxL1, int lifted_Edges, int vcount);
-    /* Breadth-First traversal of the graph */
-    void bfs(igraph_t* g, int start);
-    /* Set the original number of vertices in G */
-    void set_original_vcount_G(int original) { original_vcount_G = original; };
+    /* Fill the vector with the neighbors of every edge */
+    void get_edge_neighbors();
     ////////////////
     void setConfBudget(int budget) { isosat->setConfBudget(budget); };
     void setPropBudget(int budget) { isosat->setPropBudget(budget); };
