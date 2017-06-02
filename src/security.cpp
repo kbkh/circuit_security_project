@@ -26,10 +26,14 @@
 using namespace formula;
 using namespace std;
 
+// Added by Karl
 LiftingInfo LiftedVnE;
 OptimalSolution optimalSolution;
+BFS breadth;
+PAG pag;
 int vcount = 0;
 int notLifted = 0;
+////////////////
 
 /************************************************************//**
                                                                * @brief
@@ -2486,9 +2490,123 @@ void Security::df(igraph_vector_t* v, igraph_t* g, int vert, int vert1, int d)
     igraph_vector_destroy(&neis);
 }
 
+// Added By Karl
+void Security::bfs(igraph_t* g, int start) {
+    list<int> queue;
+    
+    // Mark it as visited
+    SETVAN(g, "Visited", start, Visited);
+    breadth.visited++;
+    
+    // Update not visited set
+    set<int>::const_iterator got = breadth.notvisited.find(start);
+    if (got != breadth.notvisited.end()) // make sure it's in the set
+        breadth.notvisited.erase(start);
+    
+    queue.push_back(start);
+    
+    while(!queue.empty()) {
+        int s = queue.front();
+        cout << s << " ";
+        queue.pop_front();
+        
+        // find neighbors
+        igraph_vector_t neis;
+        igraph_vector_init(&neis, 0);
+        igraph_neighbors(g, &neis, s, IGRAPH_ALL);
+        
+        for (int i = 0; i < igraph_vector_size(&neis); i++) {
+            map<int, vector<PAGS> >::iterator it;
+            it = pag.pags.find(s);
+            if (it == pag.pags.end()) {
+                vector<PAGS> temp;
+                pag.pags.insert(pag.pags.begin(), pair<int,vector<PAGS> >(s, temp));
+            }
+    
+            igraph_t res1;
+            pag.pags.at(s).push_back(PAGS(res1));
+            igraph_empty(&res1, 2, IGRAPH_DIRECTED);
+            
+            SETVAN(&res1, "colour", 0, VAN(G, "colour", s));
+            SETVAN(&res1, "ID", 0,  VAN(G, "ID", s));
+            set<int>::iterator it2 = pag.pags.at(s)[pag.pags.at(s).size()-1].vertex_id.find(VAN(G, "ID", s));
+            if (it2 == pag.pags.at(s).vertex_id.end())
+                pag.pags.at(s).vertex_id.insert(VAN(G, "ID", s));
+            
+            SETVAN(&res1, "colour", 1, VAN(G, "colour", (int)VECTOR(neis)[i]));
+            SETVAN(&res1, "ID", 1, VAN(G, "ID", (int)VECTOR(neis)[i]));
+            it2 = pag.pags.at(s)[pag.pags.at(s).size()-1].vertex_id.find(VAN(G, "ID", (int)VECTOR(neis)[i]));
+            if (it2 == pag.pags.at(s).vertex_id.end())
+                pag.pags.at(s).vertex_id.insert(VAN(G, "ID", (int)VECTOR(neis)[i]));
+            
+            igraph_add_edge(g, 0, 1);
+            
+            set<int>::iterator it;
+            for (it = pag.to_process.begin(); it != pag.to_process.end(); it++) {
+                int t = *it;
+                set<int>::iterator iter = pag.pags.at(t)[pag.pags.at(s).size()-1].vertex_ids.find(s);
+                if (iter != pag.pags.at(t).vertex_ides.end()) { // in the set
+                    igraph_add_vertices(&pag.pags.at(t).pag, 1, 0);
+                    
+                    SETVAN(&pag.pags.at(t).pag, "colour", igraph_vcount(&pag.pags.at(t).pag) - 1, VAN(G, "colour", (int)VECTOR(neis)[i]));
+                    SETVAN(&pag.pags.at(t).pag, "ID", igraph_vcount(&pag.pags.at(t).pag) - 1,  VAN(G, "ID", (int)VECTOR(neis)[i]));
+                    set<int>::iterator it2 = pag.pags.at(t).vertex_id.find(VAN(G, "ID", (int)VECTOR(neis)[i]));
+                    if (it2 == pag.pags.at(t).vertex_id.end())
+                        pag.pags.at(t).vertex_id.insert(VAN(G, "ID", (int)VECTOR(neis)[i]));
+                }
+            }
+
+            if(VAN(g, "Visited", (int)VECTOR(neis)[i]) == NotVisited) {
+                SETVAN(g, "Visited", (int)VECTOR(neis)[i], Visited);
+                breadth.visited++;
+                
+                set<int>::const_iterator got = breadth.notvisited.find(i);
+                if (got != breadth.notvisited.end()) // make sure it's in the set
+                    breadth.notvisited.erase(i);
+                
+                queue.push_back((int)VECTOR(neis)[i]);
+            }
+        }
+        
+        set<int>::const_iterator got = pag.to_process.find(s);
+        if (got == pag.to_process.end())
+            pag.to_process.insert(s);
+        
+        
+    }
+}
+////////////////
+
 void Security::kiso(int min_L1, int max_L1) {
+    // Added by Karl
+    breadth.visited = 0;
     
+    // Initialize set containig not visited vertices (All of them at this point)
+    for (int i = 0; i < original_vcount_G; i++) {
+        set<int>::const_iterator got = breadth.notvisited.find(i);
+        if (got == breadth.notvisited.end()) // not in set
+            breadth.notvisited.insert(i);
+    }
     
+    // Start with a vertex (0) in this case
+    int f = 0;
+    if (!breadth.notvisited.empty())
+        f = *breadth.notvisited.begin();
+    
+    bfs(G, f);
+    
+    // Visit the reste of the disconnected subgraphs without counting the individual vertices added to have a multiple of k
+    while (breadth.visited < original_vcount_G) {
+        if (!breadth.notvisited.empty())
+            f = *breadth.notvisited.begin();
+        
+        bfs(G,f);
+    }
+
+    cout<<endl;
+    
+    return;
+    ////////////////
     int maxPAGsize = 0;
     igraph_vector_t res;
     igraph_vector_init(&res, 0);

@@ -28,10 +28,12 @@
 #include <sstream>
 #include <time.h>
 #include <unistd.h>
+#include <list>
 #include <fcntl.h>
 #include <sys/ipc.h>
 #include <sys/shm.h>
 #include <set>
+#include <map>
 
 #include <sys/stat.h>
 #include <sys/types.h>
@@ -94,6 +96,7 @@ int  set_L1 (const Circuit *G, const vector<EdgeInfo> &edge_set);
 /*****************************************************************************
  * Classes
  ****************************************************************************/
+// Added by Karl
 class OptimalSolution {
 public:
     int L1;
@@ -108,6 +111,26 @@ public:
     set<int> edgeIDsSet; // Id of edges in G
 };
 
+class BFS {
+public:
+    int visited;
+    set<int> notvisited;
+};
+
+class PAGS {
+public:
+    igraph_t pag;
+    set<int> vertex_ids;
+    
+    PAGS(igraph_t graph) : pag(graph) {};
+};
+
+class PAG {
+public:
+    map<int, vector<PAGS> > pags;
+    set<int> to_process;
+};
+////////////////
 
 struct EdgeInfo {
     int   eid;
@@ -167,6 +190,7 @@ private:
     // Added by Karl
     int maxL1;
     int remove_vertices_max;
+    int original_vcount_G;
     ofstream koutfile;
     ofstream k2outfile;
     ofstream k3outfile;
@@ -195,6 +219,10 @@ public:
     void file(actions action, string outFileName = "out2.txt");
     /* Update optimal solution */
     void updateOptimalSolution(int maxL1, int lifted_Edges, int vcount);
+    /* Breadth-First traversal of the graph */
+    void bfs(igraph_t* g, int start);
+    /* Set the original number of vertices in G */
+    void set_original_vcount_G(int original) { original_vcount_G = original; };
     ////////////////
     void setConfBudget(int budget) { isosat->setConfBudget(budget); };
     void setPropBudget(int budget) { isosat->setPropBudget(budget); };

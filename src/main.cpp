@@ -172,8 +172,12 @@ int main(int argc, char **argv) {
         SETEAN(&G, "Lifted", i, NotLifted);
         SETEAN(&G, "Original", i, NotOriginal);
     }
-    ////////////////
     
+    for (int i = 0; i < igraph_vcount(&G); i++) {
+        SETVAN(&G, "Visited", i, NotVisited);
+        SETVAN(&G, "ID", i, i);
+    }
+    ////////////////
     
     circuit.save( working_dir + "/circuit.gml" );
     G.save( working_dir + "/G_circuit.gml" );
@@ -411,7 +415,7 @@ int main(int argc, char **argv) {
      ****************************************************************/
     if ( test_args.size() >= 1 && 10 == atoi(test_args[0].c_str())) {
         
-        int min_L1(2), max_L1 = G.max_L1();
+        int min_L1(4), max_L1 = G.max_L1();
         
         if ( test_args.size() == 3 ) {
             min_L1 = atoi(test_args[1].c_str());
@@ -422,6 +426,9 @@ int main(int argc, char **argv) {
         igraph_vector_t match_vert;
         igraph_vector_init(&match_vert, 0);
         
+        int original = igraph_vcount(&G);
+        
+        // Creare a vector of size of how many colors we have and fill it with how many vertices of that color exist in the graph
         for (int i = 0; i < igraph_vcount(&G); i++)
         {
             int color = VAN(&G, "colour", i);
@@ -432,12 +439,14 @@ int main(int argc, char **argv) {
                 }
             VECTOR(match_vert)[color]++;
         }
-        
+        cout<<"vcount1: "<<igraph_vcount(&G)<<endl;
         igraph_t temp;
         //	igraph_copy(&temp, &G);
         //	igraph_destroy(&G);
         //	for (min_L1 = max_L1; min_L1 >= 1; min_L1--) {
         //		igraph_copy(&G, &temp);
+        
+        // if a color doesn't have a multiple of k (min_L1) vertices, add vertices with that color
         int count = 0;
         for (int i = 0; i < igraph_vector_size(&match_vert); i++)
         {
@@ -446,10 +455,13 @@ int main(int argc, char **argv) {
             { count++;
                 igraph_add_vertices(&G, 1, 0);
                 SETVAN(&G, "colour", igraph_vcount(&G) - 1, i);
+                SETVAN(&G, "Visited", igraph_vcount(&G) - 1, 2);
             }
         }
-        
-        cout << count << " "; cout.flush();
+        cout<<"vcount2: "<<igraph_vcount(&G)<<endl;
+
+        cout << count << " "<<endl;
+        cout.flush();
         H.copy(&G);
         H.rand_del_edges((float) 1.0);
         bool done(false);
@@ -466,6 +478,7 @@ int main(int argc, char **argv) {
         if (!done)
         {
             clock_t tic = clock();
+            security->set_original_vcount_G(original);
             security->kiso(min_L1, max_L1);
             clock_t toc = clock();
             //        cout << endl << "Heuristic took: ";
