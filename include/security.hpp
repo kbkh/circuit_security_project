@@ -110,6 +110,12 @@ public:
     vector<int> lifted;
     set<int> edgeIDsSet; // Id of edges in G
 };
+
+class PAG {
+public:
+    set<int> pag;
+    vector<set<int> > embeddings;
+};
 ////////////////
 
 struct EdgeInfo {
@@ -201,7 +207,7 @@ public:
     /* Fill the vector with the neighbors of every edge */
     void get_edge_neighbors();
     /* create all possible subgraphs of size maxPAGsize */
-    void subgraphs(int v, vector<int> current_subgraph, set<int> possible_edges, set<int> neighbors);
+    void subgraphs(int v, set<int> current_subgraph, set<int> possible_edges, set<int> neighbors);
     ////////////////
     void setConfBudget(int budget) { isosat->setConfBudget(budget); };
     void setPropBudget(int budget) { isosat->setPropBudget(budget); };

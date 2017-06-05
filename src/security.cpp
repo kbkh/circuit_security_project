@@ -33,6 +33,7 @@ int vcount = 0;
 int notLifted = 0;
 int target_k = 0;
 vector<set<int> > edge_neighbors;
+vector<PAG> pags;
 ////////////////
 
 /************************************************************//**
@@ -2539,15 +2540,16 @@ void Security::get_edge_neighbors() {
     }
 }
 
-void Security::subgraphs(int v, vector<int> current_subgraph, set<int> possible_edges, set<int> neighbors) {
+void Security::subgraphs(int v, set<int> current_subgraph, set<int> possible_edges, set<int> neighbors) {
     if (current_subgraph.size() == target_k-1) {
-        //debug
+        // debug
         cout<<"subgraphs of size "<<target_k<<":"<<endl;
         string first;
         
-        for (int i = 0; i < current_subgraph.size(); i++) {
+        set<int>::iterator it1;
+        for (it1 = current_subgraph.begin(); it1 != current_subgraph.end(); it1++) {
             stringstream ss;
-            ss << current_subgraph[i];
+            ss << *it1;
             string str = ss.str();
             first = first + " " + str;
         }
@@ -2555,18 +2557,36 @@ void Security::subgraphs(int v, vector<int> current_subgraph, set<int> possible_
         set<int>::iterator it;
         for (it = possible_edges.begin(); it != possible_edges.end(); it++)
             cout<<first<<" "<<*it<<endl;
-        //
+        //--
+        
+        // Every edge in the possible list will give a new subgrph so to save them they are added to the current subgraph one after the other
+        for (it = possible_edges.begin(); it != possible_edges.end(); it++) {
+            // add an edge to the current subgraph
+            current_subgraph.insert(*it);
+            
+            // Check if this subgraph alrady has an isomorphic pag. If it does, it's an embedding of that pag
+            
+            
+            // add this subgraph to the pags
+            PAG temp_pag;
+            pags.push_back(temp_pag);
+            pags[pags.size()-1].pag = current_subgraph;
+            // bring back the current subgraph to how it was to add another edge from the list
+            current_subgraph.erase(*it);
+        }
         
         return;
     }
     
     while (!possible_edges.empty()) {
         // don't want to modify the graph for next edge to be added to form a new subgraph
-        vector<int> temp_subgraph = current_subgraph;
+        set<int> temp_subgraph = current_subgraph;
         // add the first edge in the list
         int new_edge = *possible_edges.begin();
         
-        temp_subgraph.push_back(new_edge);
+        set<int>::iterator got = temp_subgraph.find(new_edge);
+        if (got == temp_subgraph.end()) // not in set
+            temp_subgraph.insert(new_edge);
         // remove it from the list because it can't be part of it for this graph of the next since it's a neighbor of an edge in the graph
         possible_edges.erase(possible_edges.begin());
         
@@ -2596,7 +2616,7 @@ void Security::subgraphs(int v, vector<int> current_subgraph, set<int> possible_
 
 void Security::kiso(int min_L1, int max_L1) {
     // Added by Karl
-    target_k = 4; //maxPAGsize;
+    target_k = 3; //maxPAGsize;
     
     get_edge_neighbors();
     
@@ -2608,27 +2628,29 @@ void Security::kiso(int min_L1, int max_L1) {
             cout<<" "<<*it;
         cout<<endl;
     }
-    //
+    //--
     
     set<int> not_permitted;
     
     for (int i = 0; i < igraph_ecount(G); i++) {
         // Create the subgraph
-        vector<int> current_subgraph;
-        current_subgraph.push_back(i);
+        set<int> current_subgraph;
+        set<int>::iterator got = current_subgraph.find(i);
+        if (got == current_subgraph.end()) // not in set
+            current_subgraph.insert(i);
         
         // Enumerate the neighbors of the edge already in the subgraph. This will reduce the complexity of adding the neighbors of a newly added edge to the list of possible edges
         set<int> neighbors;
         neighbors = edge_neighbors[i];
         
         // When we start, every edge we add is not permitted in the future
-        set<int>::const_iterator got = not_permitted.find(i);
-        if (got == not_permitted.end()) // not in set
+        set<int>::const_iterator got2 = not_permitted.find(i);
+        if (got2 == not_permitted.end()) // not in set
             not_permitted.insert(i);
         
         // debug
         cout<<i<<":";
-        //
+        //--
         
         set<int> permitted_neighbors;
         
@@ -2650,7 +2672,7 @@ void Security::kiso(int min_L1, int max_L1) {
         for (it2 = permitted_neighbors.begin(); it2 != permitted_neighbors.end(); it2++)
             cout<<" "<<*it2;
         cout<<endl;
-        //
+        //--
         
         // start constructing subgraphs of size maxPAGsize
         subgraphs(i, current_subgraph, permitted_neighbors, neighbors);
@@ -2661,7 +2683,14 @@ void Security::kiso(int min_L1, int max_L1) {
     for (it = not_permitted.begin(); it != not_permitted.end(); it++)
         cout<<*it<<" ";
     cout<<endl;
-    //
+    
+    for (int i = 0; i < pags.size(); i++) {
+        set<int>::iterator iter;
+        for (iter = pags[i].pag.begin(); iter != pags[i].pag.end(); iter++)
+            cout<<*iter<<" ";
+        cout<<endl;
+    }
+    //--
     
     return;
     ////////////////
