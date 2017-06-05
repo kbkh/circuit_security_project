@@ -31,6 +31,7 @@ LiftingInfo LiftedVnE;
 OptimalSolution optimalSolution;
 int vcount = 0;
 int notLifted = 0;
+int target_k = 0;
 vector<set<int> > edge_neighbors;
 ////////////////
 
@@ -2489,6 +2490,7 @@ void Security::df(igraph_vector_t* v, igraph_t* g, int vert, int vert1, int d)
     igraph_vector_destroy(&neis);
 }
 
+// Added by Karl
 void Security::get_edge_neighbors() {
     for (int i = 0; i < igraph_ecount(G); i++) {
         set<int> temp;
@@ -2537,37 +2539,133 @@ void Security::get_edge_neighbors() {
     }
 }
 
+void Security::subgraphs(int v, vector<int> current_subgraph, set<int> possible_edges, set<int> neighbors) {
+    if (current_subgraph.size() == target_k-1) {
+        //debug
+        cout<<"subgraphs of size "<<target_k<<":"<<endl;
+        string first;
+        
+        for (int i = 0; i < current_subgraph.size(); i++) {
+            stringstream ss;
+            ss << current_subgraph[i];
+            string str = ss.str();
+            first = first + " " + str;
+        }
+        
+        set<int>::iterator it;
+        for (it = possible_edges.begin(); it != possible_edges.end(); it++)
+            cout<<first<<" "<<*it<<endl;
+        //
+        
+        return;
+    }
+    
+    while (!possible_edges.empty()) {
+        // don't want to modify the graph for next edge to be added to form a new subgraph
+        vector<int> temp_subgraph = current_subgraph;
+        // add the first edge in the list
+        int new_edge = *possible_edges.begin();
+        
+        temp_subgraph.push_back(new_edge);
+        // remove it from the list because it can't be part of it for this graph of the next since it's a neighbor of an edge in the graph
+        possible_edges.erase(possible_edges.begin());
+        
+        // add the rest of the list to the list of the new subgraph
+        set<int> temp_edges = possible_edges;
+        set<int>::iterator it;
+        // for every neighbor of the newly added edge
+        for (it = edge_neighbors[new_edge].begin(); it != edge_neighbors[new_edge].end(); it++) {
+            int neighbor = *it;
+            // check if it's bigger than the original edge of this family of subgraphs, if it's not then the subgraphs containing these 2 are already created
+            if (neighbor > v) {
+                set<int>::iterator got = neighbors.find(neighbor);
+                // check if it's the neighbor of one of the other edges in the graph as well. If it is, the subgraphs containing these edges are already created
+                if (got == neighbors.end()) // not in set
+                    temp_edges.insert(neighbor);
+            }
+        }
+        
+        // the neighbors should stay the same for the next edge so a copy is created so that the updated version can be sent to the subgraphs created from these edges
+        set<int> temp_neighbors = neighbors;
+        temp_neighbors.insert(edge_neighbors[new_edge].begin(), edge_neighbors[new_edge].end());
+        
+        subgraphs(v, temp_subgraph, temp_edges, temp_neighbors);
+    }
+}
+////////////////
+
 void Security::kiso(int min_L1, int max_L1) {
     // Added by Karl
+    target_k = 4; //maxPAGsize;
+    
     get_edge_neighbors();
+    
+    // debug
+    for (int i = 0; i < edge_neighbors.size(); i++) {
+        cout<<i<<"'s neighbors:";
+        set<int>::iterator it;
+        for (it = edge_neighbors[i].begin(); it != edge_neighbors[i].end(); it++)
+            cout<<" "<<*it;
+        cout<<endl;
+    }
+    //
     
     set<int> not_permitted;
     
     for (int i = 0; i < igraph_ecount(G); i++) {
+        // Create the subgraph
+        vector<int> current_subgraph;
+        current_subgraph.push_back(i);
+        
+        // Enumerate the neighbors of the edge already in the subgraph. This will reduce the complexity of adding the neighbors of a newly added edge to the list of possible edges
+        set<int> neighbors;
+        neighbors = edge_neighbors[i];
+        
+        // When we start, every edge we add is not permitted in the future
         set<int>::const_iterator got = not_permitted.find(i);
         if (got == not_permitted.end()) // not in set
             not_permitted.insert(i);
         
-        vector<int> permitted_neighbors;
+        // debug
+        cout<<i<<":";
+        //
         
-        std::set<int>::iterator it;
+        set<int> permitted_neighbors;
+        
+        // add the neighbors of the edge to the possible edges
+        set<int>::iterator it;
         for (it = edge_neighbors[i].begin(); it != edge_neighbors[i].end(); it++) {
-            std::set<int>::iterator got = not_permitted.find(*it);
-            if (got == not_permitted.end()) // not in set
-                permitted_neighbors.push_back(*it);
+            set<int>::iterator got = not_permitted.find(*it);
+            // if it is permitted (not not permitted) then we can add it
+            if (got == not_permitted.end()) { // not in set
+                set<int>::iterator got2 = permitted_neighbors.find(*it);
+                // If it's not already in the set add it -> security check
+                if (got2 == permitted_neighbors.end()) // not in set
+                    permitted_neighbors.insert(*it);
+            }
         }
+        
+        // debug
+        set<int>::iterator it2;
+        for (it2 = permitted_neighbors.begin(); it2 != permitted_neighbors.end(); it2++)
+            cout<<" "<<*it2;
+        cout<<endl;
+        //
+        
+        // start constructing subgraphs of size maxPAGsize
+        subgraphs(i, current_subgraph, permitted_neighbors, neighbors);
     }
     
-//    for (int i = 0; i < edge_neighbors.size(); i++) {
-//        cout<<i<<"'s neighbors:";
-//        std::set<int>::iterator it;
-//        for (it = edge_neighbors[i].begin(); it != edge_neighbors[i].end(); it++)
-//            cout<<" "<<*it;
-//        cout<<endl;
-//    }
+    // debug
+    set<int>::iterator it;
+    for (it = not_permitted.begin(); it != not_permitted.end(); it++)
+        cout<<*it<<" ";
+    cout<<endl;
+    //
     
     return;
     ////////////////
+    
     int maxPAGsize = 0;
     igraph_vector_t res;
     igraph_vector_init(&res, 0);
@@ -3499,7 +3597,7 @@ void Security::S1_greedy (bool save_state, int threads, int min_L1, int max_L1, 
 
             cout<<setfill(':')<<setw(225)<<igraph_ecount(H)<<" Id: "<<*LiftedVnE.edgeIDsSet.begin()<<" set: "<<LiftedVnE.edgeIDsSet.size()<<endl;
             
-            std::set<int>::iterator it3;
+            set<int>::iterator it3;
             for (it3 = LiftedVnE.edgeIDsSet.begin(); it3 != LiftedVnE.edgeIDsSet.end(); it3++) {
                 cout<<"Id: "<<*it3<<endl;
             }
@@ -3549,7 +3647,7 @@ void Security::S1_greedy (bool save_state, int threads, int min_L1, int max_L1, 
             
             set<int> temp (LiftedVnE.edgeIDsSet);
             cout<<setfill(':')<<setw(225)<<igraph_ecount(H)<<" "<<LiftedVnE.edgeIDsSet.size()<<" "<<temp.size()<<endl;
-            std::set<int>::iterator it2;
+            set<int>::iterator it2;
             for (it2 = temp.begin(); it2 != temp.end(); it2++) {
                 cout<<"Id: "<<*it2<<endl;
             }
@@ -3575,7 +3673,7 @@ void Security::S1_greedy (bool save_state, int threads, int min_L1, int max_L1, 
                 }
             }
             cout<<setfill(':')<<setw(225)<<igraph_ecount(H)<<" "<<LiftedVnE.edgeIDsSet.size()<<" "<<temp.size()<<endl;
-            std::set<int>::iterator it;
+            set<int>::iterator it;
             for (it = temp.begin(); it != temp.end(); it++) {
                 cout<<"Id: "<<*it<<endl;
                 add_edge(*it);

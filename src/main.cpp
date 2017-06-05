@@ -468,6 +468,35 @@ int main(int argc, char **argv) {
         H.rand_del_edges((float) 1.0);
         bool done(false);
         
+        // Added by Karl
+//        for (int i = igraph_ecount(&G)-1; i >= 0; i--) {
+//            igraph_es_t es;
+//            igraph_es_1(&es, i);
+//            igraph_delete_edges(&G,es);
+//        }
+//        cout<<"aahhh"<<endl;
+//        for (int i = igraph_vcount(&G)-1; i >= 0; i--) {
+//            igraph_vs_t es;
+//            igraph_vs_1(&es, i);
+//            igraph_delete_vertices(&G,es);
+//        }
+//        cout<<"aahhh2"<<endl;
+//        
+//        igraph_add_vertices(&G, 9, 0);
+//        igraph_add_edge(&G,0,1);
+//        igraph_add_edge(&G,0,2);
+//        igraph_add_edge(&G,0,3);
+//        igraph_add_edge(&G,0,4);
+//        igraph_add_edge(&G,1,2);
+//        igraph_add_edge(&G,1,5);
+//        igraph_add_edge(&G,1,6);
+//        igraph_add_edge(&G,2,7);
+//        igraph_add_edge(&G,2,8);
+//        H.copy(&G);
+//        G.save( working_dir + "/G_circuit.gml");
+//        H.rand_del_edges((float) 1.0);
+        ////////////////
+        
         security = new Security(&G, &H);
         security->setConfBudget(budget);
         
