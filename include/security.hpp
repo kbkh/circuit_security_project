@@ -116,6 +116,14 @@ public:
     set<int> pag;
     vector<set<int> > embeddings;
 };
+
+class EMBEDDINGS {
+public:
+    set<int> edges;
+    set<int> vertices;
+    set<int> connected_embeddings;
+    int size;
+};
 ////////////////
 
 struct EdgeInfo {

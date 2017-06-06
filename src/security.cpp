@@ -2579,22 +2579,22 @@ void Security::create_graph(igraph_t* g, set<int> edges) {
 
 void Security::subgraphs(int v, set<int> current_subgraph, set<int> possible_edges, set<int> neighbors) {
     if (current_subgraph.size() == target_k-1) {
-        // debug
-        cout<<"subgraphs of size "<<target_k<<":"<<endl;
-        string first;
-        
-        set<int>::iterator it1;
-        for (it1 = current_subgraph.begin(); it1 != current_subgraph.end(); it1++) {
-            stringstream ss;
-            ss << *it1;
-            string str = ss.str();
-            first = first + " " + str;
-        }
-        
+//        // debug
+//        cout<<"subgraphs of size "<<target_k<<":"<<endl;
+//        string first;
+//        
+//        set<int>::iterator it1;
+//        for (it1 = current_subgraph.begin(); it1 != current_subgraph.end(); it1++) {
+//            stringstream ss;
+//            ss << *it1;
+//            string str = ss.str();
+//            first = first + " " + str;
+//        }
+//        
         set<int>::iterator it;
-        for (it = possible_edges.begin(); it != possible_edges.end(); it++)
-            cout<<first<<" "<<*it<<endl;
-        //--
+//        for (it = possible_edges.begin(); it != possible_edges.end(); it++)
+//            cout<<first<<" "<<*it<<endl;
+//        //--
         
         // Every edge in the possible list will give a new subgrph so to save them they are added to the current subgraph one after the other
         for (it = possible_edges.begin(); it != possible_edges.end(); it++) {
@@ -2652,29 +2652,29 @@ void Security::subgraphs(int v, set<int> current_subgraph, set<int> possible_edg
             }
             
             if (!iso) {
-                // debug
-                cout<<"nope: ";
-                set<int>::iterator it;
-                for (it = current_subgraph.begin(); it != current_subgraph.end(); it++)
-                    cout<<*it<<" ";
-                cout<<endl;
-                //--
+//                // debug
+//                cout<<"nope: ";
+//                set<int>::iterator it;
+//                for (it = current_subgraph.begin(); it != current_subgraph.end(); it++)
+//                    cout<<*it<<" ";
+//                cout<<endl;
+//                //--
                 
                 // add this subgraph to the pags
                 PAG temp_pag;
                 pags.push_back(temp_pag);
                 pags[pags.size()-1].pag = current_subgraph;
             } else {
-                // debug
-                cout<<"yup: ";
-                set<int>::iterator it;
-                for (it = pags[index].pag.begin(); it != pags[index].pag.end(); it++)
-                    cout<<*it<<" ";
-                cout<<"and ";
-                for (it = current_subgraph.begin(); it != current_subgraph.end(); it++)
-                    cout<<*it<<" ";
-                cout<<endl;
-                //--
+//                // debug
+//                cout<<"yup: ";
+//                set<int>::iterator it;
+//                for (it = pags[index].pag.begin(); it != pags[index].pag.end(); it++)
+//                    cout<<*it<<" ";
+//                cout<<"and ";
+//                for (it = current_subgraph.begin(); it != current_subgraph.end(); it++)
+//                    cout<<*it<<" ";
+//                cout<<endl;
+//                //--
                 
                 // add it to the list of embedding for that PAG
                 pags[index].embeddings.push_back(current_subgraph);
@@ -2728,15 +2728,17 @@ void Security::kiso(int min_L1, int max_L1) {
     
     get_edge_neighbors();
     
-    // debug
-    for (int i = 0; i < edge_neighbors.size(); i++) {
-        cout<<i<<"'s neighbors:";
-        set<int>::iterator it;
-        for (it = edge_neighbors[i].begin(); it != edge_neighbors[i].end(); it++)
-            cout<<" "<<*it;
-        cout<<endl;
-    }
-    //--
+//    // debug
+//    cout<<setfill('-')<<setw(100)<<"neighbors of edges"<<setfill('-')<<setw(99)<<"-"<<endl;
+//    
+//    for (int i = 0; i < edge_neighbors.size(); i++) {
+//        cout<<i<<"'s neighbors:";
+//        set<int>::iterator it;
+//        for (it = edge_neighbors[i].begin(); it != edge_neighbors[i].end(); it++)
+//            cout<<" "<<*it;
+//        cout<<endl;
+//    }
+//    //--
     
     set<int> not_permitted;
     
@@ -2756,9 +2758,10 @@ void Security::kiso(int min_L1, int max_L1) {
         if (got2 == not_permitted.end()) // not in set
             not_permitted.insert(i);
         
-        // debug
-        cout<<i<<":";
-        //--
+//        // debug
+//        cout<<setfill('-')<<setw(100)<<"subgraphs enumaration"<<setfill('-')<<setw(99)<<"-"<<endl;
+//        cout<<i<<":";
+//        //--
         
         set<int> permitted_neighbors;
         
@@ -2775,37 +2778,172 @@ void Security::kiso(int min_L1, int max_L1) {
             }
         }
         
-        // debug
-        set<int>::iterator it2;
-        for (it2 = permitted_neighbors.begin(); it2 != permitted_neighbors.end(); it2++)
-            cout<<" "<<*it2;
-        cout<<endl;
-        //--
+//        // debug
+//        set<int>::iterator it2;
+//        for (it2 = permitted_neighbors.begin(); it2 != permitted_neighbors.end(); it2++)
+//            cout<<" "<<*it2;
+//        cout<<endl;
+//        //--
         
         // start constructing subgraphs of size maxPAGsize
         subgraphs(i, current_subgraph, permitted_neighbors, neighbors);
     }
     
-    // debug
-    set<int>::iterator it;
-    for (it = not_permitted.begin(); it != not_permitted.end(); it++)
-        cout<<*it<<" ";
-    cout<<endl;
-    
+    // find the VD embeddings of every PAG
     for (int i = 0; i < pags.size(); i++) {
-        cout<<endl;
+        vector<EMBEDDINGS> embeddings;
+        for (int j = 0; j < pags[i].embeddings.size(); j++) {
+            EMBEDDINGS temp;
+            embeddings.push_back(temp);
+            embeddings[j].edges = pags[i].embeddings[j];
+        }
+        EMBEDDINGS temp;
+        embeddings.push_back(temp);
+        embeddings[embeddings.size()-1].edges = pags[i].pag;
+        
+        for (int j = 0; j < embeddings.size(); j++) {
+            set<int>::iterator it;
+            for (it = embeddings[j].edges.begin(); it != embeddings[j].edges.end(); it++) {
+                int from, to;
+                igraph_edge(G,*it,&from,&to);
+                
+                set<int>::iterator got = embeddings[j].vertices.find(from);
+                if (got == embeddings[j].vertices.end()) // not in set
+                    embeddings[j].vertices.insert(from);
+                got = embeddings[j].vertices.find(to);
+                if (got == embeddings[j].vertices.end()) // not in set
+                    embeddings[j].vertices.insert(to);
+            }
+        }
+        
+        map<int,set<int> > size;
+        
+        for (int j = 0; j < embeddings.size(); j++) {
+            for (int k = j+1; k < embeddings.size(); k++) {
+                set<int>::iterator it;
+                for (it = embeddings[j].vertices.begin(); it != embeddings[j].vertices.end(); it++) {
+                    set<int>::iterator got = embeddings[k].vertices.find(*it);
+                    if (got != embeddings[k].vertices.end()) { // in set, they are connected
+                        embeddings[j].connected_embeddings.insert(k);
+                        embeddings[k].connected_embeddings.insert(j);
+                        break; // break and move to the next embeding
+                    }
+                }
+            }
+            
+            int temp_size = embeddings[j].connected_embeddings.size();
+            embeddings[j].size = temp_size;
+            map<int,set<int> >::iterator got = size.find(temp_size);
+            if (got == size.end()) { // not in set
+                set<int> temp;
+                temp.insert(j);
+                size.insert(pair<int,set<int> >(temp_size, temp));
+            } else size.at(temp_size).insert(j); // in set
+        }
+        
+        while (size.size() > 1 || size.begin()->first != 0) {
+//            cout<<"YAS"<<endl;
+            // access last element
+            map<int,set<int> >::iterator itr = size.end();
+            itr--;
+            
+            set<int> remove = itr->second;
+            int to_remove = *remove.begin();
+//            cout<<to_remove<<endl;
+            itr->second.erase(to_remove);
+            embeddings[to_remove].size = -1;
+            
+            if (itr->second.empty())
+                size.erase(itr->first);
+            
+            set<int>::iterator itera;
+            for (itera = embeddings[to_remove].connected_embeddings.begin(); itera != embeddings[to_remove].connected_embeddings.end(); itera++) {
+                int old_size = embeddings[*itera].size;
+                if (old_size == -1)
+                    continue;
+                map<int,set<int> >::iterator gotsize = size.find(old_size);
+                gotsize->second.erase(*itera);
+                if (gotsize->second.empty())
+                    size.erase(old_size);
+                
+                --embeddings[*itera].size;
+                int new_size = embeddings[*itera].size;
+                gotsize = size.find(new_size);
+                if (gotsize == size.end()) { // not in map
+                    set<int> temp;
+                    temp.insert(*itera);
+                    size.insert(pair<int,set<int> >(new_size, temp));
+                } else size.at(new_size).insert(*itera);
+            }
+            
+//            // debug
+//            cout<<size.size()<<endl;
+//            map<int,set<int> >::iterator itrat;
+//            for (itrat = size.begin(); itrat != size.end(); itrat++)
+//                cout<<itrat->first<<" ";
+//            cout<<endl;
+//            cout<<size.begin()->first<<endl;
+//            //--
+        }
+        
+        // debug
+        cout<<setw(100)<<setfill('-')<<"pags, embeddings, VD embeddings"<<setfill('-')<<setw(99)<<"-"<<endl;
+        cout<<"pag #"<<i<<": ";
         set<int>::iterator iter;
         for (iter = pags[i].pag.begin(); iter != pags[i].pag.end(); iter++)
             cout<<*iter<<" ";
-        cout<<endl<<"   ";
-        for (int j = 0; j < pags[i].embeddings.size(); j++) {
+        cout<<endl;
+        
+        for (int j = 0; j < embeddings.size(); j++) {
+            cout<<"embeding #"<<j<<": ";
             set<int>::iterator iter2;
-            for (iter2 = pags[i].embeddings[j].begin(); iter2 != pags[i].embeddings[j].end(); iter2++)
+            for (iter2 = embeddings[j].edges.begin(); iter2 != embeddings[j].edges.end(); iter2++)
                 cout<<*iter2<<" ";
-            cout<<endl<<"   ";
+            cout<<endl;
+            set<int>::iterator it;
+            for (it = embeddings[j].connected_embeddings.begin(); it != embeddings[j].connected_embeddings.end(); it++)
+                cout<<*it<<" ";
+            cout<<endl;
         }
+        
+        map<int, set<int> >::iterator iter2;
+        for (iter2 = size.begin(); iter2 != size.end(); iter2++) {
+            cout<<"size: "<<iter2->first<<" embeddings #s: ";
+            set<int> temp = iter2->second;
+            set<int>::iterator it;
+            for (it = temp.begin(); it != temp.end(); it++)
+                cout<<*it<<" ";
+            cout<<endl<<"VD-embeddings: ";
+            for (it = temp.begin(); it != temp.end(); it++)
+                cout<<*it<<" ";
+            cout<<endl;
+        }
+        //--
     }
-    //--
+    
+//    // debug
+//    cout<<setw(100)<<setfill('-')<<"initial subgraphs"<<setfill('-')<<setw(99)<<"-"<<endl;
+//    cout<<endl;
+//    set<int>::iterator it;
+//    for (it = not_permitted.begin(); it != not_permitted.end(); it++)
+//        cout<<*it<<" ";
+//    cout<<endl;
+//    
+//    cout<<setw(100)<<setfill('-')<<"Pags and their embeddings"<<setfill('-')<<setw(99)<<"-"<<endl;
+//    for (int i = 0; i < pags.size(); i++) {
+//        cout<<endl;
+//        set<int>::iterator iter;
+//        for (iter = pags[i].pag.begin(); iter != pags[i].pag.end(); iter++)
+//            cout<<*iter<<" ";
+//        cout<<endl<<"   ";
+//        for (int j = 0; j < pags[i].embeddings.size(); j++) {
+//            set<int>::iterator iter2;
+//            for (iter2 = pags[i].embeddings[j].begin(); iter2 != pags[i].embeddings[j].end(); iter2++)
+//                cout<<*iter2<<" ";
+//            cout<<endl<<"   ";
+//        }
+//    }
+//    //--
     
     return;
     ////////////////
