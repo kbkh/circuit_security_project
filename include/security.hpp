@@ -208,6 +208,8 @@ public:
     void get_edge_neighbors();
     /* create all possible subgraphs of size maxPAGsize */
     void subgraphs(int v, set<int> current_subgraph, set<int> possible_edges, set<int> neighbors);
+    /* create the graphs from the edges */
+    void create_graph(igraph_t* g, set<int> edges);
     ////////////////
     void setConfBudget(int budget) { isosat->setConfBudget(budget); };
     void setPropBudget(int budget) { isosat->setPropBudget(budget); };

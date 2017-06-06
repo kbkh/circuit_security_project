@@ -34,6 +34,7 @@ int notLifted = 0;
 int target_k = 0;
 vector<set<int> > edge_neighbors;
 vector<PAG> pags;
+bool testing = false;
 ////////////////
 
 /************************************************************//**
@@ -2540,6 +2541,42 @@ void Security::get_edge_neighbors() {
     }
 }
 
+void Security::create_graph(igraph_t* g, set<int> edges) {
+    map<int,int> vertices;
+    
+    igraph_empty(g,0,IGRAPH_DIRECTED);
+    
+    set<int>::iterator it;
+    for (it = edges.begin(); it != edges.end(); it++) {
+        int from, to;
+        int new_from, new_to;
+        
+        igraph_edge(G,*it,&from,&to);
+        
+        map<int,int>::iterator got = vertices.find(from);
+        if (got == vertices.end()) { // not in set
+            igraph_add_vertices(g, 1, 0);
+            int vid = igraph_vcount(g) - 1;
+            SETVAN(g, "colour", vid, VAN(G, "colour", from));
+            SETVAN(g, "ID", vid, VAN(G, "ID", from));
+            vertices.insert(pair<int,int>(from,vid));
+            new_from = vid;
+        } else new_from = vertices.at(from);
+        
+        got = vertices.find(to);
+        if (got == vertices.end()) { // not in set
+            igraph_add_vertices(g, 1, 0);
+            int vid = igraph_vcount(g) - 1;
+            SETVAN(g, "colour", vid, VAN(G, "colour", to));
+            SETVAN(g, "ID", vid, VAN(G, "ID", to));
+            vertices.insert(pair<int,int>(to,vid));
+            new_to = vid;
+        } else new_to = vertices.at(to);
+        
+        igraph_add_edge(g, new_from, new_to);
+    }
+}
+
 void Security::subgraphs(int v, set<int> current_subgraph, set<int> possible_edges, set<int> neighbors) {
     if (current_subgraph.size() == target_k-1) {
         // debug
@@ -2564,13 +2601,84 @@ void Security::subgraphs(int v, set<int> current_subgraph, set<int> possible_edg
             // add an edge to the current subgraph
             current_subgraph.insert(*it);
             
+            igraph_t new_pag;
+            create_graph(&new_pag, current_subgraph);
+            
+            igraph_vector_t color11;
+            igraph_vector_init(&color11, 0);
+            igraph_vector_int_t color1;
+            igraph_vector_int_init(&color1, 0);
+            
+            VANV(&new_pag, "colour", (igraph_vector_t*) &color11);
+            for (int i = 0; i < igraph_vector_size(&color11); i++)
+                igraph_vector_int_push_back(&color1, VECTOR(color11)[i]);
+            
+//            // debug
+//            for (int i = 0; i < igraph_vcount(&new_pag); i++) {
+//                if (i == 0)
+//                    cout<<"new_pag:"<<endl;
+//                cout<<"     ID: "<<VAN(&new_pag, "ID", i)<<" "<<VAN(&new_pag, "colour", i)<<endl;
+//            }
+//            //--
+            
             // Check if this subgraph alrady has an isomorphic pag. If it does, it's an embedding of that pag
+            igraph_bool_t iso = false;
+            // debug
+            int index = 0;
+            //--
             
+            for (int i = 0; i < pags.size(); i++) {
+                // debug
+                index = i;
+                //--
+                
+                // create the subgraphs
+                igraph_t pag;
+                create_graph(&pag, pags[i].pag);
+                
+                igraph_vector_t color22;
+                igraph_vector_init(&color22, 0);
+                igraph_vector_int_t color2;
+                igraph_vector_int_init(&color2, 0);
+                
+                VANV(&pag, "colour", (igraph_vector_t*) &color22);
+                for (int j = 0; j < igraph_vector_size(&color22); j++)
+                    igraph_vector_int_push_back(&color2, VECTOR(color22)[j]);
+                
+                igraph_isomorphic_vf2(&pag, &new_pag, &color2, &color1, NULL, NULL, &iso, NULL, NULL, NULL, NULL, NULL);
+                
+                if (iso)
+                    break;
+            }
             
-            // add this subgraph to the pags
-            PAG temp_pag;
-            pags.push_back(temp_pag);
-            pags[pags.size()-1].pag = current_subgraph;
+            if (!iso) {
+                // debug
+                cout<<"nope: ";
+                set<int>::iterator it;
+                for (it = current_subgraph.begin(); it != current_subgraph.end(); it++)
+                    cout<<*it<<" ";
+                cout<<endl;
+                //--
+                
+                // add this subgraph to the pags
+                PAG temp_pag;
+                pags.push_back(temp_pag);
+                pags[pags.size()-1].pag = current_subgraph;
+            } else {
+                // debug
+                cout<<"yup: ";
+                set<int>::iterator it;
+                for (it = pags[index].pag.begin(); it != pags[index].pag.end(); it++)
+                    cout<<*it<<" ";
+                cout<<"and ";
+                for (it = current_subgraph.begin(); it != current_subgraph.end(); it++)
+                    cout<<*it<<" ";
+                cout<<endl;
+                //--
+                
+                // add it to the list of embedding for that PAG
+                pags[index].embeddings.push_back(current_subgraph);
+            }
             // bring back the current subgraph to how it was to add another edge from the list
             current_subgraph.erase(*it);
         }
@@ -2685,10 +2793,17 @@ void Security::kiso(int min_L1, int max_L1) {
     cout<<endl;
     
     for (int i = 0; i < pags.size(); i++) {
+        cout<<endl;
         set<int>::iterator iter;
         for (iter = pags[i].pag.begin(); iter != pags[i].pag.end(); iter++)
             cout<<*iter<<" ";
-        cout<<endl;
+        cout<<endl<<"   ";
+        for (int j = 0; j < pags[i].embeddings.size(); j++) {
+            set<int>::iterator iter2;
+            for (iter2 = pags[i].embeddings[j].begin(); iter2 != pags[i].embeddings[j].end(); iter2++)
+                cout<<*iter2<<" ";
+            cout<<endl<<"   ";
+        }
     }
     //--
     
