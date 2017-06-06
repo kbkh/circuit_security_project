@@ -113,16 +113,16 @@ public:
 
 class PAG {
 public:
-    set<int> pag;
-    vector<set<int> > embeddings;
+    set<int> pag; // edges in pag
+    vector<set<int> > embeddings; // edges of the embeddings of that pag.
 };
 
 class EMBEDDINGS {
 public:
-    set<int> edges;
-    set<int> vertices;
-    set<int> connected_embeddings;
-    int size;
+    set<int> edges; // edges of that embedding
+    set<int> vertices; // vertices of that embedding
+    set<int> connected_embeddings; // embeddings that share one or more vertices with that embedding
+    int size; // how many embeddings it has as not VD
 };
 ////////////////
 

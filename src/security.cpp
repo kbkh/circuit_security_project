@@ -2792,15 +2792,18 @@ void Security::kiso(int min_L1, int max_L1) {
     // find the VD embeddings of every PAG
     for (int i = 0; i < pags.size(); i++) {
         vector<EMBEDDINGS> embeddings;
+        // copy the embeddings of a PAG to the new class
         for (int j = 0; j < pags[i].embeddings.size(); j++) {
             EMBEDDINGS temp;
             embeddings.push_back(temp);
             embeddings[j].edges = pags[i].embeddings[j];
         }
+        // add the pag itself to the embeddings to be studied because it is a part of the graph
         EMBEDDINGS temp;
         embeddings.push_back(temp);
         embeddings[embeddings.size()-1].edges = pags[i].pag;
         
+        // get the vertices of every embedding. So far only edges were saved
         for (int j = 0; j < embeddings.size(); j++) {
             set<int>::iterator it;
             for (it = embeddings[j].edges.begin(); it != embeddings[j].edges.end(); it++) {
@@ -2818,11 +2821,15 @@ void Security::kiso(int min_L1, int max_L1) {
         
         map<int,set<int> > size;
         
+        // for every embedding ...
         for (int j = 0; j < embeddings.size(); j++) {
+            // ... look at the other embeddings ...
             for (int k = j+1; k < embeddings.size(); k++) {
                 set<int>::iterator it;
+                // ... for every vertex in the embedding studied ...
                 for (it = embeddings[j].vertices.begin(); it != embeddings[j].vertices.end(); it++) {
                     set<int>::iterator got = embeddings[k].vertices.find(*it);
+                    // ... see if it is in the other embeddings of the same pag
                     if (got != embeddings[k].vertices.end()) { // in set, they are connected
                         embeddings[j].connected_embeddings.insert(k);
                         embeddings[k].connected_embeddings.insert(j);
@@ -2833,6 +2840,8 @@ void Security::kiso(int min_L1, int max_L1) {
             
             int temp_size = embeddings[j].connected_embeddings.size();
             embeddings[j].size = temp_size;
+            // see if we already found an embedding with this many not vd embeddings
+            // in both cases add the id of the new embedding to that
             map<int,set<int> >::iterator got = size.find(temp_size);
             if (got == size.end()) { // not in set
                 set<int> temp;
@@ -2841,31 +2850,42 @@ void Security::kiso(int min_L1, int max_L1) {
             } else size.at(temp_size).insert(j); // in set
         }
         
+        // while there are embeddings that have connected embeddings (they are not vd embeddings) we remove from the candidate list the embedding that is conncted to the most embeddings
+        // size->first is the # of connected embeddings, size->second is the ids of the embeddings that have that many conneceted embeddings
         while (size.size() > 1 || size.begin()->first != 0) {
 //            cout<<"YAS"<<endl;
-            // access last element
+            // access last element (in c++ map is sorted automatically everytime we insert an element)
             map<int,set<int> >::iterator itr = size.end();
             itr--;
             
+            // get id of embedding to remove
             set<int> remove = itr->second;
+            // if more than one have that much connected embeds then we take the first one
             int to_remove = *remove.begin();
 //            cout<<to_remove<<endl;
+            // remove it from the set of embeds that have that much connected embeds
             itr->second.erase(to_remove);
+            // to mark that it already have been considered
             embeddings[to_remove].size = -1;
             
+            // if it was the last one with that much connected embeds, update mao
             if (itr->second.empty())
                 size.erase(itr->first);
             
+            // update size map and size for every connected embedding
             set<int>::iterator itera;
             for (itera = embeddings[to_remove].connected_embeddings.begin(); itera != embeddings[to_remove].connected_embeddings.end(); itera++) {
                 int old_size = embeddings[*itera].size;
+                // if it was considered, skip, we don't want to put it back in the size map
                 if (old_size == -1)
                     continue;
+                // remove from size map at the old size element
                 map<int,set<int> >::iterator gotsize = size.find(old_size);
                 gotsize->second.erase(*itera);
                 if (gotsize->second.empty())
                     size.erase(old_size);
                 
+                // place it at the right element in the size map (with the old size decreased by 1)
                 --embeddings[*itera].size;
                 int new_size = embeddings[*itera].size;
                 gotsize = size.find(new_size);
