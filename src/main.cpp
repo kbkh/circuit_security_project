@@ -415,7 +415,7 @@ int main(int argc, char **argv) {
      ****************************************************************/
     if ( test_args.size() >= 1 && 10 == atoi(test_args[0].c_str())) {
         
-        int min_L1(4), max_L1 = G.max_L1();
+        int min_L1(2), max_L1 = G.max_L1();
         
         if ( test_args.size() == 3 ) {
             min_L1 = atoi(test_args[1].c_str());

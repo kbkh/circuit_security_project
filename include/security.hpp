@@ -123,6 +123,15 @@ public:
     set<int> vertices; // vertices of that embedding
     set<int> connected_embeddings; // embeddings that share one or more vertices with that embedding
     int size; // how many embeddings it has as not VD
+    int max_degree;
+    int max_count;
+};
+
+class VDEMBEDDINGS {
+public:
+    map<int, set<int> > vd_embeddings;
+    int max_degree;
+    int max_count;
 };
 ////////////////
 
