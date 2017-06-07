@@ -355,6 +355,11 @@ void Circuit::del_edge(Edge edge) {
 }
 
 
+void Circuit::del_vertices() {
+    while (igraph_vcount(this) != 0)
+        igraph_delete_vertices(this,igraph_vss_1(0));
+}
+
 
 
 /*************************************************************************//**

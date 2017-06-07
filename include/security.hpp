@@ -116,9 +116,9 @@ public:
     set<int> edges; // edges of that embedding
     set<int> vertices; // vertices of that embedding
     set<int> connected_embeddings; // embeddings that share one or more vertices with that embedding
+    igraph_vector_t* map; // mappings of the embedding to the pag. Used for VM
     int size; // how many embeddings it has as not VD
     int max_degree; // degree of this embedding
-    int max_count; // how many vertices have this degree
 };
 
 class VDEMBEDDINGS {
@@ -131,8 +131,7 @@ public:
 class PAG {
 public:
     set<int> pag; // edges in pag
-    vector<set<int> > embeddings; // edges of the embeddings of that pag.
-    vector<EMBEDDINGS> v_embeddings; // embeddings of this pag
+    vector<EMBEDDINGS> embeddings; // embeddings of this pag
     VDEMBEDDINGS vd_embeddings; // vd embeddings of this pag
 };
 ////////////////
@@ -228,7 +227,7 @@ public:
     /* create all possible subgraphs of size maxPAGsize */
     void subgraphs(int v, set<int> current_subgraph, set<int> possible_edges, set<int> neighbors);
     /* create the graphs from the edges */
-    void create_graph(igraph_t* g, set<int> edges);
+    void create_graph(igraph_t* g, set<int> edges, bool create = true);
     ////////////////
     void setConfBudget(int budget) { isosat->setConfBudget(budget); };
     void setPropBudget(int budget) { isosat->setPropBudget(budget); };

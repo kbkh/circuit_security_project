@@ -49,8 +49,8 @@ using namespace std;
 #define Original 1
 #define NotOriginal 0
 
-#define Visited 1
-#define NotVisited 0
+#define Removed 1
+#define NotRemoved 0
 ////////////////
 
 

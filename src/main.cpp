@@ -171,10 +171,12 @@ int main(int argc, char **argv) {
     for (int i = 0; i < igraph_ecount(&G); i++) {
         SETEAN(&G, "Lifted", i, NotLifted);
         SETEAN(&G, "Original", i, NotOriginal);
+        SETEAN(&G, "ID", i, i);
+        SETEAN(&G, "Removed", i, NotRemoved);
     }
     
     for (int i = 0; i < igraph_vcount(&G); i++) {
-        SETVAN(&G, "Visited", i, NotVisited);
+        SETVAN(&G, "Removed", i, NotRemoved);
         SETVAN(&G, "ID", i, i);
     }
     ////////////////
@@ -456,7 +458,7 @@ int main(int argc, char **argv) {
             { count++;
                 igraph_add_vertices(&G, 1, 0);
                 SETVAN(&G, "colour", igraph_vcount(&G) - 1, i);
-                SETVAN(&G, "Visited", igraph_vcount(&G) - 1, 2);
+                SETVAN(&G, "Removed", igraph_vcount(&G) - 1, NotRemoved);
             }
         }
         cout<<"vcount2: "<<igraph_vcount(&G)<<endl;
@@ -466,6 +468,7 @@ int main(int argc, char **argv) {
         cout.flush();
         H.copy(&G);
         H.rand_del_edges((float) 1.0);
+        H.del_vertices();
         bool done(false);
         
         // Added by Karl
