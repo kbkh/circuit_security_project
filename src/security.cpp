@@ -2790,54 +2790,50 @@ void Security::kiso(int min_L1, int max_L1) {
     }
     
     // find the VD embeddings of every PAG
-    map<int, vector<EMBEDDINGS> > embeddings;
-    map<int, VDEMBEDDINGS> vd_embeddings;
     int max_degree = 0;
     int max_count = 0;
     int first_pag = -1;
     
     for (int i = 0; i < pags.size(); i++) {
-        vector<EMBEDDINGS> tmp;
-        embeddings.insert(pair<int, vector<EMBEDDINGS> >(i, tmp));
         // copy the embeddings of a PAG to the new class
         for (int j = 0; j < pags[i].embeddings.size(); j++) {
             EMBEDDINGS temp;
-            embeddings[i].push_back(temp);
-            embeddings[i][j].edges = pags[i].embeddings[j];
-            embeddings[i][j].max_degree = 0;
+            pags[i].v_embeddings.push_back(temp);
+            pags[i].v_embeddings[j].edges = pags[i].embeddings[j];
+            pags[i].v_embeddings[j].max_degree = 0;
         }
         // add the pag itself to the embeddings to be studied because it is a part of the graph
         EMBEDDINGS temp;
-        embeddings[i].push_back(temp);
-        embeddings[i][embeddings[i].size()-1].edges = pags[i].pag;
-        embeddings[i][embeddings[i].size()-1].max_degree = 0;
+        pags[i].v_embeddings.push_back(temp);
+        pags[i].v_embeddings[pags[i].v_embeddings.size()-1].edges = pags[i].pag;
+        pags[i].v_embeddings[pags[i].v_embeddings.size()-1].max_degree = 0;
         
         // get the vertices of every embedding. So far only edges were saved
-        for (int j = 0; j < embeddings[i].size(); j++) {
+        for (int j = 0; j < pags[i].v_embeddings.size(); j++) {
             set<int>::iterator it;
-            for (it = embeddings[i][j].edges.begin(); it != embeddings[i][j].edges.end(); it++) {
+            for (it = pags[i].v_embeddings[j].edges.begin(); it != pags[i].v_embeddings[j].edges.end(); it++) {
                 int from, to;
                 igraph_edge(G,*it,&from,&to);
                 
-                set<int>::iterator got = embeddings[i][j].vertices.find(from);
-                if (got == embeddings[i][j].vertices.end()) { // not in set
-                    embeddings[i][j].vertices.insert(from);
+                set<int>::iterator got = pags[i].v_embeddings[j].vertices.find(from);
+                if (got == pags[i].v_embeddings[j].vertices.end()) { // not in set
+                    pags[i].v_embeddings[j].vertices.insert(from);
                     
-                    if (igraph_vertex_degree(G, from) > embeddings[i][j].max_degree) {
-                        embeddings[i][j].max_degree = igraph_vertex_degree(G, from);
-                        embeddings[i][j].max_count = 1;
-                    } else if (igraph_vertex_degree(G, from) == embeddings[i][j].max_degree)
-                        embeddings[i][j].max_count++;
+                    if (igraph_vertex_degree(G, from) > pags[i].v_embeddings[j].max_degree) {
+                        pags[i].v_embeddings[j].max_degree = igraph_vertex_degree(G, from);
+                        pags[i].v_embeddings[j].max_count = 1;
+                    } else if (igraph_vertex_degree(G, from) == pags[i].v_embeddings[j].max_degree)
+                        pags[i].v_embeddings[j].max_count++;
                 }
-                got = embeddings[i][j].vertices.find(to);
-                if (got == embeddings[i][j].vertices.end()) { // not in set
-                    embeddings[i][j].vertices.insert(to);
+                got = pags[i].v_embeddings[j].vertices.find(to);
+                if (got == pags[i].v_embeddings[j].vertices.end()) { // not in set
+                    pags[i].v_embeddings[j].vertices.insert(to);
                     
-                    if (igraph_vertex_degree(G, to) > embeddings[i][j].max_degree) {
-                        embeddings[i][j].max_degree = igraph_vertex_degree(G, to);
-                        embeddings[i][j].max_count = 1;
-                    } else if (igraph_vertex_degree(G, to) == embeddings[i][j].max_degree)
-                        embeddings[i][j].max_count++;
+                    if (igraph_vertex_degree(G, to) > pags[i].v_embeddings[j].max_degree) {
+                        pags[i].v_embeddings[j].max_degree = igraph_vertex_degree(G, to);
+                        pags[i].v_embeddings[j].max_count = 1;
+                    } else if (igraph_vertex_degree(G, to) == pags[i].v_embeddings[j].max_degree)
+                        pags[i].v_embeddings[j].max_count++;
                 }
             }
         }
@@ -2845,24 +2841,24 @@ void Security::kiso(int min_L1, int max_L1) {
         map<int,set<int> > size;
         
         // for every embedding ...
-        for (int j = 0; j < embeddings[i].size(); j++) {
+        for (int j = 0; j < pags[i].v_embeddings.size(); j++) {
             // ... look at the other embeddings ...
-            for (int k = j+1; k < embeddings[i].size(); k++) {
+            for (int k = j+1; k < pags[i].v_embeddings.size(); k++) {
                 set<int>::iterator it;
                 // ... for every vertex in the embedding studied ...
-                for (it = embeddings[i][j].vertices.begin(); it != embeddings[i][j].vertices.end(); it++) {
-                    set<int>::iterator got = embeddings[i][k].vertices.find(*it);
+                for (it = pags[i].v_embeddings[j].vertices.begin(); it != pags[i].v_embeddings[j].vertices.end(); it++) {
+                    set<int>::iterator got = pags[i].v_embeddings[k].vertices.find(*it);
                     // ... see if it is in the other embeddings of the same pag
-                    if (got != embeddings[i][k].vertices.end()) { // in set, they are connected
-                        embeddings[i][j].connected_embeddings.insert(k);
-                        embeddings[i][k].connected_embeddings.insert(j);
+                    if (got != pags[i].v_embeddings[k].vertices.end()) { // in set, they are connected
+                        pags[i].v_embeddings[j].connected_embeddings.insert(k);
+                        pags[i].v_embeddings[k].connected_embeddings.insert(j);
                         break; // break and move to the next embeding
                     }
                 }
             }
             
-            int temp_size = embeddings[i][j].connected_embeddings.size();
-            embeddings[i][j].size = temp_size;
+            int temp_size = pags[i].v_embeddings[j].connected_embeddings.size();
+            pags[i].v_embeddings[j].size = temp_size;
             // see if we already found an embedding with this many not vd embeddings
             // in both cases add the id of the new embedding to that
             map<int,set<int> >::iterator got = size.find(temp_size);
@@ -2889,7 +2885,7 @@ void Security::kiso(int min_L1, int max_L1) {
             // remove it from the set of embeds that have that much connected embeds
             itr->second.erase(to_remove);
             // to mark that it already have been considered
-            embeddings[i][to_remove].size = -1;
+            pags[i].v_embeddings[to_remove].size = -1;
             
             // if it was the last one with that much connected embeds, update mao
             if (itr->second.empty())
@@ -2897,8 +2893,8 @@ void Security::kiso(int min_L1, int max_L1) {
             
             // update size map and size for every connected embedding
             set<int>::iterator itera;
-            for (itera = embeddings[i][to_remove].connected_embeddings.begin(); itera != embeddings[i][to_remove].connected_embeddings.end(); itera++) {
-                int old_size = embeddings[i][*itera].size;
+            for (itera = pags[i].v_embeddings[to_remove].connected_embeddings.begin(); itera != pags[i].v_embeddings[to_remove].connected_embeddings.end(); itera++) {
+                int old_size = pags[i].v_embeddings[*itera].size;
                 // if it was considered, skip, we don't want to put it back in the size map
                 if (old_size == -1)
                     continue;
@@ -2909,8 +2905,8 @@ void Security::kiso(int min_L1, int max_L1) {
                     size.erase(old_size);
                 
                 // place it at the right element in the size map (with the old size decreased by 1)
-                --embeddings[i][*itera].size;
-                int new_size = embeddings[i][*itera].size;
+                --pags[i].v_embeddings[*itera].size;
+                int new_size = pags[i].v_embeddings[*itera].size;
                 gotsize = size.find(new_size);
                 if (gotsize == size.end()) { // not in map
                     set<int> temp;
@@ -2930,9 +2926,7 @@ void Security::kiso(int min_L1, int max_L1) {
         }
         
         // save the VD-embeddings
-        VDEMBEDDINGS tmpvd;
-        vd_embeddings.insert(pair<int, VDEMBEDDINGS>(i, tmpvd));
-        vd_embeddings[i].max_degree = 0;
+        pags[i].vd_embeddings.max_degree = 0;
         
         map<int, set<int> >::iterator itervd;
         int countr = 0;
@@ -2940,24 +2934,24 @@ void Security::kiso(int min_L1, int max_L1) {
             set<int> temp = itervd->second;
             set<int>::iterator itr;
             for (itr = temp.begin(); itr != temp.end(); itr++) {
-                vd_embeddings[i].vd_embeddings.insert(pair<int, set<int> >(*itr, embeddings[i][*itr].edges));
+                pags[i].vd_embeddings.vd_embeddings.insert(pair<int, set<int> >(*itr, pags[i].v_embeddings[*itr].edges));
                 countr++;
-                if (embeddings[i][*itr].max_degree > vd_embeddings[i].max_degree) {
-                    vd_embeddings[i].max_degree = embeddings[i][*itr].max_degree;
-                    vd_embeddings[i].max_count = 1;
-                } else if (embeddings[i][*itr].max_degree == vd_embeddings[i].max_degree)
-                    vd_embeddings[i].max_count++;
+                if (pags[i].v_embeddings[*itr].max_degree > pags[i].vd_embeddings.max_degree) {
+                    pags[i].vd_embeddings.max_degree = pags[i].v_embeddings[*itr].max_degree;
+                    pags[i].vd_embeddings.max_count = 1;
+                } else if (pags[i].v_embeddings[*itr].max_degree == pags[i].vd_embeddings.max_degree)
+                    pags[i].vd_embeddings.max_count++;
             }
         }
         
-        if (vd_embeddings[i].vd_embeddings.size() >= min_L1) {
-            if (vd_embeddings[i].max_degree > max_degree) {
-                max_degree = vd_embeddings[i].max_degree;
-                max_count = vd_embeddings[i].max_count;
+        if (pags[i].vd_embeddings.vd_embeddings.size() >= min_L1) {
+            if (pags[i].vd_embeddings.max_degree > max_degree) {
+                max_degree = pags[i].vd_embeddings.max_degree;
+                max_count = pags[i].vd_embeddings.max_count;
                 first_pag = i;
-            } else if (vd_embeddings[i].max_degree == max_degree) {
-                if (vd_embeddings[i].max_count > max_count) {
-                    max_count = vd_embeddings[i].max_count;
+            } else if (pags[i].vd_embeddings.max_degree == max_degree) {
+                if (pags[i].vd_embeddings.max_count > max_count) {
+                    max_count = pags[i].vd_embeddings.max_count;
                     first_pag = i;
                 }
             }
@@ -2971,14 +2965,14 @@ void Security::kiso(int min_L1, int max_L1) {
             cout<<*iter<<" ";
         cout<<endl;
         
-        for (int j = 0; j < embeddings[i].size(); j++) {
+        for (int j = 0; j < pags[i].v_embeddings.size(); j++) {
             cout<<"embeding #"<<j<<": ";
             set<int>::iterator iter2;
-            for (iter2 = embeddings[i][j].edges.begin(); iter2 != embeddings[i][j].edges.end(); iter2++)
+            for (iter2 = pags[i].v_embeddings[j].edges.begin(); iter2 != pags[i].v_embeddings[j].edges.end(); iter2++)
                 cout<<*iter2<<" ";
             cout<<endl;
             set<int>::iterator it;
-            for (it = embeddings[i][j].connected_embeddings.begin(); it != embeddings[i][j].connected_embeddings.end(); it++)
+            for (it = pags[i].v_embeddings[j].connected_embeddings.begin(); it != pags[i].v_embeddings[j].connected_embeddings.end(); it++)
                 cout<<*it<<" ";
             cout<<endl;
         }
@@ -2994,16 +2988,16 @@ void Security::kiso(int min_L1, int max_L1) {
             for (it = temp.begin(); it != temp.end(); it++)
                 cout<<*it<<" ";
             cout<<endl;
-            cout<<"max deg: "<<vd_embeddings[i].max_degree<<" max count: "<<vd_embeddings[i].max_count<<endl;
+            cout<<"max deg: "<<pags[i].vd_embeddings.max_degree<<" max count: "<<pags[i].vd_embeddings.max_count<<endl;
         }
         
-        for (iter2 = vd_embeddings[i].vd_embeddings.begin(); iter2 != vd_embeddings[i].vd_embeddings.end(); iter2++) {
+        for (iter2 = pags[i].vd_embeddings.vd_embeddings.begin(); iter2 != pags[i].vd_embeddings.vd_embeddings.end(); iter2++) {
             cout<<"embedding "<<iter2->first<<": ";
             set<int> temp = iter2->second;
             set<int>::iterator it;
             for (it = temp.begin(); it != temp.end(); it++)
                 cout<<*it<<" ";
-            cout<<"deg: "<<embeddings[i][iter2->first].max_degree;
+            cout<<"deg: "<<pags[i].v_embeddings[iter2->first].max_degree;
             cout<<endl;
         }
         

@@ -111,27 +111,29 @@ public:
     set<int> edgeIDsSet; // Id of edges in G
 };
 
-class PAG {
-public:
-    set<int> pag; // edges in pag
-    vector<set<int> > embeddings; // edges of the embeddings of that pag.
-};
-
 class EMBEDDINGS {
 public:
     set<int> edges; // edges of that embedding
     set<int> vertices; // vertices of that embedding
     set<int> connected_embeddings; // embeddings that share one or more vertices with that embedding
     int size; // how many embeddings it has as not VD
-    int max_degree;
-    int max_count;
+    int max_degree; // degree of this embedding
+    int max_count; // how many vertices have this degree
 };
 
 class VDEMBEDDINGS {
 public:
-    map<int, set<int> > vd_embeddings;
-    int max_degree;
-    int max_count;
+    map<int, set<int> > vd_embeddings; // edges of the vd embedding at this place in the map
+    int max_degree; // max degree of all vd embeddings
+    int max_count; // count of vd embeddings of this pag with this max degree
+};
+
+class PAG {
+public:
+    set<int> pag; // edges in pag
+    vector<set<int> > embeddings; // edges of the embeddings of that pag.
+    vector<EMBEDDINGS> v_embeddings; // embeddings of this pag
+    VDEMBEDDINGS vd_embeddings; // vd embeddings of this pag
 };
 ////////////////
 
