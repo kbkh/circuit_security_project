@@ -131,9 +131,10 @@ public:
 class PAG {
 public:
     set<int> pag; // edges in pag
+    set<int> vertices; // vertices in pag
+    map<int,int> mapPAGG; // map in which the corresponding vertices in G are stored
     vector<EMBEDDINGS> embeddings; // embeddings of this pag
     VDEMBEDDINGS vd_embeddings; // vd embeddings of this pag
-    map<int,int> mapPAGG; // map in which the corresponding vertices in G are stored
 };
 ////////////////
 
@@ -228,7 +229,7 @@ public:
     /* create all possible subgraphs of size maxPAGsize */
     void subgraphs(int v, set<int> current_subgraph, set<int> possible_edges, set<int> neighbors);
     /* create the graphs from the edges */
-    void create_graph(igraph_t* g, set<int> edges, map<int,int>& map12, bool mapping = true, bool create = true);
+    void create_graph(igraph_t* g, set<int> edges, map<int,int>& map12, set<int>& vertices_set, bool mapping = true, bool create = true);
     ////////////////
     void setConfBudget(int budget) { isosat->setConfBudget(budget); };
     void setPropBudget(int budget) { isosat->setPropBudget(budget); };
