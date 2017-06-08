@@ -2541,7 +2541,7 @@ void Security::get_edge_neighbors() {
     }
 }
 
-void Security::create_graph(igraph_t* g, set<int> edges, bool create) {
+void Security::create_graph(igraph_t* g, set<int> edges, map<int,int>& map12, bool mapping, bool create) {
     map<int,int> vertices;
     
     if (create)
@@ -2568,6 +2568,16 @@ void Security::create_graph(igraph_t* g, set<int> edges, bool create) {
             SETVAN(g, "ID", vid, VAN(G, "ID", from));
             vertices.insert(pair<int,int>(from,vid));
             new_from = vid;
+            
+            if (mapping)
+                map12.insert(pair<int,int>(vid,from));
+            
+            if (!create) {
+                map<int,int>::iterator in = map12.find(from);
+                
+                if (in == map12.end()) // not in set
+                    map12.insert(pair<int,int>(from,vid));
+            }
         } else new_from = vertices[from];
         
         got = vertices.find(to);
@@ -2578,6 +2588,16 @@ void Security::create_graph(igraph_t* g, set<int> edges, bool create) {
             SETVAN(g, "ID", vid, VAN(G, "ID", to));
             vertices.insert(pair<int,int>(to,vid));
             new_to = vid;
+            
+            if (mapping)
+                map12.insert(pair<int,int>(vid,to));
+        
+            if (!create) {
+                map<int,int>::iterator in = map12.find(to);
+                
+                if (in == map12.end()) // not in set
+                    map12.insert(pair<int,int>(to,vid));
+            }
         } else new_to = vertices[to];
         
         igraph_add_edge(g, new_from, new_to);
@@ -2609,8 +2629,9 @@ void Security::subgraphs(int v, set<int> current_subgraph, set<int> possible_edg
             // add an edge to the current subgraph
             current_subgraph.insert(*it);
             
+            map<int,int> mapPAGG;
             igraph_t new_pag;
-            create_graph(&new_pag, current_subgraph);
+            create_graph(&new_pag, current_subgraph, mapPAGG);
             
             igraph_vector_t color11;
             igraph_vector_init(&color11, 0);
@@ -2644,8 +2665,9 @@ void Security::subgraphs(int v, set<int> current_subgraph, set<int> possible_edg
                 //--
                 
                 // create the subgraphs
+                map<int,int> dummy;
                 igraph_t pag;
-                create_graph(&pag, pags[i].pag);
+                create_graph(&pag, pags[i].pag, dummy, false);
                 
                 igraph_vector_t color22;
                 igraph_vector_init(&color22, 0);
@@ -2675,6 +2697,7 @@ void Security::subgraphs(int v, set<int> current_subgraph, set<int> possible_edg
                 PAG temp_pag;
                 pags.push_back(temp_pag);
                 pags[pags.size()-1].pag = current_subgraph;
+                pags[pags.size()-1].mapPAGG = mapPAGG;
             } else {
 //                // debug
 //                cout<<"yup: ";
@@ -2693,7 +2716,7 @@ void Security::subgraphs(int v, set<int> current_subgraph, set<int> possible_edg
                 pags[index].embeddings[pags[index].embeddings.size()-1].edges = current_subgraph;
                 
                 for (int i = 0; i < igraph_vector_size(map12); i++)
-                    igraph_vector_set(map12,(long int)i,(igraph_real_t)VAN(&new_pag, "ID", igraph_vector_e(map12,(long int)i)));
+                    igraph_vector_set(map12, i, VAN(&new_pag, "ID", igraph_vector_e(map12,i)));
                 
                 pags[index].embeddings[pags[index].embeddings.size()-1].map = map12;
                 pags[index].embeddings[pags[index].embeddings.size()-1].max_degree = 0;
@@ -3012,6 +3035,7 @@ void Security::kiso(int min_L1, int max_L1) {
     }
     
     cout<<endl<<"first: "<<first_pag<<endl;
+    vector<vector<int> > VM;
     
     if (pags[first_pag].vd_embeddings.vd_embeddings.size() >= min_L1) {
         int multiple = pags[first_pag].vd_embeddings.vd_embeddings.size()%min_L1;
@@ -3029,18 +3053,47 @@ void Security::kiso(int min_L1, int max_L1) {
             
             cout<<"embedding added to H: "<<itr->first<<endl;
             
+            map<int,int> mapGH;
             set<int> edges = itr->second;
-            create_graph(H, edges, false);
+            create_graph(H, edges,  mapGH, false, false);
             counter++;
             
+            vector<int> temp;
+            
+            // debug
             if (itr->first != pags[first_pag].embeddings.size()-1) {
-                for (int i = 0; i < igraph_vector_size(pags[first_pag].embeddings[itr->first].map); i++)
-                    cout<<igraph_vector_e(pags[first_pag].embeddings[itr->first].map,(long int)i)<<" ";
-                cout<<endl;
+                for (int i = 0; i < igraph_vector_size(pags[first_pag].embeddings[itr->first].map); i++) {
+                    map<int,int>::iterator got = mapGH.find(igraph_vector_e(pags[first_pag].embeddings[itr->first].map, i));
+                    temp.push_back(got->second);
+                    cout<<got->first<<" "<<got->second<<endl;
+                }
+            } else {
+                map<int,int>::iterator it;
+                //cout<<pags[first_pag].mapPAGG.size();
+                for (it = pags[first_pag].mapPAGG.begin(); it != pags[first_pag].mapPAGG.end(); it++) {
+                    map<int,int>::iterator got = mapGH.find(it->second);
+                    temp.push_back(got->second);
+                    cout<<got->first<<" "<<got->second<<" "<<it->first<<endl;
+                }
             }
+            //--
+            
+            VM.push_back(temp);
         }
     }
     
+    // debug
+    cout<<endl;
+    for (int i = 0; i < VM.size(); i++)
+        cout<<i<<" ";
+    cout<<endl;
+    
+    for (int i = 0; i < VM[0].size(); i++) {
+        for(int j = 0; j < VM.size(); j++)
+            cout<<VM[j][i]<<" ";
+        cout<<endl;
+    }
+    //--
     
 //    // debug
 //    cout<<setw(100)<<setfill('-')<<"initial subgraphs"<<setfill('-')<<setw(99)<<"-"<<endl;
