@@ -2554,6 +2554,7 @@ void Security::create_graph(igraph_t* g, set<int> edges, map<int,int>& map12, bo
         
         igraph_edge(G,*it,&from,&to);
         
+        // if adding vertices and egdes to H, "delete" them from G
         if (!create) {
             SETVAN(G, "Removed", from, Removed);
             SETVAN(G, "Removed", to, Removed);
@@ -2569,9 +2570,11 @@ void Security::create_graph(igraph_t* g, set<int> edges, map<int,int>& map12, bo
             vertices.insert(pair<int,int>(from,vid));
             new_from = vid;
             
+            // "mapping" of the vertices of the new pag to vertices in G
             if (mapping)
                 map12.insert(pair<int,int>(vid,from));
             
+            // "mapping" of the vertices of H to vertices in G
             if (!create) {
                 map<int,int>::iterator in = map12.find(from);
                 
@@ -2629,7 +2632,7 @@ void Security::subgraphs(int v, set<int> current_subgraph, set<int> possible_edg
             // add an edge to the current subgraph
             current_subgraph.insert(*it);
             
-            map<int,int> mapPAGG;
+            map<int,int> mapPAGG; // mapping of the new pag from its vertices to G
             igraph_t new_pag;
             create_graph(&new_pag, current_subgraph, mapPAGG);
             
@@ -3042,11 +3045,13 @@ void Security::kiso(int min_L1, int max_L1) {
         map<int, set<int> >::iterator itr;
         int counter = 0;
         for (itr = pags[first_pag].vd_embeddings.vd_embeddings.begin(); itr != pags[first_pag].vd_embeddings.vd_embeddings.end(); itr++) {
+            // if we have a multiple of k vd-embeddings, go through all of them
             if (multiple == 0) {
                 if (counter == pags[first_pag].vd_embeddings.vd_embeddings.size())
                     break;
             } else {
-                int div = floor(pags[first_pag].vd_embeddings.vd_embeddings.size()%min_L1);
+                // if we have a non multiple, we take min_L1 embeddings. If the non multiple is bigger than x*L1_min then we take x*L1_min embeddings
+                int div = floor(pags[first_pag].vd_embeddings.vd_embeddings.size()/min_L1);
                 if (counter == div*min_L1)
                     break;
             }
@@ -3059,6 +3064,37 @@ void Security::kiso(int min_L1, int max_L1) {
             counter++;
             
             vector<int> temp;
+            
+            /*****************************************************************
+             This works because the mapping saves the corresponding vertex in 
+             an embedding for a pag in ascending order (0->end) do when going 
+             through the vertices of the pag in that order we garentee that the
+             mapping is valid. Even if the pag is not in the vd-embeddings, if
+             we get the corresponding vertices for every vd-embed by taking 
+             the mapping done between it and the pag, for every vd-embed, then
+             we garentee that every vertex in any embed that maps to vertex i 
+             in the pag will map to the vertex of any vd_embed that also maps 
+             to vertex i in the pag
+             ****************************************************************/
+            
+            // if it's an embedding of the pag, then the isomorphic test generated a mapping
+            if (itr->first != pags[first_pag].embeddings.size()-1)
+                // go through that mapping and get the id of the vertex in H and insert it in the corresponding column in VM
+                for (int i = 0; i < igraph_vector_size(pags[first_pag].embeddings[itr->first].map); i++) {
+                    map<int,int>::iterator got = mapGH.find(igraph_vector_e(pags[first_pag].embeddings[itr->first].map, i));
+                    temp.push_back(got->second);
+                }
+            else { // if it's the pag itself, no mapping was created other than the one I did
+                map<int,int>::iterator it;
+                // go through that mapping and get the id of the vertex in H and insert in the corresponding column in VM
+                for (it = pags[first_pag].mapPAGG.begin(); it != pags[first_pag].mapPAGG.end(); it++) {
+                    map<int,int>::iterator got = mapGH.find(it->second);
+                    temp.push_back(got->second);
+                }
+            }
+            
+            // add the column the VM
+            VM.push_back(temp);
             
             // debug
             if (itr->first != pags[first_pag].embeddings.size()-1) {
@@ -3077,8 +3113,6 @@ void Security::kiso(int min_L1, int max_L1) {
                 }
             }
             //--
-            
-            VM.push_back(temp);
         }
     }
     
