@@ -3044,6 +3044,7 @@ void Security::kiso(int min_L1, int max_L1) {
         int multiple = pags[first_pag].vd_embeddings.vd_embeddings.size()%min_L1;
         map<int, set<int> >::iterator itr;
         int counter = 0;
+        // for every vd-embedding
         for (itr = pags[first_pag].vd_embeddings.vd_embeddings.begin(); itr != pags[first_pag].vd_embeddings.vd_embeddings.end(); itr++) {
             // if we have a multiple of k vd-embeddings, go through all of them
             if (multiple == 0) {
