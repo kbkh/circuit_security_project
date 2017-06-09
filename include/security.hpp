@@ -113,6 +113,7 @@ public:
 
 class EMBEDDINGS {
 public:
+    bool erase;
     set<int> edges; // edges of that embedding
     set<int> vertices; // vertices of that embedding
     set<int> connected_embeddings; // embeddings that share one or more vertices with that embedding
@@ -133,6 +134,8 @@ public:
     set<int> pag; // edges in pag
     set<int> vertices; // vertices in pag
     map<int,int> mapPAGG; // map in which the corresponding vertices in G are stored
+    int max_degree;
+    set<int> connected_embeddings;
     vector<EMBEDDINGS> embeddings; // embeddings of this pag
     VDEMBEDDINGS vd_embeddings; // vd embeddings of this pag
 };
@@ -229,7 +232,9 @@ public:
     /* create all possible subgraphs of size maxPAGsize */
     void subgraphs(int v, set<int> current_subgraph, set<int> possible_edges, set<int> neighbors);
     /* create the graphs from the edges */
-    void create_graph(igraph_t* g, set<int> edges, map<int,int>& map12, set<int>& vertices_set, bool mapping = true, bool create = true);
+    void create_graph(igraph_t* g, set<int> edges, map<int,int>& map12, set<int>& vertices_set, int* max_degree, bool mapping = true, bool create = true);
+    /**/
+    void find_VD_embeddings(int i);
     ////////////////
     void setConfBudget(int budget) { isosat->setConfBudget(budget); };
     void setPropBudget(int budget) { isosat->setPropBudget(budget); };

@@ -2541,7 +2541,7 @@ void Security::get_edge_neighbors() {
     }
 }
 
-void Security::create_graph(igraph_t* g, set<int> edges, map<int,int>& map12, set<int>& vertices_set, bool mapping, bool create) {
+void Security::create_graph(igraph_t* g, set<int> edges, map<int,int>& map12, set<int>& vertices_set, int* max_degree, bool mapping, bool create) {
     map<int,int> vertices;
     
     if (create)
@@ -2575,6 +2575,9 @@ void Security::create_graph(igraph_t* g, set<int> edges, map<int,int>& map12, se
             if (has == vertices_set.end()) // not in set, security check
                 vertices_set.insert(from);
             
+            if (igraph_vertex_degree(G, from) > *max_degree)
+                *max_degree = igraph_vertex_degree(G, from);
+            
             // "mapping" of the vertices of the new pag to vertices in G
             if (mapping)
                 map12.insert(pair<int,int>(vid,from));
@@ -2601,6 +2604,9 @@ void Security::create_graph(igraph_t* g, set<int> edges, map<int,int>& map12, se
             set<int>::iterator has = vertices_set.find(to);
             if (has == vertices_set.end()) // not in set, security check
                 vertices_set.insert(to);
+            
+            if (igraph_vertex_degree(G, to) > *max_degree)
+                *max_degree = igraph_vertex_degree(G, to);
             
             if (mapping)
                 map12.insert(pair<int,int>(vid,to));
@@ -2645,7 +2651,9 @@ void Security::subgraphs(int v, set<int> current_subgraph, set<int> possible_edg
             map<int,int> mapPAGG; // mapping of the new pag from its vertices to G
             set<int> vert;
             igraph_t new_pag;
-            create_graph(&new_pag, current_subgraph, mapPAGG, vert);
+            int max_degree = 0;
+            
+            create_graph(&new_pag, current_subgraph, mapPAGG, vert, &max_degree);
             
             igraph_vector_t color11;
             igraph_vector_init(&color11, 0);
@@ -2681,8 +2689,9 @@ void Security::subgraphs(int v, set<int> current_subgraph, set<int> possible_edg
                 // create the subgraphs
                 map<int,int> dummy;
                 set<int> dumy;
+                int dum;
                 igraph_t pag;
-                create_graph(&pag, pags[i].pag, dummy, dumy, false);
+                create_graph(&pag, pags[i].pag, dummy, dumy, &dum, false);
                 
                 if (igraph_vcount(&pag) != igraph_vcount(&new_pag))
                     continue;
@@ -2717,6 +2726,7 @@ void Security::subgraphs(int v, set<int> current_subgraph, set<int> possible_edg
                 pags[pags.size()-1].pag = current_subgraph;
                 pags[pags.size()-1].mapPAGG = mapPAGG;
                 pags[pags.size()-1].vertices = vert;
+                pags[pags.size()-1].max_degree = max_degree;
             } else {
                 //                // debug
                 //                cout<<"yup: ";
@@ -2740,6 +2750,8 @@ void Security::subgraphs(int v, set<int> current_subgraph, set<int> possible_edg
                 pags[index].embeddings[pags[index].embeddings.size()-1].map = map12;
                 pags[index].embeddings[pags[index].embeddings.size()-1].max_degree = 0;
                 pags[index].embeddings[pags[index].embeddings.size()-1].vertices = vert;
+                pags[index].embeddings[pags[index].embeddings.size()-1].max_degree = max_degree;
+                pags[index].embeddings[pags[index].embeddings.size()-1].erase = false;
             }
             // bring back the current subgraph to how it was to add another edge from the list
             current_subgraph.erase(*it);
@@ -2782,17 +2794,179 @@ void Security::subgraphs(int v, set<int> current_subgraph, set<int> possible_edg
         subgraphs(v, temp_subgraph, temp_edges, temp_neighbors);
     }
 }
+
+void Security::find_VD_embeddings(int i) {
+    cout<<"pags: "<<i<<endl;
+    // add the pag itself to the embeddings to be studied because it is a part of the graph
+    EMBEDDINGS temp;
+    pags[i].embeddings.push_back(temp);
+    pags[i].embeddings[pags[i].embeddings.size()-1].edges = pags[i].pag;
+    pags[i].embeddings[pags[i].embeddings.size()-1].max_degree = pags[i].max_degree;
+    pags[i].embeddings[pags[i].embeddings.size()-1].vertices = pags[i].vertices;
+    pags[i].embeddings[pags[i].embeddings.size()-1].connected_embeddings = pags[i].connected_embeddings;
+//    pags[i].vd_embeddings.vd_embeddings.clear();
+//    pags[i].vd_embeddings.max_degree = 0;
+//    pags[i].vd_embeddings.max_count = 0;
+    
+    // Initialization
+    for (int j = 0; j < pags[i].embeddings.size(); j++) {
+        cout<<"eyyyy"<<endl;
+        map<int, set<int> >::iterator got = pags[i].vd_embeddings.vd_embeddings.find(j);
+        if (got != pags[i].vd_embeddings.vd_embeddings.end()) // in set
+            continue;
+        
+        set<int>::iterator it;
+        for (it = pags[i].embeddings[j].connected_embeddings.begin(); it != pags[i].embeddings[j].connected_embeddings.end(); it++) {
+            got = pags[i].vd_embeddings.vd_embeddings.find(*it);
+            // if it's alrady connected to a vd-embedding we want to keep this connection since we will skip it in the next step
+            if (got == pags[i].vd_embeddings.vd_embeddings.end()) // not in set
+                pags[i].embeddings[j].connected_embeddings.erase(*it);
+        }
+        
+        cout<<endl;
+        cout<<"embeding #"<<j<<": ";
+        set<int>::iterator iter2;
+        for (iter2 = pags[i].embeddings[j].edges.begin(); iter2 != pags[i].embeddings[j].edges.end(); iter2++)
+            cout<<*iter2<<" ";
+        cout<<endl;
+        cout<<"connected embeddings: ";
+
+        for (it = pags[i].embeddings[j].connected_embeddings.begin(); it != pags[i].embeddings[j].connected_embeddings.end(); it++)
+            cout<<*it<<" ";
+        cout<<endl;
+        
+        
+        //pags[i].embeddings[j].connected_embeddings.clear();
+        pags[i].embeddings[j].size = 0;
+    }
+    
+    map<int,set<int> > size;
+    
+    // for every embedding ...
+    for (int j = 0; j < pags[i].embeddings.size(); j++) {
+        //            // if this embedding is already in the vd embeddings then it is surely still vs embedded because we only remoced vertices and didn't add any
+        map<int, set<int> >::iterator got = pags[i].vd_embeddings.vd_embeddings.find(j);
+        if (got != pags[i].vd_embeddings.vd_embeddings.end()) // in set
+            continue;
+        // ... look at the other embeddings ...
+        for (int k = j+1; k < pags[i].embeddings.size(); k++) {
+            set<int>::iterator it;
+            // ... for every vertex in the embedding studied ...
+            for (it = pags[i].embeddings[j].vertices.begin(); it != pags[i].embeddings[j].vertices.end(); it++) {
+                set<int>::iterator got = pags[i].embeddings[k].vertices.find(*it);
+                // ... see if it is in the other embeddings of the same pag
+                if (got != pags[i].embeddings[k].vertices.end()) { // in set, they are connected
+                    pags[i].embeddings[j].connected_embeddings.insert(k);
+                    pags[i].embeddings[k].connected_embeddings.insert(j);
+                    break; // break and move to the next embeding
+                }
+            }
+        }
+        
+        int temp_size = pags[i].embeddings[j].connected_embeddings.size();
+        pags[i].embeddings[j].size = temp_size;
+        // see if we already found an embedding with this many not vd embeddings
+        // in both cases add the id of the new embedding to that
+        got = size.find(temp_size);
+        if (got == size.end()) { // not in set
+            set<int> temp;
+            temp.insert(j);
+            size.insert(pair<int,set<int> >(temp_size, temp));
+        } else size[temp_size].insert(j); // in set
+    }
+    
+    // while there are embeddings that have connected embeddings (they are not vd embeddings) we remove from the candidate list the embedding that is conncted to the most embeddings
+    // size->first is the # of connected embeddings, size->second is the ids of the embeddings that have that many conneceted embeddings
+    while (size.size() > 1 || size.begin()->first != 0) {
+        //            cout<<"YAS"<<endl;
+        // access last element (in c++ map is sorted automatically everytime we insert an element)
+        map<int,set<int> >::iterator itr = size.end();
+        itr--;
+        
+        // get id of embedding to remove
+        set<int> remove = itr->second;
+        // if more than one have that much connected embeds then we take the first one
+        int to_remove = *remove.begin();
+        //            cout<<to_remove<<endl;
+        // remove it from the set of embeds that have that much connected embeds
+        itr->second.erase(to_remove);
+        // to mark that it already have been considered
+        pags[i].embeddings[to_remove].size = -1;
+        
+        // if it was the last one with that much connected embeds, update mao
+        if (itr->second.empty())
+            size.erase(itr->first);
+        
+        // update size map and size for every connected embedding
+        set<int>::iterator itera;
+        for (itera = pags[i].embeddings[to_remove].connected_embeddings.begin(); itera != pags[i].embeddings[to_remove].connected_embeddings.end(); itera++) {
+            int old_size = pags[i].embeddings[*itera].size;
+            // if it was considered, skip, we don't want to put it back in the size map
+            if (old_size == -1)
+                continue;
+            // remove from size map at the old size element
+            map<int,set<int> >::iterator gotsize = size.find(old_size);
+            gotsize->second.erase(*itera);
+            if (gotsize->second.empty())
+                size.erase(old_size);
+            
+            // place it at the right element in the size map (with the old size decreased by 1)
+            --pags[i].embeddings[*itera].size;
+            int new_size = pags[i].embeddings[*itera].size;
+            gotsize = size.find(new_size);
+            if (gotsize == size.end()) { // not in map
+                set<int> temp;
+                temp.insert(*itera);
+                size.insert(pair<int,set<int> >(new_size, temp));
+            } else size[new_size].insert(*itera);
+        }
+        
+        //            // debug
+        //            cout<<size.size()<<endl;
+        //            map<int,set<int> >::iterator itrat;
+        //            for (itrat = size.begin(); itrat != size.end(); itrat++)
+        //                cout<<itrat->first<<" ";
+        //            cout<<endl;
+        //            cout<<size.begin()->first<<endl;
+        //            //--
+    }
+    
+    // save the VD-embeddings
+    pags[i].vd_embeddings.max_degree = 0;
+    
+    map<int, set<int> >::iterator itervd;
+    for (itervd = pags[i].vd_embeddings.vd_embeddings.begin(); itervd != pags[i].vd_embeddings.vd_embeddings.end(); itervd++) {
+        if (pags[i].embeddings[itervd->first].max_degree > pags[i].vd_embeddings.max_degree) {
+            pags[i].vd_embeddings.max_degree = pags[i].embeddings[itervd->first].max_degree;
+            pags[i].vd_embeddings.max_count = 1;
+        } else if (pags[i].embeddings[itervd->first].max_degree == pags[i].vd_embeddings.max_degree)
+            pags[i].vd_embeddings.max_count++;
+    }
+    
+    for (itervd = size.begin(); itervd != size.end(); itervd++) {
+        set<int> temp = itervd->second;
+        set<int>::iterator itr;
+        for (itr = temp.begin(); itr != temp.end(); itr++) {
+            pags[i].vd_embeddings.vd_embeddings.insert(pair<int, set<int> >(*itr, pags[i].embeddings[*itr].edges));
+            if (pags[i].embeddings[*itr].max_degree > pags[i].vd_embeddings.max_degree) {
+                pags[i].vd_embeddings.max_degree = pags[i].embeddings[*itr].max_degree;
+                pags[i].vd_embeddings.max_count = 1;
+            } else if (pags[i].embeddings[*itr].max_degree == pags[i].vd_embeddings.max_degree)
+                pags[i].vd_embeddings.max_count++;
+        }
+    }
+}
 ////////////////
 
 void Security::kiso(int min_L1, int max_L1) {
     // Added by Karl
-    maxPAGsize = 3;
+    maxPAGsize = 4;
     
     get_edge_neighbors();
     
 //        // debug
 //        cout<<setfill('-')<<setw(100)<<"neighbors of edges"<<setfill('-')<<setw(99)<<"-"<<endl;
-//    
+//
 //        for (int i = 0; i < edge_neighbors.size(); i++) {
 //            cout<<i<<"'s neighbors:";
 //            set<int>::iterator it;
@@ -2857,139 +3031,7 @@ void Security::kiso(int min_L1, int max_L1) {
     int first_pag = -1;
     
     for (int i = 0; i < pags.size(); i++) {
-        // add the pag itself to the embeddings to be studied because it is a part of the graph
-        EMBEDDINGS temp;
-        pags[i].embeddings.push_back(temp);
-        pags[i].embeddings[pags[i].embeddings.size()-1].edges = pags[i].pag;
-        pags[i].embeddings[pags[i].embeddings.size()-1].max_degree = 0;
-        pags[i].embeddings[pags[i].embeddings.size()-1].vertices = pags[i].vertices;
-        
-        // Initialization
-        for (int j = 0; j < pags[i].embeddings.size(); j++) {
-            map<int, set<int> >::iterator got = pags[i].vd_embeddings.vd_embeddings.find(j);
-            if (got != pags[i].vd_embeddings.vd_embeddings.end()) // in set
-                continue;
-            
-            pags[i].embeddings[j].connected_embeddings.clear();
-            pags[i].embeddings[j].max_degree = 0;
-            pags[i].embeddings[j].size = 0;
-        }
-        
-        map<int,set<int> > size;
-        
-        // for every embedding ...
-        for (int j = 0; j < pags[i].embeddings.size(); j++) {
-//            // if this embedding is already in the vd embeddings then it is surely still vs embedded because we only remoced vertices and didn't add any
-            map<int, set<int> >::iterator got = pags[i].vd_embeddings.vd_embeddings.find(j);
-//            if (got != pags[i].vd_embeddings.vd_embeddings.end()) // in set
-//                continue;
-            // ... look at the other embeddings ...
-            for (int k = j+1; k < pags[i].embeddings.size(); k++) {
-                set<int>::iterator it;
-                // ... for every vertex in the embedding studied ...
-                for (it = pags[i].embeddings[j].vertices.begin(); it != pags[i].embeddings[j].vertices.end(); it++) {
-                    set<int>::iterator got = pags[i].embeddings[k].vertices.find(*it);
-                    // ... see if it is in the other embeddings of the same pag
-                    if (got != pags[i].embeddings[k].vertices.end()) { // in set, they are connected
-                        pags[i].embeddings[j].connected_embeddings.insert(k);
-                        pags[i].embeddings[k].connected_embeddings.insert(j);
-                        break; // break and move to the next embeding
-                    }
-                }
-            }
-            
-            int temp_size = pags[i].embeddings[j].connected_embeddings.size();
-            pags[i].embeddings[j].size = temp_size;
-            // see if we already found an embedding with this many not vd embeddings
-            // in both cases add the id of the new embedding to that
-            got = size.find(temp_size);
-            if (got == size.end()) { // not in set
-                set<int> temp;
-                temp.insert(j);
-                size.insert(pair<int,set<int> >(temp_size, temp));
-            } else size[temp_size].insert(j); // in set
-        }
-        
-        // while there are embeddings that have connected embeddings (they are not vd embeddings) we remove from the candidate list the embedding that is conncted to the most embeddings
-        // size->first is the # of connected embeddings, size->second is the ids of the embeddings that have that many conneceted embeddings
-        while (size.size() > 1 || size.begin()->first != 0) {
-            //            cout<<"YAS"<<endl;
-            // access last element (in c++ map is sorted automatically everytime we insert an element)
-            map<int,set<int> >::iterator itr = size.end();
-            itr--;
-            
-            // get id of embedding to remove
-            set<int> remove = itr->second;
-            // if more than one have that much connected embeds then we take the first one
-            int to_remove = *remove.begin();
-            //            cout<<to_remove<<endl;
-            // remove it from the set of embeds that have that much connected embeds
-            itr->second.erase(to_remove);
-            // to mark that it already have been considered
-            pags[i].embeddings[to_remove].size = -1;
-            
-            // if it was the last one with that much connected embeds, update mao
-            if (itr->second.empty())
-                size.erase(itr->first);
-            
-            // update size map and size for every connected embedding
-            set<int>::iterator itera;
-            for (itera = pags[i].embeddings[to_remove].connected_embeddings.begin(); itera != pags[i].embeddings[to_remove].connected_embeddings.end(); itera++) {
-                int old_size = pags[i].embeddings[*itera].size;
-                // if it was considered, skip, we don't want to put it back in the size map
-                if (old_size == -1)
-                    continue;
-                // remove from size map at the old size element
-                map<int,set<int> >::iterator gotsize = size.find(old_size);
-                gotsize->second.erase(*itera);
-                if (gotsize->second.empty())
-                    size.erase(old_size);
-                
-                // place it at the right element in the size map (with the old size decreased by 1)
-                --pags[i].embeddings[*itera].size;
-                int new_size = pags[i].embeddings[*itera].size;
-                gotsize = size.find(new_size);
-                if (gotsize == size.end()) { // not in map
-                    set<int> temp;
-                    temp.insert(*itera);
-                    size.insert(pair<int,set<int> >(new_size, temp));
-                } else size[new_size].insert(*itera);
-            }
-            
-            //            // debug
-            //            cout<<size.size()<<endl;
-            //            map<int,set<int> >::iterator itrat;
-            //            for (itrat = size.begin(); itrat != size.end(); itrat++)
-            //                cout<<itrat->first<<" ";
-            //            cout<<endl;
-            //            cout<<size.begin()->first<<endl;
-            //            //--
-        }
-        
-        // save the VD-embeddings
-        pags[i].vd_embeddings.max_degree = 0;
-        
-        map<int, set<int> >::iterator itervd;
-//        for (itervd = pags[i].vd_embeddings.vd_embeddings.begin(); itervd != pags[i].vd_embeddings.vd_embeddings.end(); itervd++) {
-//            if (pags[i].embeddings[itervd->first].max_degree > pags[i].vd_embeddings.max_degree) {
-//                pags[i].vd_embeddings.max_degree = pags[i].embeddings[itervd->first].max_degree;
-//                pags[i].vd_embeddings.max_count = 1;
-//            } else if (pags[i].embeddings[itervd->first].max_degree == pags[i].vd_embeddings.max_degree)
-//                pags[i].vd_embeddings.max_count++;
-//        }
-        
-        for (itervd = size.begin(); itervd != size.end(); itervd++) {
-            set<int> temp = itervd->second;
-            set<int>::iterator itr;
-            for (itr = temp.begin(); itr != temp.end(); itr++) {
-                pags[i].vd_embeddings.vd_embeddings.insert(pair<int, set<int> >(*itr, pags[i].embeddings[*itr].edges));
-                if (pags[i].embeddings[*itr].max_degree > pags[i].vd_embeddings.max_degree) {
-                    pags[i].vd_embeddings.max_degree = pags[i].embeddings[*itr].max_degree;
-                    pags[i].vd_embeddings.max_count = 1;
-                } else if (pags[i].embeddings[*itr].max_degree == pags[i].vd_embeddings.max_degree)
-                    pags[i].vd_embeddings.max_count++;
-            }
-        }
+        find_VD_embeddings(i);
         
         if (pags[i].vd_embeddings.vd_embeddings.size() >= min_L1) {
             if (pags[i].vd_embeddings.max_degree > max_degree) {
@@ -3039,23 +3081,29 @@ void Security::kiso(int min_L1, int max_L1) {
             for (it = pags[i].embeddings[j].vertices.begin(); it != pags[i].embeddings[j].vertices.end(); it++)
                 cout<<*it<<" ";
             cout<<endl;
+            
+            cout<<"max_deg: "<<pags[i].embeddings[j].max_degree<<endl;
         }
         
         cout<<endl;
         
         map<int, set<int> >::iterator iter2;
-        for (iter2 = size.begin(); iter2 != size.end(); iter2++) {
-            cout<<"size: "<<iter2->first<<" embeddings #s: ";
-            set<int> temp = iter2->second;
-            set<int>::iterator it;
-            for (it = temp.begin(); it != temp.end(); it++)
-                cout<<*it<<" ";
-            cout<<endl<<"VD-embeddings: ";
-            for (it = temp.begin(); it != temp.end(); it++)
-                cout<<*it<<" ";
-            cout<<endl;
-            cout<<"max deg: "<<pags[i].vd_embeddings.max_degree<<" max count: "<<pags[i].vd_embeddings.max_count<<endl;
-        }
+        cout<<"VD-embeddings: ";
+        for (iter2 = pags[i].vd_embeddings.vd_embeddings.begin(); iter2 != pags[i].vd_embeddings.vd_embeddings.end(); iter2++)
+            cout<<iter2->first<<" ";
+        cout<<endl<<"max deg: "<<pags[i].vd_embeddings.max_degree<<" max count: "<<pags[i].vd_embeddings.max_count<<endl;
+//        for (iter2 = size.begin(); iter2 != size.end(); iter2++) {
+//            cout<<"size: "<<iter2->first<<" embeddings #s: ";
+//            set<int> temp = iter2->second;
+//            set<int>::iterator it;
+//            for (it = temp.begin(); it != temp.end(); it++)
+//                cout<<*it<<" ";
+//            cout<<endl<<"VD-embeddings: ";
+//            for (it = temp.begin(); it != temp.end(); it++)
+//                cout<<*it<<" ";
+//            cout<<endl;
+//            cout<<"max deg: "<<pags[i].vd_embeddings.max_degree<<" max count: "<<pags[i].vd_embeddings.max_count<<endl;
+//        }
         
         for (iter2 = pags[i].vd_embeddings.vd_embeddings.begin(); iter2 != pags[i].vd_embeddings.vd_embeddings.end(); iter2++) {
             cout<<"embedding "<<iter2->first<<": ";
@@ -3099,9 +3147,10 @@ void Security::kiso(int min_L1, int max_L1) {
             
             map<int,int> mapGH;
             set<int> dummy;
+            int dum;
             set<int> edges = itr->second;
             // add embedding to H
-            create_graph(H, edges,  mapGH, dummy, false, false);
+            create_graph(H, edges,  mapGH, dummy, &dum, false, false);
             counter++;
             
             vector<int> temp;
@@ -3166,41 +3215,71 @@ void Security::kiso(int min_L1, int max_L1) {
         for (int i = pag_loop; i >= 0; i--) {
             int to_remove = pags[i].embeddings.size()-1;
             int loop = pags[i].embeddings.size() - 1;
-            for (int j = loop; j >= 0 ; j--) {
-                bool remove = false;
+//            for (int j = loop; j >= 0 ; j--) {
+//                bool remove = false;
+//                set<int>::iterator it;
+//                int to_remove = -1;
+//                for (it = pags[i].embeddings[j].vertices.begin(); it != pags[i].embeddings[j].vertices.end(); it++) {
+//                    if (VAN(G, "Removed", *it) == Removed) { // if it removed
+//                        to_remove = j;
+//                        remove = true;
+//                        break;
+//                    }
+//                }
+//                
+//                if (remove) {
+//                    pags[i].embeddings.erase(pags[i].embeddings.begin()+j);
+//                    map<int, set<int> >::iterator got = pags[i].vd_embeddings.vd_embeddings.find(to_remove);
+//                    if (got != pags[i].vd_embeddings.vd_embeddings.end()) // in set
+//                        pags[i].vd_embeddings.vd_embeddings.erase(to_remove);
+//                }
+//            }
+            int index = 0;
+            for (int j = 0; j < loop; j++) {
+                index++;
                 set<int>::iterator it;
                 int to_remove = -1;
                 for (it = pags[i].embeddings[j].vertices.begin(); it != pags[i].embeddings[j].vertices.end(); it++) {
                     if (VAN(G, "Removed", *it) == Removed) { // if it removed
                         to_remove = j;
+                        pags[i].embeddings[j].erase = true;
+                        index--;
+                        break;
+                    }
+                }
+                
+                map<int, set<int> >::iterator got = pags[i].vd_embeddings.vd_embeddings.find(to_remove);
+                if (got != pags[i].vd_embeddings.vd_embeddings.end()) { // in set
+                    if (pags[i].embeddings[j].erase)
+                        pags[i].vd_embeddings.vd_embeddings.erase(to_remove);
+                    else {
+                        pags[i].vd_embeddings.vd_embeddings.insert(pair<int, set<int> >(index, got->second));
+                        pags[i].vd_embeddings.vd_embeddings.erase(to_remove);
+                    }
+                }
+            }
+            
+            for (int j = loop; j >= 0 ; j--)
+                if (pags[i].embeddings[j].erase)
+                    pags[i].embeddings.erase(pags[i].embeddings.begin()+j);
+            
+            if (pags[i].embeddings.size() == 0) // the pag is a part of the embeddings, so if it's 0 then the pag should be removed
+                pags.erase(pags.begin()+i);
+            else {
+                bool remove = false;
+                set<int>::iterator it;
+                for (it = pags[i].vertices.begin(); it != pags[i].vertices.end(); it++) {
+                    if (VAN(G, "Removed", *it) == Removed) { // if it removed
                         remove = true;
                         break;
                     }
                 }
                 
-                if (remove) {
-                    pags[i].embeddings.erase(pags[i].embeddings.begin()+j);
-                    map<int, set<int> >::iterator got = pags[i].vd_embeddings.vd_embeddings.find(to_remove);
-                    if (got != pags[i].vd_embeddings.vd_embeddings.end()) // in set
-                        pags[i].vd_embeddings.vd_embeddings.erase(to_remove);
-                }
-            }
-            
-            bool remove = false;
-            set<int>::iterator it;
-            for (it = pags[i].vertices.begin(); it != pags[i].vertices.end(); it++) {
-                if (VAN(G, "Removed", *it) == Removed) { // if it removed
-                    remove = true;
-                    break;
-                }
-            }
-            
-            if (remove == true) {
-                if (pags[i].embeddings.size() == 0)
-                    pags.erase(pags.begin()+i);
-                else {
+                if (remove == true) {
                     pags[i].pag = pags[i].embeddings[0].edges;
                     pags[i].vertices = pags[i].embeddings[0].vertices;
+                    pags[i].max_degree = pags[i].embeddings[0].max_degree;
+                    pags[i].connected_embeddings = pags[i].embeddings[0].connected_embeddings;
                     pags[i].mapPAGG.clear();
                     
                     for (int j = 0; j < igraph_vector_size(pags[i].embeddings[0].map); j++)
@@ -3211,13 +3290,16 @@ void Security::kiso(int min_L1, int max_L1) {
                     map<int, set<int> >::iterator got = pags[i].vd_embeddings.vd_embeddings.find(to_remove);
                     if (got != pags[i].vd_embeddings.vd_embeddings.end()) // in set
                         pags[i].vd_embeddings.vd_embeddings.erase(to_remove);
-                }
+                } else pags[i].embeddings.erase(pags[i].embeddings.end()-1); // If the pag is a vd-embedding then remove it from list of embeddings because we will add it back when searching for the VD-embeddings
             }
         }
+        
+        for (int i = 0; i < pags.size(); i++)
+            find_VD_embeddings(i);
     }
-    
+
     // debug
-    
+
     for (int i = 0; i < pags.size(); i++ ){
         cout<<endl<<setw(100)<<setfill('-')<<"updated pags, embeddings, VD embeddings"<<setfill('-')<<setw(99)<<"-"<<endl;
         cout<<"pag #"<<i<<": ";
@@ -3237,16 +3319,28 @@ void Security::kiso(int min_L1, int max_L1) {
             for (iter2 = pags[i].embeddings[j].edges.begin(); iter2 != pags[i].embeddings[j].edges.end(); iter2++)
                 cout<<*iter2<<" ";
             cout<<endl;
+            cout<<"connected embeddings: ";
             set<int>::iterator it;
             for (it = pags[i].embeddings[j].connected_embeddings.begin(); it != pags[i].embeddings[j].connected_embeddings.end(); it++)
                 cout<<*it<<" ";
             cout<<endl;
         }
         
-        map<int, set<int> >::iterator it;
-        cout<<"vd-embeddings: ";
-        for (it = pags[i].vd_embeddings.vd_embeddings.begin(); it != pags[i].vd_embeddings.vd_embeddings.end(); it++)
-            cout<<it->first<<endl;
+        map<int, set<int> >::iterator iter2;
+        cout<<"VD-embeddings: ";
+        for (iter2 = pags[i].vd_embeddings.vd_embeddings.begin(); iter2 != pags[i].vd_embeddings.vd_embeddings.end(); iter2++)
+            cout<<iter2->first<<" ";
+        cout<<endl<<"max deg: "<<pags[i].vd_embeddings.max_degree<<" max count: "<<pags[i].vd_embeddings.max_count<<endl;
+        
+        for (iter2 = pags[i].vd_embeddings.vd_embeddings.begin(); iter2 != pags[i].vd_embeddings.vd_embeddings.end(); iter2++) {
+            cout<<"embedding "<<iter2->first<<": ";
+            set<int> temp = iter2->second;
+            set<int>::iterator it;
+            for (it = temp.begin(); it != temp.end(); it++)
+                cout<<*it<<" ";
+            cout<<"deg: "<<pags[i].embeddings[iter2->first].max_degree;
+            cout<<endl;
+        }
     }
     
     cout<<endl;
