@@ -113,7 +113,6 @@ public:
 
 class EMBEDDINGS {
 public:
-    bool erase;
     set<int> edges; // edges of that embedding
     set<int> vertices; // vertices of that embedding
     set<int> connected_embeddings; // embeddings that share one or more vertices with that embedding
@@ -134,8 +133,7 @@ public:
     set<int> pag; // edges in pag
     set<int> vertices; // vertices in pag
     map<int,int> mapPAGG; // map in which the corresponding vertices in G are stored
-    int max_degree;
-    set<int> connected_embeddings;
+    int max_degree; // degree of this embedding (PAG)
     vector<EMBEDDINGS> embeddings; // embeddings of this pag
     VDEMBEDDINGS vd_embeddings; // vd embeddings of this pag
 };
@@ -247,7 +245,7 @@ public:
     
     void S1_rand    (int threads=1, int min_L1=2, bool quite = true);
     void S1_greedy  (bool save_state = true, int threads=1, int min_L1=2, int max_L1=-1, bool quite = true); // Added by Karl (int remove_vertex_max = 0)
-    void kiso(int min_L1, int max_L1);
+    void kiso(int min_L1, int max_L1, int maxPsize);
     void df(igraph_vector_t* v, igraph_t* vect, int vert1, int vert, int d);
     void p1(igraph_t* G, igraph_vector_t* ids, int min_L1);
     int count(igraph_t* G, igraph_vector_t* ids);

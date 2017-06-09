@@ -51,7 +51,7 @@ int main(int argc, char **argv) {
      ******************************/
     
     bool mono_lib(false), print_gate(false), print_solns(false), print_sat(false), print_blif(false), print_verilog(false);
-    int num_threads, budget, remove_vertices_max; // Added by Karl (remove_vertices_max)
+    int num_threads, budget, remove_vertices_max, maxPAGsize; // Added by Karl (remove_vertices_max)
     float remove_percent(0.6);
     vector<string> test_args;
     string outName;
@@ -77,6 +77,7 @@ int main(int argc, char **argv) {
      "   3: S1 - Greedy [min S1] \n")
     // Added by Karl
     ("remove_vertices,v", po::value<int>(&remove_vertices_max)->default_value(0),   "Number of vertices to remove")
+    ("maxPAGsize,p", po::value<int>(&maxPAGsize)->default_value(2), "Number if edges in a PAG")
     ("output data file,f", po::value<string>(&outName)->default_value("out.txt"),  "Name of the file that will be the input for gnuplot")
     ////////////////
     ("num_threads,n",   po::value<int>(&num_threads)->default_value(1),         "Number of threads")
@@ -512,7 +513,7 @@ int main(int argc, char **argv) {
         if (!done)
         {
             clock_t tic = clock();
-            security->kiso(min_L1, max_L1);
+            security->kiso(min_L1, max_L1, maxPAGsize);
             clock_t toc = clock();
             //        cout << endl << "Heuristic took: ";
             //       cout << (double) (toc-tic)/CLOCKS_PER_SEC << endl;
