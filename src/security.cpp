@@ -2817,8 +2817,6 @@ void Security::find_VD_embeddings(int i) {
     
     // for every embedding ...
     for (int j = 0; j < pags[i].embeddings.size(); j++) {
-        //            // if this embedding is already in the vd embeddings then it is surely still vs embedded because we only remoced vertices and didn't add any
-        map<int, set<int> >::iterator got = pags[i].vd_embeddings.vd_embeddings.find(j);
         // ... look at the other embeddings ...
         for (int k = j+1; k < pags[i].embeddings.size(); k++) {
             set<int>::iterator it;
@@ -2838,7 +2836,7 @@ void Security::find_VD_embeddings(int i) {
         pags[i].embeddings[j].size = temp_size;
         // see if we already found an embedding with this many not vd embeddings
         // in both cases add the id of the new embedding to that
-        got = size.find(temp_size);
+        map<int, set<int> >::iterator got = size.find(temp_size);;
         if (got == size.end()) { // not in set
             set<int> temp;
             temp.insert(j);
@@ -2864,7 +2862,7 @@ void Security::find_VD_embeddings(int i) {
         // to mark that it already have been considered
         pags[i].embeddings[to_remove].size = -1;
         
-        // if it was the last one with that much connected embeds, update mao
+        // if it was the last one with that much connected embeds, update map
         if (itr->second.empty())
             size.erase(itr->first);
         
