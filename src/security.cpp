@@ -3345,6 +3345,8 @@ void Security::kiso(int min_L1, int max_L1, int maxPsize) {
     //    //--
     
     cout<<endl;
+    cout<<igraph_ecount(G) - igraph_ecount(H)<<endl;
+    cout<<endl;
     return;
     ////////////////
     
