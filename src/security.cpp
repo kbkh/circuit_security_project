@@ -3348,7 +3348,19 @@ void Security::kiso(int min_L1, int max_L1, int maxPsize) {
     //    //--
     
     cout<<endl;
-    cout<<igraph_ecount(G) - igraph_ecount(H)<<endl;
+    int G_ecount = igraph_ecount(G);
+    
+    int vcount = igraph_vcount(G) - 1;
+    for (int i = vcount; i >= 0; i--) {
+        if (VAN(G, "Removed", i) == Removed) {
+            igraph_vs_t vid;
+            igraph_vs_1(&vid, i);
+            igraph_delete_vertices(G,vid);
+        }
+    }
+    
+    cout<<G_ecount - igraph_ecount(H)<<endl;
+    cout<<igraph_vcount(H)<<endl;
     cout<<endl;
     return;
     ////////////////

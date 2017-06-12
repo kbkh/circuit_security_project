@@ -460,6 +460,7 @@ int main(int argc, char **argv) {
                 igraph_add_vertices(&G, 1, 0);
                 SETVAN(&G, "colour", igraph_vcount(&G) - 1, i);
                 SETVAN(&G, "Removed", igraph_vcount(&G) - 1, NotRemoved);
+                SETVAN(&G, "ID", igraph_vcount(&G) - 1, igraph_vcount(&G) - 1);
             }
         }
         cout<<"vcount2: "<<igraph_vcount(&G)<<endl;
