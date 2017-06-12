@@ -130,6 +130,7 @@ public:
 
 class PAG {
 public:
+    bool processed;
     set<int> pag; // edges in pag
     set<int> vertices; // vertices in pag
     map<int,int> mapPAGG; // map in which the corresponding vertices in G are stored

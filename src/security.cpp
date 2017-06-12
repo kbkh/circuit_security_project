@@ -2727,6 +2727,7 @@ void Security::subgraphs(int v, set<int> current_subgraph, set<int> possible_edg
                 pags[pags.size()-1].mapPAGG = mapPAGG;
                 pags[pags.size()-1].vertices = vert;
                 pags[pags.size()-1].max_degree = max_degree;
+                pags[pags.size()-1].processed = false;
             } else {
                 //                // debug
                 //                cout<<"yup: ";
@@ -3004,6 +3005,9 @@ void Security::kiso(int min_L1, int max_L1, int maxPsize) {
         first_pag = -1;
         
         for (int i = 0; i < pags.size(); i++) {
+            if (pags[i].processed)
+                continue;
+            
             find_VD_embeddings(i);
             
             if (pags[i].vd_embeddings.vd_embeddings.size() >= min_L1) {
@@ -3087,6 +3091,7 @@ void Security::kiso(int min_L1, int max_L1, int maxPsize) {
         
         //    while (first_pag != -1) {
         if (pags[first_pag].vd_embeddings.vd_embeddings.size() >= min_L1) {
+            pags[first_pag].processed = true;
             int multiple = pags[first_pag].vd_embeddings.vd_embeddings.size()%min_L1;
             map<int, set<int> >::iterator itr;
             int counter = 0;
