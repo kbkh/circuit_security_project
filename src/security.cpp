@@ -3195,9 +3195,9 @@ void Security::kiso(int min_L1, int max_L1, int maxPsize) {
                     // if it was, remove it from the embeddings and from the vd-embeddings
                     if (remove) {
                         pags[i].embeddings.erase(pags[i].embeddings.begin()+j);
-                        map<int, set<int> >::iterator got = pags[i].vd_embeddings.vd_embeddings.find(to_remove);
-                        if (got != pags[i].vd_embeddings.vd_embeddings.end()) // in set
-                            pags[i].vd_embeddings.vd_embeddings.erase(to_remove);
+//                        map<int, set<int> >::iterator got = pags[i].vd_embeddings.vd_embeddings.find(to_remove);
+//                        if (got != pags[i].vd_embeddings.vd_embeddings.end()) // in set
+//                            pags[i].vd_embeddings.vd_embeddings.erase(to_remove);
                     }
                 }
                 
@@ -3228,9 +3228,9 @@ void Security::kiso(int min_L1, int max_L1, int maxPsize) {
                         // delete the pag
                         pags[i].embeddings.erase(pags[i].embeddings.begin());
                         
-                        map<int, set<int> >::iterator got = pags[i].vd_embeddings.vd_embeddings.find(to_remove);
-                        if (got != pags[i].vd_embeddings.vd_embeddings.end()) // in set
-                            pags[i].vd_embeddings.vd_embeddings.erase(to_remove);
+//                        map<int, set<int> >::iterator got = pags[i].vd_embeddings.vd_embeddings.find(to_remove);
+//                        if (got != pags[i].vd_embeddings.vd_embeddings.end()) // in set
+//                            pags[i].vd_embeddings.vd_embeddings.erase(to_remove);
                     } else pags[i].embeddings.erase(pags[i].embeddings.end()-1); // If the pag is a vd-embedding then remove it from list of embeddings because we will add it back when searching for the VD-embeddings
                 }
             }
