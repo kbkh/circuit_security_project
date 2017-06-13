@@ -232,8 +232,10 @@ public:
     void subgraphs(int v, set<int> current_subgraph, set<int> possible_edges, set<int> neighbors);
     /* create the graphs from the edges */
     void create_graph(igraph_t* g, set<int> edges, map<int,int>& map12, set<int>& vertices_set, int* max_degree, bool mapping = true, bool create = true);
-    /**/
+    /* Find VD-embeddings */
     void find_VD_embeddings(int i);
+    /* Find pags and embeddings. Take care of possible edges to add etc. */
+    void find_subgraphs();
     ////////////////
     void setConfBudget(int budget) { isosat->setConfBudget(budget); };
     void setPropBudget(int budget) { isosat->setPropBudget(budget); };
