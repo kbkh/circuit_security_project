@@ -3297,7 +3297,7 @@ void Security::kiso(int min_L1, int max_L1, int maxPsize) {
         }
     }
     
-    edge_neighbors.clear()
+    edge_neighbors.clear();
     
     get_edge_neighbors();
     
