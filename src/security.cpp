@@ -34,7 +34,8 @@ int notLifted = 0;
 int maxPAGsize = 0;
 vector<set<int> > edge_neighbors;
 vector<PAG> pags;
-bool testing = false;
+vector<PAG> mini_pags;
+bool anonimyze = false;
 ////////////////
 
 /************************************************************//**
@@ -2516,6 +2517,7 @@ void Security::create_graph(igraph_t* g, set<int> edges, map<int,int>& map12, se
         int new_from, new_to;
         
         igraph_edge(G,*it,&from,&to);
+        cout<<to<<endl;
         
         // if adding vertices and egdes to H, "delete" them from G
         if (!create) {
@@ -2553,7 +2555,7 @@ void Security::create_graph(igraph_t* g, set<int> edges, map<int,int>& map12, se
                     map12.insert(pair<int,int>(from,vid));
             }
         } else new_from = vertices[from];
-        
+        cout<<"okk4"<<endl;
         got = vertices.find(to);
         if (got == vertices.end()) { // not in set
             igraph_add_vertices(g, 1, 0);
@@ -2567,13 +2569,13 @@ void Security::create_graph(igraph_t* g, set<int> edges, map<int,int>& map12, se
             set<int>::iterator has = vertices_set.find(to);
             if (has == vertices_set.end()) // not in set, security check
                 vertices_set.insert(to);
-            
+            cout<<"okk6"<<endl;
             if (igraph_vertex_degree(G, to) > *max_degree)
                 *max_degree = igraph_vertex_degree(G, to);
-            
+            cout<<"okk7"<<endl;
             if (mapping)
                 map12.insert(pair<int,int>(vid,to));
-            
+            cout<<"okk8"<<endl;
             if (!create) {
                 map<int,int>::iterator in = map12.find(to);
                 
@@ -2581,7 +2583,7 @@ void Security::create_graph(igraph_t* g, set<int> edges, map<int,int>& map12, se
                     map12.insert(pair<int,int>(to,vid));
             }
         } else new_to = vertices[to];
-        
+        cout<<"okk3"<<endl;
         igraph_add_edge(g, new_from, new_to);
         SETEAN(g, "ID", igraph_ecount(g)-1, EAN(G, "ID", *it));
     }
@@ -2684,13 +2686,23 @@ void Security::subgraphs(int v, set<int> current_subgraph, set<int> possible_edg
                 //                //--
                 
                 // add this subgraph to the pags
-                PAG temp_pag;
-                pags.push_back(temp_pag);
-                pags[pags.size()-1].pag = current_subgraph;
-                pags[pags.size()-1].mapPAGG = mapPAGG;
-                pags[pags.size()-1].vertices = vert;
-                pags[pags.size()-1].max_degree = max_degree;
-                pags[pags.size()-1].processed = false;
+                if (!anonimyze) {
+                    PAG temp_pag;
+                    pags.push_back(temp_pag);
+                    pags[pags.size()-1].pag = current_subgraph;
+                    pags[pags.size()-1].mapPAGG = mapPAGG;
+                    pags[pags.size()-1].vertices = vert;
+                    pags[pags.size()-1].max_degree = max_degree;
+                    pags[pags.size()-1].processed = false;
+                } else {
+                    PAG temp_pag;
+                    mini_pags.push_back(temp_pag);
+                    mini_pags[mini_pags.size()-1].pag = current_subgraph;
+                    mini_pags[mini_pags.size()-1].mapPAGG = mapPAGG;
+                    mini_pags[mini_pags.size()-1].vertices = vert;
+                    mini_pags[mini_pags.size()-1].max_degree = max_degree;
+                    mini_pags[mini_pags.size()-1].processed = false;
+                }
             } else {
                 //                // debug
                 //                cout<<"yup: ";
@@ -2704,17 +2716,31 @@ void Security::subgraphs(int v, set<int> current_subgraph, set<int> possible_edg
                 //                //--
                 
                 // add it to the list of embedding for that PAG
-                EMBEDDINGS temp;
-                pags[index].embeddings.push_back(temp);
-                pags[index].embeddings[pags[index].embeddings.size()-1].edges = current_subgraph;
-                
-                for (int i = 0; i < igraph_vector_size(map12); i++)
-                    igraph_vector_set(map12, i, VAN(&new_pag, "ID", igraph_vector_e(map12,i)));
-                
-                pags[index].embeddings[pags[index].embeddings.size()-1].map = map12;
-                pags[index].embeddings[pags[index].embeddings.size()-1].max_degree = 0;
-                pags[index].embeddings[pags[index].embeddings.size()-1].vertices = vert;
-                pags[index].embeddings[pags[index].embeddings.size()-1].max_degree = max_degree;
+                if (!anonimyze) {
+                    EMBEDDINGS temp;
+                    pags[index].embeddings.push_back(temp);
+                    pags[index].embeddings[pags[index].embeddings.size()-1].edges = current_subgraph;
+                    
+                    for (int i = 0; i < igraph_vector_size(map12); i++)
+                        igraph_vector_set(map12, i, VAN(&new_pag, "ID", igraph_vector_e(map12,i)));
+                    
+                    pags[index].embeddings[pags[index].embeddings.size()-1].map = map12;
+                    pags[index].embeddings[pags[index].embeddings.size()-1].max_degree = 0;
+                    pags[index].embeddings[pags[index].embeddings.size()-1].vertices = vert;
+                    pags[index].embeddings[pags[index].embeddings.size()-1].max_degree = max_degree;
+                } else {
+                    EMBEDDINGS temp;
+                    mini_pags[index].embeddings.push_back(temp);
+                    mini_pags[index].embeddings[mini_pags[index].embeddings.size()-1].edges = current_subgraph;
+                    
+                    for (int i = 0; i < igraph_vector_size(map12); i++)
+                        igraph_vector_set(map12, i, VAN(&new_pag, "ID", igraph_vector_e(map12,i)));
+                    
+                    mini_pags[index].embeddings[mini_pags[index].embeddings.size()-1].map = map12;
+                    mini_pags[index].embeddings[mini_pags[index].embeddings.size()-1].max_degree = 0;
+                    mini_pags[index].embeddings[mini_pags[index].embeddings.size()-1].vertices = vert;
+                    mini_pags[index].embeddings[mini_pags[index].embeddings.size()-1].max_degree = max_degree;
+                }
             }
             // bring back the current subgraph to how it was to add another edge from the list
             current_subgraph.erase(*it);
@@ -3297,24 +3323,35 @@ void Security::kiso(int min_L1, int max_L1, int maxPsize) {
         }
     }
     
-    edge_neighbors.clear();
-    
-    get_edge_neighbors();
-    
-    // debug
-    cout<<setfill('-')<<setw(100)<<"neighbors of edges"<<setfill('-')<<setw(99)<<"-"<<endl;
-    for (int i = 0; i < edge_neighbors.size(); i++) {
-        cout<<EAN(G,"ID",i)<<"'s neighbors:";
-        set<int>::iterator it;
-        for (it = edge_neighbors[i].begin(); it != edge_neighbors[i].end(); it++)
-            cout<<" "<<EAN(G,"ID",*it);
-        cout<<endl;
-    }
-    //--
-    
-    find_subgraphs();
+    int maxpagsize = maxPAGsize;
+    maxPAGsize--;
+    G->save("wdir/G3_circuit.gml");
+    anonimyze = true;
     
     while (!pags.empty()) {
+        while(maxPAGsize > maxpagsize/2) {
+            edge_neighbors.clear();
+            
+            get_edge_neighbors();
+            
+            // debug
+            cout<<setfill('-')<<setw(100)<<"neighbors of edges"<<setfill('-')<<setw(99)<<"-"<<endl;
+            for (int i = 0; i < edge_neighbors.size(); i++) {
+                cout<<EAN(G,"ID",i)<<"'s neighbors:";
+                set<int>::iterator it;
+                for (it = edge_neighbors[i].begin(); it != edge_neighbors[i].end(); it++)
+                    cout<<" "<<EAN(G,"ID",*it);
+                cout<<endl;
+            }
+            //--
+            cout<<"yup"<<endl;
+            find_subgraphs();
+            
+            maxPAGsize--;
+        }
+        
+        maxPAGsize = maxpagsize;
+        
         break;
     }
     
