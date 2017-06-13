@@ -3297,27 +3297,6 @@ void Security::kiso(int min_L1, int max_L1, int maxPsize) {
         }
     }
     
-    edge_neighbors.clear();
-    
-    get_edge_neighbors();
-    
-    // debug
-    cout<<setfill('-')<<setw(100)<<"neighbors of edges"<<setfill('-')<<setw(99)<<"-"<<endl;
-    for (int i = 0; i < edge_neighbors.size(); i++) {
-        cout<<EAN(G,"ID",i)<<"'s neighbors:";
-        set<int>::iterator it;
-        for (it = edge_neighbors[i].begin(); it != edge_neighbors[i].end(); it++)
-            cout<<" "<<EAN(G,"ID",*it);
-        cout<<endl;
-    }
-    //--
-    
-    find_subgraphs();
-    
-    while (!pags.empty()) {
-        break;
-    }
-    
     cout<<endl;
     cout<<"G ecount - H ecount = "<<G_ecount - igraph_ecount(H)<<endl;
     cout<<"H vcount = "<<igraph_vcount(H)<<endl;
