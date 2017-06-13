@@ -51,7 +51,7 @@ int main(int argc, char **argv) {
      ******************************/
     
     bool mono_lib(false), print_gate(false), print_solns(false), print_sat(false), print_blif(false), print_verilog(false);
-    int num_threads, budget, remove_vertices_max, maxPAGsize; // Added by Karl (remove_vertices_max)
+    int num_threads, budget, remove_vertices_max, maxPAGsize, target_security; // Added by Karl (remove_vertices_max)
     float remove_percent(0.6);
     vector<string> test_args;
     string outName;
@@ -78,6 +78,7 @@ int main(int argc, char **argv) {
     // Added by Karl
     ("remove_vertices,v", po::value<int>(&remove_vertices_max)->default_value(0),   "Number of vertices to remove")
     ("maxPAGsize,p", po::value<int>(&maxPAGsize)->default_value(2), "Number if edges in a PAG")
+    ("security,k", po::value<int>(&target_security)->default_value(2), "Target security")
     ("output data file,f", po::value<string>(&outName)->default_value("out.txt"),  "Name of the file that will be the input for gnuplot")
     ////////////////
     ("num_threads,n",   po::value<int>(&num_threads)->default_value(1),         "Number of threads")
@@ -432,16 +433,16 @@ int main(int argc, char **argv) {
         int original = igraph_vcount(&G);
         
         // Creare a vector of size of how many colors we have and fill it with how many vertices of that color exist in the graph
-        for (int i = 0; i < igraph_vcount(&G); i++)
-        {
-            int color = VAN(&G, "colour", i);
-            if (igraph_vector_size(&match_vert) < color + 1)
-                for (int j = igraph_vector_size(&match_vert); j <= color; j++)
-                {
-                    igraph_vector_push_back(&match_vert, 0);
-                }
-            VECTOR(match_vert)[color]++;
-        }
+//        for (int i = 0; i < igraph_vcount(&G); i++)
+//        {
+//            int color = VAN(&G, "colour", i);
+//            if (igraph_vector_size(&match_vert) < color + 1)
+//                for (int j = igraph_vector_size(&match_vert); j <= color; j++)
+//                {
+//                    igraph_vector_push_back(&match_vert, 0);
+//                }
+//            VECTOR(match_vert)[color]++;
+//        }
         cout<<"vcount1: "<<igraph_vcount(&G)<<endl;
         cout<<"ecount1: "<<igraph_ecount(&G)<<endl;
         igraph_t temp;
@@ -452,17 +453,17 @@ int main(int argc, char **argv) {
         
         // if a color doesn't have a multiple of k (min_L1) vertices, add vertices with that color
         int count = 0;
-        for (int i = 0; i < igraph_vector_size(&match_vert); i++)
-        {
-            int n = ((int) VECTOR(match_vert)[i]) % min_L1; if (n == 0) continue;
-            for (int j = 0; j < min_L1 - n; j++)
-            { count++;
-                igraph_add_vertices(&G, 1, 0);
-                SETVAN(&G, "colour", igraph_vcount(&G) - 1, i);
-                SETVAN(&G, "Removed", igraph_vcount(&G) - 1, NotRemoved);
-                SETVAN(&G, "ID", igraph_vcount(&G) - 1, igraph_vcount(&G) - 1);
-            }
-        }
+//        for (int i = 0; i < igraph_vector_size(&match_vert); i++)
+//        {
+//            int n = ((int) VECTOR(match_vert)[i]) % min_L1; if (n == 0) continue;
+//            for (int j = 0; j < min_L1 - n; j++)
+//            { count++;
+//                igraph_add_vertices(&G, 1, 0);
+//                SETVAN(&G, "colour", igraph_vcount(&G) - 1, i);
+//                SETVAN(&G, "Removed", igraph_vcount(&G) - 1, NotRemoved);
+//                SETVAN(&G, "ID", igraph_vcount(&G) - 1, igraph_vcount(&G) - 1);
+//            }
+//        }
         cout<<"vcount2: "<<igraph_vcount(&G)<<endl;
         cout<<"ecount2: "<<igraph_ecount(&G)<<endl;
         
@@ -514,7 +515,7 @@ int main(int argc, char **argv) {
         if (!done)
         {
             clock_t tic = clock();
-            security->kiso(min_L1, max_L1, maxPAGsize);
+            security->kiso(target_security, max_L1, maxPAGsize);
             clock_t toc = clock();
             //        cout << endl << "Heuristic took: ";
             //       cout << (double) (toc-tic)/CLOCKS_PER_SEC << endl;

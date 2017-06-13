@@ -236,6 +236,10 @@ public:
     void find_VD_embeddings(int i);
     /* Find pags and embeddings. Take care of possible edges to add etc. */
     void find_subgraphs();
+    /* Update pags, embeddings etc */
+    void update_pags();
+    /* Find VD embeddings */
+    void VD_embeddings(int* max_degree, int* max_count, int* first_pag, int min_L1);
     ////////////////
     void setConfBudget(int budget) { isosat->setConfBudget(budget); };
     void setPropBudget(int budget) { isosat->setPropBudget(budget); };
