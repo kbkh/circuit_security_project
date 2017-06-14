@@ -3217,7 +3217,7 @@ void Security::kiso(int min_L1, int max_L1, int maxPsize) {
         
         int pag = got->second[got->second.size() - 1];
         got->second.erase(got->second.begin() + got->second.size() - 1);
-        if (got->first > min_L1/2) {
+        if (got->first >= min_L1/2) {
             cout<<endl<<setfill('-')<<setw(100)<<"Add embeddings to H"<<setfill('-')<<setw(99)<<"-"<<endl;
             cout<<"pag #"<<pag<<endl;
             map<int,set<int> >::iterator it;
