@@ -3217,7 +3217,7 @@ void Security::kiso(int min_L1, int max_L1, int maxPsize) {
         
         int pag = got->second[got->second.size() - 1];
         got->second.erase(got->second.begin() + got->second.size() - 1);
-        if (got->first >= min_L1/2) {
+        if (got->first > min_L1/2) {
             cout<<endl<<setfill('-')<<setw(100)<<"Add embeddings to H"<<setfill('-')<<setw(99)<<"-"<<endl;
             cout<<"pag #"<<pag<<endl;
             map<int,set<int> >::iterator it;
@@ -3242,6 +3242,22 @@ void Security::kiso(int min_L1, int max_L1, int maxPsize) {
             }
         } else {
             // lift those embeddings
+            cout<<endl<<setfill('-')<<setw(100)<<"Remove embeddings from H"<<setfill('-')<<setw(99)<<"-"<<endl;
+            cout<<"pag #"<<pag<<endl;
+            map<int,set<int> >::iterator it;
+            for (it = pags[pag].vd_embeddings.vd_embeddings.begin(); it != pags[pag].vd_embeddings.vd_embeddings.end(); it++) {
+                cout<<"embedding removed from H: "<<it->first<<endl;
+                set<int>::iterator itr;
+                for (itr = it->second.begin(); itr != it->second.end(); itr++) {
+                    int from, to;
+                    
+                    igraph_edge(G,*itr,&from,&to);
+                    
+                    SETVAN(G, "Removed", from, Removed);
+                    SETVAN(G, "Removed", to, Removed);
+                    SETEAN(G, "Removed", *itr, Removed);
+                }
+            }
         }
         
         // Upadate PAGs
