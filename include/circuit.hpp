@@ -112,7 +112,9 @@ public:
     Edge get_edge  (int index);
     void add_edge  (Edge edge);
     void del_edge  (Edge edge);
+    // Added by Karl
     void del_vertices();
+    ////////////////
     bool test_edge (Edge edge);
     
     void copy (Circuit* circuit) {

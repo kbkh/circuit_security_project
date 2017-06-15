@@ -472,6 +472,7 @@ int main(int argc, char **argv) {
         H.copy(&G);
         H.rand_del_edges((float) 1.0);
         H.del_vertices();
+
         bool done(false);
         
         // Added by Karl

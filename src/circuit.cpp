@@ -354,12 +354,12 @@ void Circuit::del_edge(Edge edge) {
         igraph_delete_edges(this, igraph_ess_1(index));
 }
 
-
+// Added by Karl
 void Circuit::del_vertices() {
     while (igraph_vcount(this) != 0)
         igraph_delete_vertices(this,igraph_vss_1(0));
 }
-
+////////////////
 
 
 /*************************************************************************//**

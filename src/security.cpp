@@ -3154,19 +3154,20 @@ void Security::kiso(int min_L1, int max_L1, int maxPsize) {
                 for (int i = loop; i >= 0; i--) {
                     if (multiple != 0 && counter == div*min_L1)
                         break;
-                    
+
                     // add v to H
                     igraph_add_vertices(H, 1, 0);
                     int vid = igraph_vcount(H) - 1;
                     SETVAN(H, "colour", vid, VAN(G, "colour", temp[i]));
                     SETVAN(H, "ID", vid, VAN(G, "ID", temp[i]));
                     // delete v from G
-                    igraph_vs_t id;
-                    igraph_vs_1(&id, temp[i]);
-                    igraph_delete_vertices(G,id);
+//                    igraph_vs_t id;
+//                    igraph_vs_1(&id, temp[i]);
+//                    igraph_delete_vertices(G,id);
+                    SETVAN(G, "Removed", temp[i], Removed);
                     // delete v from vector
                     temp.erase(temp.begin()+i);
-                    
+
                     counter++;
                 }
                 
@@ -3183,9 +3184,10 @@ void Security::kiso(int min_L1, int max_L1, int maxPsize) {
                                 SETVAN(H, "ID", vid, VAN(G, "ID", temp[i]));
                                 
                                 // delete v from G
-                                igraph_vs_t id;
-                                igraph_vs_1(&id, temp[i]);
-                                igraph_delete_vertices(G,id);
+//                                igraph_vs_t id;
+//                                igraph_vs_1(&id, temp[i]);
+//                                igraph_delete_vertices(G,id);
+                                SETVAN(G, "Removed", temp[i], Removed);
                                 // delete v from vector
                                 temp.erase(temp.begin()+i);
                             } else {
@@ -3202,15 +3204,26 @@ void Security::kiso(int min_L1, int max_L1, int maxPsize) {
                             G_v_lifted++;
 
                             // delete v from G
-                            igraph_vs_t vid;
-                            igraph_vs_1(&vid, temp[i]);
-                            igraph_delete_vertices(G,vid);
+//                            igraph_vs_t vid;
+//                            igraph_vs_1(&vid, temp[i]);
+//                            igraph_delete_vertices(G,vid);
+                            SETVAN(G, "Removed", temp[i], Removed);
                             // delete v from vector
                             temp.erase(temp.begin()+i);
                         }
                     }
                 }
             }
+            
+            int vcount = igraph_vcount(G) - 1;
+            for (int i = vcount; i >= 0; i--) {
+                if (VAN(G, "Removed", i) == Removed) {
+                    igraph_vs_t vid;
+                    igraph_vs_1(&vid, i);
+                    igraph_delete_vertices(G,vid);
+                }
+            }
+            
             continue;
         }
         
