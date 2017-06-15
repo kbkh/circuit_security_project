@@ -38,6 +38,11 @@ int maxPAGsize = 0;
 vector<set<int> > edge_neighbors;
 vector<PAG> pags;
 map<int,vector<int> > colors;
+int H_v_dummy = 0;
+int H_e_dummy = 0;
+int G_v_lifted = 0;
+int G_e_lifted = 0;
+bool start = false;
 ////////////////
 
 /************************************************************//**
@@ -2530,6 +2535,9 @@ void Security::create_graph(igraph_t* g, set<int> edges, map<int,int>& map12, se
         map<int,int>::iterator got = vertices.find(from);
         if (got == vertices.end()) { // not in set
             igraph_add_vertices(g, 1, 0);
+            if (start)
+                H_v_dummy++;
+            cout<<H_v_dummy<<endl;
             int vid = igraph_vcount(g) - 1;
             SETVAN(g, "colour", vid, VAN(G, "colour", from));
             SETVAN(g, "ID", vid, VAN(G, "ID", from));
@@ -2560,6 +2568,9 @@ void Security::create_graph(igraph_t* g, set<int> edges, map<int,int>& map12, se
         got = vertices.find(to);
         if (got == vertices.end()) { // not in set
             igraph_add_vertices(g, 1, 0);
+            if (start)
+                H_v_dummy++;
+            cout<<H_v_dummy<<endl;
             int vid = igraph_vcount(g) - 1;
             SETVAN(g, "colour", vid, VAN(G, "colour", to));
             SETVAN(g, "ID", vid, VAN(G, "ID", to));
@@ -2586,6 +2597,9 @@ void Security::create_graph(igraph_t* g, set<int> edges, map<int,int>& map12, se
         } else new_to = vertices[to];
         
         igraph_add_edge(g, new_from, new_to);
+        if (start)
+            H_e_dummy++;
+        cout<<H_e_dummy<<endl;
         SETEAN(g, "ID", igraph_ecount(g)-1, EAN(G, "ID", *it));
     }
 }
@@ -3093,10 +3107,13 @@ void Security::VD_embeddings(int* max_degree, int* max_count, int* first_pag, in
 }
 
 void Security::kiso(int min_L1, int max_L1, int maxPsize) {
+    clock_t tic = clock();
     maxPAGsize = maxPsize;
     int G_ecount = igraph_ecount(G);
+    int G_vcount = igraph_vcount(G);
     
     while (igraph_vcount(G) != 0) {
+        start = false;
         pags.clear();
         edge_neighbors.clear();
         cout<<"PAG: "<<maxPAGsize<<endl;
@@ -3169,6 +3186,8 @@ void Security::kiso(int min_L1, int max_L1, int maxPsize) {
                                 // delete v from vector
                                 temp.erase(temp.begin()+i);
                             } else {
+                                H_v_dummy++;
+                                cout<<H_v_dummy<<endl;
                                 int tmp = it->first;
                                 SETVAN(H, "colour", vid, tmp);
                                 SETVAN(H, "ID", vid, vid);
@@ -3177,6 +3196,7 @@ void Security::kiso(int min_L1, int max_L1, int maxPsize) {
                     } else {
                         loop = temp.size()-1;
                         for (int i = loop; i >= 0; i--) {
+                            G_v_lifted++;
                             // delete v from G
                             igraph_vs_t vid;
                             igraph_vs_1(&vid, temp[i]);
@@ -3298,6 +3318,7 @@ void Security::kiso(int min_L1, int max_L1, int maxPsize) {
         cout<<endl<<setfill('-')<<setw(100)<<"Anonimyze"<<setfill('-')<<setw(99)<<"-"<<endl;
         
         while (!pags.empty()) {
+            start = false;
             map<int,vector<int> > vd_embeddings;
             // find the pag that has the most vd-embeddings left
             for (int i = 0; i < pags.size(); i++) {
@@ -3321,10 +3342,12 @@ void Security::kiso(int min_L1, int max_L1, int maxPsize) {
                 cout<<"pag #"<<pag<<endl;
                 map<int,set<int> >::iterator it;
                 it = pags[pag].vd_embeddings.vd_embeddings.begin();
+            
                 for (int i = 0; i < min_L1; i++) {
-                    it++;
-                    if (it == pags[pag].vd_embeddings.vd_embeddings.end())
+                    if (it == pags[pag].vd_embeddings.vd_embeddings.end()) {
                         it = pags[pag].vd_embeddings.vd_embeddings.begin();
+                        start = true;
+                    }
                     
                     cout<<"embedding added to H: "<<it->first<<endl;
                     set<int>::iterator itr;
@@ -3338,6 +3361,8 @@ void Security::kiso(int min_L1, int max_L1, int maxPsize) {
                     // add embedding to H
                     create_graph(H, edges, mapGH, dummy, &dum, false, false);
                     cout<<"H vcount = "<<igraph_vcount(H)<<endl<<endl;
+                    
+                    it++;
                 }
             } else {
                 // lift those embeddings
@@ -3346,11 +3371,22 @@ void Security::kiso(int min_L1, int max_L1, int maxPsize) {
                 map<int,set<int> >::iterator it;
                 for (it = pags[pag].vd_embeddings.vd_embeddings.begin(); it != pags[pag].vd_embeddings.vd_embeddings.end(); it++) {
                     cout<<"embedding removed from H: "<<it->first<<endl;
+                    set<int> removed;
                     set<int>::iterator itr;
                     for (itr = it->second.begin(); itr != it->second.end(); itr++) {
                         int from, to;
                         
                         igraph_edge(G,*itr,&from,&to);
+                        
+                        set<int>::iterator got = removed.find(from);
+                        if (got == removed.end()) // not in set
+                            G_v_lifted++;
+                        
+                        got = removed.find(to);
+                        if (got == removed.end()) // not in set
+                            G_v_lifted++;
+                        
+                        G_e_lifted++;
                         
                         SETVAN(G, "Removed", from, Removed);
                         SETVAN(G, "Removed", to, Removed);
@@ -3412,10 +3448,18 @@ void Security::kiso(int min_L1, int max_L1, int maxPsize) {
         cout<<endl;
     }
     
+    cout<<endl<<setfill('-')<<setw(100)<<"Report"<<setfill('-')<<setw(99)<<"-"<<endl;
+    cout<<"G initial vertex count: "<<G_vcount<<endl;
+    cout<<"G initial edge count: "<<G_ecount<<endl;
+    cout<<"G final vertex count: "<<G_v_lifted<<endl;
+    cout<<"G final edge count: "<<G_e_lifted<<endl;
     cout<<endl;
-    cout<<"G ecount - H ecount = "<<G_ecount - igraph_ecount(H)<<endl;
-    cout<<"H vcount = "<<igraph_vcount(H)<<endl;
-    cout<<"G vcount = "<<igraph_vcount(G)<<endl;
+    cout<<"H final vertex count, with dummies: "<<igraph_vcount(H)<<endl;
+    cout<<"H final edge count, with dummies: "<<igraph_ecount(H)<<endl;
+    cout<<"H final vertex count, without dummies: "<<igraph_vcount(H) - H_v_dummy<<endl;
+    cout<<"H final edge count, without dummies: "<<igraph_ecount(H) - H_e_dummy<<endl;
+    cout<<endl;
+    cout<<"Lifted edges: "<<G_ecount - (igraph_ecount(H) - H_e_dummy) - G_e_lifted<<endl;
     cout<<endl;
     
 //    // debug
@@ -3485,6 +3529,10 @@ void Security::kiso(int min_L1, int max_L1, int maxPsize) {
 //        }
 //    }
 //    //--
+    
+    clock_t toc = clock();
+
+    cout<<"Took: "<<(double) (toc-tic)/CLOCKS_PER_SEC<<endl;
 }
 /*************************************************************************//**
                                                                             * @brief
