@@ -2535,9 +2535,10 @@ void Security::create_graph(igraph_t* g, set<int> edges, map<int,int>& map12, se
         map<int,int>::iterator got = vertices.find(from);
         if (got == vertices.end()) { // not in set
             igraph_add_vertices(g, 1, 0);
+            
             if (start)
                 H_v_dummy++;
-            cout<<H_v_dummy<<endl;
+;
             int vid = igraph_vcount(g) - 1;
             SETVAN(g, "colour", vid, VAN(G, "colour", from));
             SETVAN(g, "ID", vid, VAN(G, "ID", from));
@@ -2568,9 +2569,10 @@ void Security::create_graph(igraph_t* g, set<int> edges, map<int,int>& map12, se
         got = vertices.find(to);
         if (got == vertices.end()) { // not in set
             igraph_add_vertices(g, 1, 0);
+            
             if (start)
                 H_v_dummy++;
-            cout<<H_v_dummy<<endl;
+        
             int vid = igraph_vcount(g) - 1;
             SETVAN(g, "colour", vid, VAN(G, "colour", to));
             SETVAN(g, "ID", vid, VAN(G, "ID", to));
@@ -2597,9 +2599,10 @@ void Security::create_graph(igraph_t* g, set<int> edges, map<int,int>& map12, se
         } else new_to = vertices[to];
         
         igraph_add_edge(g, new_from, new_to);
+        
         if (start)
             H_e_dummy++;
-        cout<<H_e_dummy<<endl;
+ 
         SETEAN(g, "ID", igraph_ecount(g)-1, EAN(G, "ID", *it));
     }
 }
@@ -3141,10 +3144,10 @@ void Security::kiso(int min_L1, int max_L1, int maxPsize) {
             map<int, vector<int> >::iterator it;
             for (it = colors.begin(); it != colors.end(); it++) {
                 vector<int> temp = it->second;
-                
+
                 int multiple = temp.size()%min_L1;
                 int div = floor(temp.size()/min_L1);
-                
+
                 int loop = temp.size()-1;
                 int counter = 0;
             
@@ -3187,7 +3190,7 @@ void Security::kiso(int min_L1, int max_L1, int maxPsize) {
                                 temp.erase(temp.begin()+i);
                             } else {
                                 H_v_dummy++;
-                                cout<<H_v_dummy<<endl;
+                                
                                 int tmp = it->first;
                                 SETVAN(H, "colour", vid, tmp);
                                 SETVAN(H, "ID", vid, vid);
@@ -3197,6 +3200,7 @@ void Security::kiso(int min_L1, int max_L1, int maxPsize) {
                         loop = temp.size()-1;
                         for (int i = loop; i >= 0; i--) {
                             G_v_lifted++;
+
                             // delete v from G
                             igraph_vs_t vid;
                             igraph_vs_1(&vid, temp[i]);
@@ -3379,13 +3383,17 @@ void Security::kiso(int min_L1, int max_L1, int maxPsize) {
                         igraph_edge(G,*itr,&from,&to);
                         
                         set<int>::iterator got = removed.find(from);
-                        if (got == removed.end()) // not in set
+                        if (got == removed.end()) { // not in set
                             G_v_lifted++;
+                            removed.insert(from);
+                        }
                         
                         got = removed.find(to);
-                        if (got == removed.end()) // not in set
+                        if (got == removed.end()) { // not in set
                             G_v_lifted++;
-                        
+                            removed.insert(to);
+                        }
+
                         G_e_lifted++;
                         
                         SETVAN(G, "Removed", from, Removed);
