@@ -3144,49 +3144,49 @@ void Security::kiso(int min_L1, int max_L1, int maxPsize) {
             map<int, vector<int> >::iterator it;
             for (it = colors.begin(); it != colors.end(); it++) {
                 vector<int> temp = it->second;
-
-                int multiple = temp.size()%min_L1;
-                int div = floor(temp.size()/min_L1);
-
-                int loop = temp.size()-1;
-                int counter = 0;
-            
-                for (int i = loop; i >= 0; i--) {
-                    if (multiple != 0 && counter == div*min_L1)
-                        break;
-
-                    // add v to H
-                    igraph_add_vertices(H, 1, 0);
-                    int vid = igraph_vcount(H) - 1;
-                    SETVAN(H, "colour", vid, VAN(G, "colour", temp[i]));
-                    SETVAN(H, "ID", vid, VAN(G, "ID", temp[i]));
-                    // delete v from G
-//                    igraph_vs_t id;
-//                    igraph_vs_1(&id, temp[i]);
-//                    igraph_delete_vertices(G,id);
-                    SETVAN(G, "Removed", temp[i], Removed);
-                    // delete v from vector
-                    temp.erase(temp.begin()+i);
-
-                    counter++;
-                }
                 
-                if (multiple != 0) {
+                //int multiple = temp.size()%min_L1;
+                //int div = floor(temp.size()/min_L1);
+                
+                int loop = temp.size()-1;
+                //int counter = 0;
+                if (temp.size() >= min_L1) {
+                    for (int i = loop; i >= 0; i--) {
+                        //                    if (multiple != 0 && counter == div*min_L1)
+                        //                        break;
+                        
+                        // add v to H
+                        igraph_add_vertices(H, 1, 0);
+                        int vid = igraph_vcount(H) - 1;
+                        SETVAN(H, "colour", vid, VAN(G, "colour", temp[i]));
+                        SETVAN(H, "ID", vid, VAN(G, "ID", temp[i]));
+                        // delete v from G
+                        //                    igraph_vs_t id;
+                        //                    igraph_vs_1(&id, temp[i]);
+                        //                    igraph_delete_vertices(G,id);
+                        SETVAN(G, "Removed", temp[i], Removed);
+                        // delete v from vector
+                        temp.erase(temp.begin()+i);
+                        
+                        //counter++;
+                    }
+                } else {
+                    //                if (multiple != 0) {
                     if (temp.size() >= min_L1/2) {
                         // add
                         for (int i = min_L1; i >= 0; i--) {
                             // add v to H
                             igraph_add_vertices(H, 1, 0);
-                           
+                            
                             int vid = igraph_vcount(H) - 1;
-                            if (i < multiple) {
+                            if (i < temp.size()) {
                                 SETVAN(H, "colour", vid, VAN(G, "colour", temp[i]));
                                 SETVAN(H, "ID", vid, VAN(G, "ID", temp[i]));
                                 
                                 // delete v from G
-//                                igraph_vs_t id;
-//                                igraph_vs_1(&id, temp[i]);
-//                                igraph_delete_vertices(G,id);
+                                //                                igraph_vs_t id;
+                                //                                igraph_vs_1(&id, temp[i]);
+                                //                                igraph_delete_vertices(G,id);
                                 SETVAN(G, "Removed", temp[i], Removed);
                                 // delete v from vector
                                 temp.erase(temp.begin()+i);
@@ -3202,11 +3202,11 @@ void Security::kiso(int min_L1, int max_L1, int maxPsize) {
                         loop = temp.size()-1;
                         for (int i = loop; i >= 0; i--) {
                             G_v_lifted++;
-
+                            
                             // delete v from G
-//                            igraph_vs_t vid;
-//                            igraph_vs_1(&vid, temp[i]);
-//                            igraph_delete_vertices(G,vid);
+                            //                            igraph_vs_t vid;
+                            //                            igraph_vs_1(&vid, temp[i]);
+                            //                            igraph_delete_vertices(G,vid);
                             SETVAN(G, "Removed", temp[i], Removed);
                             // delete v from vector
                             temp.erase(temp.begin()+i);
@@ -3253,21 +3253,21 @@ void Security::kiso(int min_L1, int max_L1, int maxPsize) {
             
             if (pags[first_pag].vd_embeddings.vd_embeddings.size() >= min_L1) {
                 pags[first_pag].processed = true;
-                int multiple = pags[first_pag].vd_embeddings.vd_embeddings.size()%min_L1;
+                //int multiple = pags[first_pag].vd_embeddings.vd_embeddings.size()%min_L1;
                 map<int, set<int> >::iterator itr;
                 int counter = 0;
                 // for every vd-embedding
                 for (itr = pags[first_pag].vd_embeddings.vd_embeddings.begin(); itr != pags[first_pag].vd_embeddings.vd_embeddings.end(); itr++) {
                     // if we have a multiple of k vd-embeddings, go through all of them
-                    if (multiple == 0) {
-                        if (counter == pags[first_pag].vd_embeddings.vd_embeddings.size())
-                            break;
-                    } else {
-                        // if we have a non multiple, we take min_L1 embeddings. If the non multiple is bigger than x*L1_min then we take x*L1_min embeddings
-                        int div = floor(pags[first_pag].vd_embeddings.vd_embeddings.size()/min_L1);
-                        if (counter == div*min_L1)
-                            break;
-                    }
+//                    if (multiple == 0) {
+//                        if (counter == pags[first_pag].vd_embeddings.vd_embeddings.size())
+//                            break;
+//                    } else {
+//                        // if we have a non multiple, we take min_L1 embeddings. If the non multiple is bigger than x*L1_min then we take x*L1_min embeddings
+//                        int div = floor(pags[first_pag].vd_embeddings.vd_embeddings.size()/min_L1);
+//                        if (counter == div*min_L1)
+//                            break;
+//                    }
                     
                     cout<<"embedding added to H: "<<itr->first<<endl;
                     
