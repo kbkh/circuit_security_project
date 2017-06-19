@@ -14,6 +14,7 @@
 #include <iostream>
 #include <fstream>
 #include "security.hpp"
+#include "main.hpp"
 
 #define DEBUG
 //#define PRINT_SOLUTION
@@ -2538,7 +2539,7 @@ void Security::create_graph(igraph_t* g, set<int> edges, map<int,int>& map12, se
             
             if (start)
                 H_v_dummy++;
-;
+            ;
             int vid = igraph_vcount(g) - 1;
             SETVAN(g, "colour", vid, VAN(G, "colour", from));
             SETVAN(g, "ID", vid, VAN(G, "ID", from));
@@ -2572,7 +2573,7 @@ void Security::create_graph(igraph_t* g, set<int> edges, map<int,int>& map12, se
             
             if (start)
                 H_v_dummy++;
-        
+            
             int vid = igraph_vcount(g) - 1;
             SETVAN(g, "colour", vid, VAN(G, "colour", to));
             SETVAN(g, "ID", vid, VAN(G, "ID", to));
@@ -2602,7 +2603,7 @@ void Security::create_graph(igraph_t* g, set<int> edges, map<int,int>& map12, se
         
         if (start)
             H_e_dummy++;
- 
+        
         SETEAN(g, "ID", igraph_ecount(g)-1, EAN(G, "ID", *it));
     }
 }
@@ -2895,7 +2896,7 @@ void Security::find_VD_embeddings(int i) {
     pags[i].vd_embeddings.max_degree = 0;
     
     map<int, set<int> >::iterator itervd;
-
+    
     for (itervd = size.begin(); itervd != size.end(); itervd++) {
         set<int> temp = itervd->second;
         set<int>::iterator itr;
@@ -3110,10 +3111,21 @@ void Security::VD_embeddings(int* max_degree, int* max_count, int* first_pag, in
 }
 
 void Security::kiso(int min_L1, int max_L1, int maxPsize, int tresh) {
+    maxPAGsize = 0;
+    edge_neighbors.clear();
+    pags.clear();
+    colors.clear();
+    H_v_dummy = 0;
+    H_e_dummy = 0;
+    G_v_lifted = 0;
+    G_e_lifted = 0;
+    start = false;
+    
     clock_t tic = clock();
     maxPAGsize = maxPsize;
     
-    int treshhold = tresh == 0 ? 0 : min_L1/tresh;
+    int treshold = tresh == 0 ? 0 : min_L1/tresh;
+    cout<<"treshold: "<<treshold<<endl;
     int G_ecount = igraph_ecount(G);
     int G_vcount = igraph_vcount(G);
     
@@ -3174,7 +3186,7 @@ void Security::kiso(int min_L1, int max_L1, int maxPsize, int tresh) {
                     }
                 } else {
                     //                if (multiple != 0) {
-                    if (temp.size() >= treshhold) {
+                    if (temp.size() >= treshold) {
                         // add
                         for (int i = min_L1; i >= 0; i--) {
                             // add v to H
@@ -3261,15 +3273,15 @@ void Security::kiso(int min_L1, int max_L1, int maxPsize, int tresh) {
                 // for every vd-embedding
                 for (itr = pags[first_pag].vd_embeddings.vd_embeddings.begin(); itr != pags[first_pag].vd_embeddings.vd_embeddings.end(); itr++) {
                     // if we have a multiple of k vd-embeddings, go through all of them
-//                    if (multiple == 0) {
-//                        if (counter == pags[first_pag].vd_embeddings.vd_embeddings.size())
-//                            break;
-//                    } else {
-//                        // if we have a non multiple, we take min_L1 embeddings. If the non multiple is bigger than x*L1_min then we take x*L1_min embeddings
-//                        int div = floor(pags[first_pag].vd_embeddings.vd_embeddings.size()/min_L1);
-//                        if (counter == div*min_L1)
-//                            break;
-//                    }
+                    //                    if (multiple == 0) {
+                    //                        if (counter == pags[first_pag].vd_embeddings.vd_embeddings.size())
+                    //                            break;
+                    //                    } else {
+                    //                        // if we have a non multiple, we take min_L1 embeddings. If the non multiple is bigger than x*L1_min then we take x*L1_min embeddings
+                    //                        int div = floor(pags[first_pag].vd_embeddings.vd_embeddings.size()/min_L1);
+                    //                        if (counter == div*min_L1)
+                    //                            break;
+                    //                    }
                     
                     cout<<"embedding added to H: "<<itr->first<<endl;
                     
@@ -3277,7 +3289,7 @@ void Security::kiso(int min_L1, int max_L1, int maxPsize, int tresh) {
                     set<int> dummy;
                     int dum;
                     set<int> edges = itr->second;
-
+                    
                     // add embedding to H
                     create_graph(H, edges,  mapGH, dummy, &dum, false, false);
                     counter++;
@@ -3356,12 +3368,12 @@ void Security::kiso(int min_L1, int max_L1, int maxPsize, int tresh) {
             
             int pag = got->second[got->second.size() - 1];
             got->second.erase(got->second.begin() + got->second.size() - 1);
-            if (got->first >= treshhold) {
+            if (got->first >= treshold) {
                 cout<<endl<<setfill('-')<<setw(100)<<"Add embeddings to H"<<setfill('-')<<setw(99)<<"-"<<endl;
                 cout<<"pag #"<<pag<<endl;
                 map<int,set<int> >::iterator it;
                 it = pags[pag].vd_embeddings.vd_embeddings.begin();
-            
+                
                 for (int i = 0; i < min_L1; i++) {
                     if (it == pags[pag].vd_embeddings.vd_embeddings.end()) {
                         it = pags[pag].vd_embeddings.vd_embeddings.begin();
@@ -3408,7 +3420,7 @@ void Security::kiso(int min_L1, int max_L1, int maxPsize, int tresh) {
                             G_v_lifted++;
                             removed.insert(to);
                         }
-
+                        
                         G_e_lifted++;
                         
                         SETVAN(G, "Removed", from, Removed);
@@ -3472,6 +3484,7 @@ void Security::kiso(int min_L1, int max_L1, int maxPsize, int tresh) {
     }
     
     cout<<endl<<setfill('-')<<setw(100)<<"Report"<<setfill('-')<<setw(99)<<"-"<<endl;
+    cout<<"Security lvl: "<<min_L1<<endl;
     cout<<"G initial vertex count: "<<G_vcount<<endl;
     cout<<"G initial edge count: "<<G_ecount<<endl;
     cout<<"G final vertex count: "<<G_v_lifted<<endl;
@@ -3482,80 +3495,83 @@ void Security::kiso(int min_L1, int max_L1, int maxPsize, int tresh) {
     cout<<"H final vertex count, without dummies: "<<igraph_vcount(H) - H_v_dummy<<endl;
     cout<<"H final edge count, without dummies: "<<igraph_ecount(H) - H_e_dummy<<endl;
     cout<<endl;
-    cout<<"Lifted edges: "<<G_ecount - (igraph_ecount(H) - H_e_dummy) - G_e_lifted<<endl;
+    int lifted_edges = igraph_ecount(H) == 0 ? 0 : G_ecount - (igraph_ecount(H) - H_e_dummy) - G_e_lifted;
+    cout<<"Lifted edges: "<<lifted_edges<<endl;
     cout<<endl;
     
-//    // debug
-//    
-//    for (int i = 0; i < pags.size(); i++ ){
-//        cout<<endl<<setw(100)<<setfill('-')<<"updated pags, embeddings, VD embeddings"<<setfill('-')<<setw(99)<<"-"<<endl;
-//        cout<<"pag #"<<i<<": ";
-//        set<int>::iterator iter;
-//        for (iter = pags[i].pag.begin(); iter != pags[i].pag.end(); iter++)
-//            cout<<*iter<<" ";
-//        cout<<endl;
-//        cout<<"map: ";
-//        map<int,int>::iterator itr;
-//        for (itr = pags[i].mapPAGG.begin(); itr != pags[i].mapPAGG.end(); itr++)
-//            cout<<itr->second<<" ";
-//        cout<<endl;
-//        
-//        for (int j = 0; j < pags[i].embeddings.size(); j++) {
-//            cout<<"embeding #"<<j<<": ";
-//            set<int>::iterator iter2;
-//            for (iter2 = pags[i].embeddings[j].edges.begin(); iter2 != pags[i].embeddings[j].edges.end(); iter2++)
-//                cout<<*iter2<<" ";
-//            cout<<endl;
-//            cout<<"connected embeddings: ";
-//            set<int>::iterator it;
-//            for (it = pags[i].embeddings[j].connected_embeddings.begin(); it != pags[i].embeddings[j].connected_embeddings.end(); it++)
-//                cout<<*it<<" ";
-//            cout<<endl;
-//        }
-//        
-//        map<int, set<int> >::iterator iter2;
-//        cout<<"VD-embeddings: ";
-//        for (iter2 = pags[i].vd_embeddings.vd_embeddings.begin(); iter2 != pags[i].vd_embeddings.vd_embeddings.end(); iter2++)
-//            cout<<iter2->first<<" ";
-//        cout<<endl<<"max deg: "<<pags[i].vd_embeddings.max_degree<<" max count: "<<pags[i].vd_embeddings.max_count<<endl;
-//        
-//        for (iter2 = pags[i].vd_embeddings.vd_embeddings.begin(); iter2 != pags[i].vd_embeddings.vd_embeddings.end(); iter2++) {
-//            cout<<"embedding "<<iter2->first<<": ";
-//            set<int> temp = iter2->second;
-//            set<int>::iterator it;
-//            for (it = temp.begin(); it != temp.end(); it++)
-//                cout<<*it<<" ";
-//            cout<<"deg: "<<pags[i].embeddings[iter2->first].max_degree;
-//            cout<<endl;
-//        }
-//    }
-//    
-//    cout<<setw(100)<<setfill('-')<<"initial subgraphs"<<setfill('-')<<setw(99)<<"-"<<endl;
-//    cout<<endl;
-//    set<int>::iterator it;
-//    for (it = not_permitted.begin(); it != not_permitted.end(); it++)
-//        cout<<*it<<" ";
-//    cout<<endl;
-//    
-//    cout<<setw(100)<<setfill('-')<<"Pags and their embeddings"<<setfill('-')<<setw(99)<<"-"<<endl;
-//    for (int i = 0; i < pags.size(); i++) {
-//        cout<<endl;
-//        set<int>::iterator iter;
-//        for (iter = pags[i].pag.begin(); iter != pags[i].pag.end(); iter++)
-//            cout<<*iter<<" ";
-//        cout<<endl<<"   ";
-//        for (int j = 0; j < pags[i].embeddings.size(); j++) {
-//            set<int>::iterator iter2;
-//            for (iter2 = pags[i].embeddings[j].begin(); iter2 != pags[i].embeddings[j].end(); iter2++)
-//                cout<<*iter2<<" ";
-//            cout<<endl<<"   ";
-//        }
-//    }
-//    //--
+    //    // debug
+    //
+    //    for (int i = 0; i < pags.size(); i++ ){
+    //        cout<<endl<<setw(100)<<setfill('-')<<"updated pags, embeddings, VD embeddings"<<setfill('-')<<setw(99)<<"-"<<endl;
+    //        cout<<"pag #"<<i<<": ";
+    //        set<int>::iterator iter;
+    //        for (iter = pags[i].pag.begin(); iter != pags[i].pag.end(); iter++)
+    //            cout<<*iter<<" ";
+    //        cout<<endl;
+    //        cout<<"map: ";
+    //        map<int,int>::iterator itr;
+    //        for (itr = pags[i].mapPAGG.begin(); itr != pags[i].mapPAGG.end(); itr++)
+    //            cout<<itr->second<<" ";
+    //        cout<<endl;
+    //
+    //        for (int j = 0; j < pags[i].embeddings.size(); j++) {
+    //            cout<<"embeding #"<<j<<": ";
+    //            set<int>::iterator iter2;
+    //            for (iter2 = pags[i].embeddings[j].edges.begin(); iter2 != pags[i].embeddings[j].edges.end(); iter2++)
+    //                cout<<*iter2<<" ";
+    //            cout<<endl;
+    //            cout<<"connected embeddings: ";
+    //            set<int>::iterator it;
+    //            for (it = pags[i].embeddings[j].connected_embeddings.begin(); it != pags[i].embeddings[j].connected_embeddings.end(); it++)
+    //                cout<<*it<<" ";
+    //            cout<<endl;
+    //        }
+    //
+    //        map<int, set<int> >::iterator iter2;
+    //        cout<<"VD-embeddings: ";
+    //        for (iter2 = pags[i].vd_embeddings.vd_embeddings.begin(); iter2 != pags[i].vd_embeddings.vd_embeddings.end(); iter2++)
+    //            cout<<iter2->first<<" ";
+    //        cout<<endl<<"max deg: "<<pags[i].vd_embeddings.max_degree<<" max count: "<<pags[i].vd_embeddings.max_count<<endl;
+    //
+    //        for (iter2 = pags[i].vd_embeddings.vd_embeddings.begin(); iter2 != pags[i].vd_embeddings.vd_embeddings.end(); iter2++) {
+    //            cout<<"embedding "<<iter2->first<<": ";
+    //            set<int> temp = iter2->second;
+    //            set<int>::iterator it;
+    //            for (it = temp.begin(); it != temp.end(); it++)
+    //                cout<<*it<<" ";
+    //            cout<<"deg: "<<pags[i].embeddings[iter2->first].max_degree;
+    //            cout<<endl;
+    //        }
+    //    }
+    //
+    //    cout<<setw(100)<<setfill('-')<<"initial subgraphs"<<setfill('-')<<setw(99)<<"-"<<endl;
+    //    cout<<endl;
+    //    set<int>::iterator it;
+    //    for (it = not_permitted.begin(); it != not_permitted.end(); it++)
+    //        cout<<*it<<" ";
+    //    cout<<endl;
+    //
+    //    cout<<setw(100)<<setfill('-')<<"Pags and their embeddings"<<setfill('-')<<setw(99)<<"-"<<endl;
+    //    for (int i = 0; i < pags.size(); i++) {
+    //        cout<<endl;
+    //        set<int>::iterator iter;
+    //        for (iter = pags[i].pag.begin(); iter != pags[i].pag.end(); iter++)
+    //            cout<<*iter<<" ";
+    //        cout<<endl<<"   ";
+    //        for (int j = 0; j < pags[i].embeddings.size(); j++) {
+    //            set<int>::iterator iter2;
+    //            for (iter2 = pags[i].embeddings[j].begin(); iter2 != pags[i].embeddings[j].end(); iter2++)
+    //                cout<<*iter2<<" ";
+    //            cout<<endl<<"   ";
+    //        }
+    //    }
+    //    //--
     
     clock_t toc = clock();
-
+    
     cout<<"Took: "<<(double) (toc-tic)/CLOCKS_PER_SEC<<endl;
+    
+    write_to_file(lifted_edges, G_vcount, G_ecount, G_v_lifted, G_e_lifted, igraph_vcount(H), igraph_ecount(H), igraph_vcount(H) - H_v_dummy, igraph_ecount(H) - H_e_dummy, (double) (toc-tic)/CLOCKS_PER_SEC);
 }
 /*************************************************************************//**
                                                                             * @brief

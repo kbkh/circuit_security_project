@@ -45,6 +45,10 @@ using namespace std;
 using namespace isosat;
 namespace po = boost::program_options;
 
+// Added by Karl
+
+void write_to_file(int lifted_edges, int G_vcount, int G_ecount, int G_v_lifted, int G_e_lifted, int H_vcount, int H_ecount, int H_v_no_dummy, int H_e_no_dummy, double took);
+////////////////
 
 /*****************************************************************************
  * Defs

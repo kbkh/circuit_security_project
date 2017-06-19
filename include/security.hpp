@@ -286,7 +286,7 @@ public:
     C_SAT(Security* security, int min_L1, int max_L1, int eta);
     C_SAT(Security* security, int min_L1, int max_L1, int eta, int u, bool quite);
     C_SAT(Security* security, int min_L1, int max_L1, int eta, int u);
-    operator int() { return 0; }	
+    operator int() { return 0; }
 };
 
 #endif
