@@ -137,7 +137,7 @@ int main(int argc, char **argv) {
     ss2 << maxPAGsize;
     string str2 = ss2.str();
     
-    string outname = outName + "_PAG_" + str2 + "_tresh_" + str;
+    string outname = "PAG_testing/" + outName + "_PAG_" + str2 + "_tresh_" + str;
     
     outName = outname + ".txt";
     koutfile.open(outName.c_str());
