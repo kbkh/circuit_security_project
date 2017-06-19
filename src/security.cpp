@@ -3109,9 +3109,11 @@ void Security::VD_embeddings(int* max_degree, int* max_count, int* first_pag, in
     }
 }
 
-void Security::kiso(int min_L1, int max_L1, int maxPsize) {
+void Security::kiso(int min_L1, int max_L1, int maxPsize, int tresh) {
     clock_t tic = clock();
     maxPAGsize = maxPsize;
+    
+    int treshhold = tresh == 0 ? 0 : min_L1/tresh;
     int G_ecount = igraph_ecount(G);
     int G_vcount = igraph_vcount(G);
     
@@ -3172,7 +3174,7 @@ void Security::kiso(int min_L1, int max_L1, int maxPsize) {
                     }
                 } else {
                     //                if (multiple != 0) {
-                    if (temp.size() >= min_L1/2) {
+                    if (temp.size() >= treshhold) {
                         // add
                         for (int i = min_L1; i >= 0; i--) {
                             // add v to H
@@ -3354,7 +3356,7 @@ void Security::kiso(int min_L1, int max_L1, int maxPsize) {
             
             int pag = got->second[got->second.size() - 1];
             got->second.erase(got->second.begin() + got->second.size() - 1);
-            if (got->first >= min_L1/2) {
+            if (got->first >= treshhold) {
                 cout<<endl<<setfill('-')<<setw(100)<<"Add embeddings to H"<<setfill('-')<<setw(99)<<"-"<<endl;
                 cout<<"pag #"<<pag<<endl;
                 map<int,set<int> >::iterator it;

@@ -254,7 +254,7 @@ public:
     
     void S1_rand    (int threads=1, int min_L1=2, bool quite = true);
     void S1_greedy  (bool save_state = true, int threads=1, int min_L1=2, int max_L1=-1, bool quite = true); // Added by Karl (int remove_vertex_max = 0)
-    void kiso(int min_L1, int max_L1, int maxPsize);
+    void kiso(int min_L1, int max_L1, int maxPsize, int tresh);
     void df(igraph_vector_t* v, igraph_t* vect, int vert1, int vert, int d);
     void p1(igraph_t* G, igraph_vector_t* ids, int min_L1);
     int count(igraph_t* G, igraph_vector_t* ids);

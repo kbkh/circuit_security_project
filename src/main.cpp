@@ -51,7 +51,7 @@ int main(int argc, char **argv) {
      ******************************/
     
     bool mono_lib(false), print_gate(false), print_solns(false), print_sat(false), print_blif(false), print_verilog(false);
-    int num_threads, budget, remove_vertices_max, maxPAGsize, target_security; // Added by Karl (remove_vertices_max)
+    int num_threads, budget, remove_vertices_max, maxPAGsize, target_security, tresh; // Added by Karl (remove_vertices_max)
     float remove_percent(0.6);
     vector<string> test_args;
     string outName;
@@ -79,6 +79,7 @@ int main(int argc, char **argv) {
     ("remove_vertices,v", po::value<int>(&remove_vertices_max)->default_value(0),   "Number of vertices to remove")
     ("maxPAGsize,p", po::value<int>(&maxPAGsize)->default_value(2), "Number if edges in a PAG")
     ("security,k", po::value<int>(&target_security)->default_value(2), "Target security")
+    ("treshhold,l", po::value<int>(&tresh)->default_value(2), "Treshhold for adding or lifting embeddings")
     ("output data file,f", po::value<string>(&outName)->default_value("out.txt"),  "Name of the file that will be the input for gnuplot")
     ////////////////
     ("num_threads,n",   po::value<int>(&num_threads)->default_value(1),         "Number of threads")
@@ -516,7 +517,7 @@ int main(int argc, char **argv) {
         if (!done)
         {
             clock_t tic = clock();
-            security->kiso(target_security, max_L1, maxPAGsize);
+            security->kiso(target_security, max_L1, maxPAGsize, tresh);
             clock_t toc = clock();
             //        cout << endl << "Heuristic took: ";
             //       cout << (double) (toc-tic)/CLOCKS_PER_SEC << endl;
