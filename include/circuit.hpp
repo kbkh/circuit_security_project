@@ -57,6 +57,15 @@ void sis_convert(string infile, string tech_lib, string outfile);
 void load_circuit(string infile);
 void load_circuit(Circuit *circuit, string infile, bool nand);
 
+// Added by Karl
+void set_topV(int a);
+void set_topE(int a);
+void set_bottomV(int a);
+void set_bottomE(int a);
+void set_twoBondLiftedEdge(int a);
+void set_oneBondLiftedEdge(int a);
+void set_bonds(int a);
+////////////////
 
 
 /*****************************************************************************
@@ -89,15 +98,6 @@ public:
 class Circuit : public igraph_t {
 private:
     vector< vector<int> > solutions;
-    // Added by Karl
-    int topV;
-    int topE;
-    int bottomV;
-    int bottomE;
-    int twoBondLiftedEdge;
-    int oneBondLiftedEdge;
-    int bonds;
-    ////////////////
 public:
     
     Circuit () {
@@ -123,13 +123,6 @@ public:
     void del_edge  (Edge edge);
     // Added by Karl
     void del_vertices();
-    void set_topV(int a) { topV = a };
-    void set_topE(int a) { topE = a };
-    void set_bottomV(int a) { bottomV = a };
-    void set_bottomE(int a) { bottomE = a };
-    void set_twoBondLiftedEdge(int a) { twoBondLiftedEdge = a };
-    void set_oneBondLiftedEdge(int a) { oneBondLiftedEdge = a };
-    void set_bonds(int a) { bonds = a };
     ////////////////
     bool test_edge (Edge edge);
     

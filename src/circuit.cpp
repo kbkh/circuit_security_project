@@ -14,14 +14,47 @@
 //#define NotLifted false
 //#define DEBUG //
 
+// Added by Karl
+int topV;
+int topE;
+int bottomV;
+int bottomE;
+int twoBondLiftedEdge;
+int oneBondLiftedEdge;
+int bonds;
+
+void set_topV(int a) {
+    topV = a;
+}
+void set_topE(int a) {
+    topE = a;
+}
+void set_bottomV(int a) {
+    bottomV = a;
+}
+void set_bottomE(int a) {
+    bottomE = a;
+}
+void set_twoBondLiftedEdge(int a) {
+    twoBondLiftedEdge = a;
+}
+void set_oneBondLiftedEdge(int a) {
+    oneBondLiftedEdge = a;
+}
+void set_bonds(int a) {
+    bonds = a;
+}
+////////////////
 
 
 
-    
+
+
 /*************************************************************************//**
  * @brief	
  * @version						v0.01b \n
  ****************************************************************************/
+
 void sis_convert(string infile, string tech_lib, string outfile) {
 
     if (infile == outfile)

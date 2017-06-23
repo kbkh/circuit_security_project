@@ -44,6 +44,9 @@ int H_e_dummy = 0;
 int G_v_lifted = 0;
 int G_e_lifted = 0;
 bool start = false;
+vector<set<int> > vertex_neighbors_out;
+vector<set<int> > vertex_neighbors_in;
+set<int> top_tier_vertices;
 ////////////////
 
 /************************************************************//**
@@ -3110,9 +3113,37 @@ void Security::VD_embeddings(int* max_degree, int* max_count, int* first_pag, in
     }
 }
 
+void Security::get_vertex_neighbors() {
+    for (int i = 0; i < igraph_vcount(G); i++) {
+        set<int> neighbors;
+        
+        igraph_vector_t nvids;
+        igraph_vector_init(&nvids, 0);
+        igraph_neighbors(G, &nvids, i, IGRAPH_OUT);
+        
+        for (int j = 0; j < igraph_vector_size(&nvids); j++)
+            neighbors.insert(VECTOR(nvids)[j]);
+        
+        vertex_neighbors_out.push_back(neighbors);
+        
+        
+        neighbors.clear();
+        igraph_vector_clear(&nvids);
+        igraph_neighbors(G, &nvids, i, IGRAPH_IN);
+        
+        for (int j = 0; j < igraph_vector_size(&nvids); j++)
+            neighbors.insert(VECTOR(nvids)[j]);
+        
+        vertex_neighbors_in.push_back(neighbors);
+    }
+}
+
 void Security::kiso(int min_L1, int max_L1, int maxPsize, int tresh) {
     maxPAGsize = 0;
     edge_neighbors.clear();
+    vertex_neighbors_in.clear();
+    vertex_neighbors_out.clear();
+    top_tier_vertices.clear();
     pags.clear();
     colors.clear();
     H_v_dummy = 0;
@@ -3128,6 +3159,8 @@ void Security::kiso(int min_L1, int max_L1, int maxPsize, int tresh) {
     cout<<"treshold: "<<treshold<<endl;
     int G_ecount = igraph_ecount(G);
     int G_vcount = igraph_vcount(G);
+    
+    get_vertex_neighbors();
     
     while (igraph_vcount(G) != 0) {
         start = false;
@@ -3216,6 +3249,10 @@ void Security::kiso(int min_L1, int max_L1, int maxPsize, int tresh) {
                         loop = temp.size()-1;
                         for (int i = loop; i >= 0; i--) {
                             G_v_lifted++;
+                            
+                            set<int>::iterator has = top_tier_vertices.find(VAN(G, "ID",temp[i]));
+                            if (has == top_tier_vertices.end()) // not in set
+                                top_tier_vertices.insert(VAN(G, "ID", temp[i]));
                             
                             // delete v from G
                             //                            igraph_vs_t vid;
@@ -3412,12 +3449,18 @@ void Security::kiso(int min_L1, int max_L1, int maxPsize, int tresh) {
                         set<int>::iterator got = removed.find(from);
                         if (got == removed.end()) { // not in set
                             G_v_lifted++;
+                            set<int>::iterator has = top_tier_vertices.find(VAN(G, "ID",from));
+                            if (has == top_tier_vertices.end()) // not in set
+                                top_tier_vertices.insert(VAN(G, "ID",from));
                             removed.insert(from);
                         }
                         
                         got = removed.find(to);
                         if (got == removed.end()) { // not in set
                             G_v_lifted++;
+                            set<int>::iterator has = top_tier_vertices.find(VAN(G, "ID",to));
+                            if (has == top_tier_vertices.end()) // not in set
+                                top_tier_vertices.insert(VAN(G, "ID",to));
                             removed.insert(to);
                         }
                         
@@ -3483,6 +3526,34 @@ void Security::kiso(int min_L1, int max_L1, int maxPsize, int tresh) {
         cout<<endl;
     }
     
+    int oneBond = 0;
+    
+    set<int>::iterator it;
+    for (it = top_tier_vertices.begin(); it != top_tier_vertices.end(); it++) {
+        set<int>::iterator iter;
+        for (iter = vertex_neighbors_out[*it].begin(); iter != vertex_neighbors_out[*it].end(); iter++) {
+            set<int>::iterator got = top_tier_vertices.find(*iter);
+            if (got == top_tier_vertices.end()) // not in set
+                oneBond++;
+        }
+        
+        for (iter = vertex_neighbors_in[*it].begin(); iter != vertex_neighbors_in[*it].end(); iter++) {
+            set<int>::iterator got = top_tier_vertices.find(*iter);
+            if (got == top_tier_vertices.end()) // not in set
+                oneBond++;
+        }
+    }
+    
+    int lifted_edges = igraph_ecount(H) == 0 ? 0 : G_ecount - (igraph_ecount(H) - H_e_dummy) - G_e_lifted;
+    set_topV(G_v_lifted);
+    set_topE(G_e_lifted);
+    set_bottomV(igraph_vcount(H));
+    set_bottomE(igraph_ecount(H));
+    int twoBond = lifted_edges == 0 ? 0 : lifted_edges-oneBond;
+    set_twoBondLiftedEdge(twoBond);
+    set_oneBondLiftedEdge(oneBond);
+    set_bonds(oneBond + 2*twoBond);
+    
     cout<<endl<<setfill('-')<<setw(100)<<"Report"<<setfill('-')<<setw(99)<<"-"<<endl;
     cout<<"Security lvl: "<<min_L1<<endl;
     cout<<"G initial vertex count: "<<G_vcount<<endl;
@@ -3495,7 +3566,6 @@ void Security::kiso(int min_L1, int max_L1, int maxPsize, int tresh) {
     cout<<"H final vertex count, without dummies: "<<igraph_vcount(H) - H_v_dummy<<endl;
     cout<<"H final edge count, without dummies: "<<igraph_ecount(H) - H_e_dummy<<endl;
     cout<<endl;
-    int lifted_edges = igraph_ecount(H) == 0 ? 0 : G_ecount - (igraph_ecount(H) - H_e_dummy) - G_e_lifted;
     cout<<"Lifted edges: "<<lifted_edges<<endl;
     cout<<endl;
     
@@ -3572,14 +3642,28 @@ void Security::kiso(int min_L1, int max_L1, int maxPsize, int tresh) {
     cout<<"Took: "<<(double) (toc-tic)/CLOCKS_PER_SEC<<endl;
     
     write_to_file(lifted_edges, G_vcount, G_ecount, G_v_lifted, G_e_lifted, igraph_vcount(H), igraph_ecount(H), igraph_vcount(H) - H_v_dummy, igraph_ecount(H) - H_e_dummy, (double) (toc-tic)/CLOCKS_PER_SEC);
+
+    // debug
     
-    set_topV(G_v_lifted);
-    set_topE(G_e_lifted);
-    set_bottomV(igraph_vcount(H));
-    set_bottomE(igraph_ecount(H));
-//    set_twoBondLiftedEdge();
-//    set_oneBondLiftedEdge();
-//    set_bonds();
+    cout<<"oneBond: "<<oneBond<<endl;
+    cout<<"twoBond: "<<twoBond<<endl;
+    cout<<"bonds: "<<oneBond + 2*twoBond<<endl;
+    
+    for (it = top_tier_vertices.begin(); it != top_tier_vertices.end(); it++)
+        cout<<*it<<" ";
+    cout<<endl;
+
+//    for (int i = 0; i < vertex_neighbors_out.size(); i++) {
+//        set<int>::iterator it;
+//        cout<<"vertex: "<<i<<endl;
+//        for (it = vertex_neighbors_out[i].begin(); it != vertex_neighbors_out[i].end(); it++)
+//            cout<<*it<<" ";
+//        for (it = vertex_neighbors_in[i].begin(); it != vertex_neighbors_in[i].end(); it++)
+//            cout<<*it<<" ";
+//        cout<<endl;
+//    }
+    //--
+    cout<<"top tier: "<<top_tier_vertices.size()<<endl;
 }
 /*************************************************************************//**
                                                                             * @brief

@@ -242,6 +242,8 @@ public:
     void VD_embeddings(int* max_degree, int* max_count, int* first_pag, int min_L1);
     /* Find new pags and embeddings */
     void isomorphic_test(set<int> current_subgraph);
+    /* Save the neighbors of every vertex */
+    void get_vertex_neighbors();
     ////////////////
     void setConfBudget(int budget) { isosat->setConfBudget(budget); };
     void setPropBudget(int budget) { isosat->setPropBudget(budget); };
