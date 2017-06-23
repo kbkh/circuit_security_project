@@ -89,6 +89,15 @@ public:
 class Circuit : public igraph_t {
 private:
     vector< vector<int> > solutions;
+    // Added by Karl
+    int topV;
+    int topE;
+    int bottomV;
+    int bottomE;
+    int twoBondLiftedEdge;
+    int oneBondLiftedEdge;
+    int bonds;
+    ////////////////
 public:
     
     Circuit () {
@@ -114,6 +123,13 @@ public:
     void del_edge  (Edge edge);
     // Added by Karl
     void del_vertices();
+    void set_topV(int a) { topV = a };
+    void set_topE(int a) { topE = a };
+    void set_bottomV(int a) { bottomV = a };
+    void set_bottomE(int a) { bottomE = a };
+    void set_twoBondLiftedEdge(int a) { twoBondLiftedEdge = a };
+    void set_oneBondLiftedEdge(int a) { oneBondLiftedEdge = a };
+    void set_bonds(int a) { bonds = a };
     ////////////////
     bool test_edge (Edge edge);
     

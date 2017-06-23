@@ -3572,6 +3572,14 @@ void Security::kiso(int min_L1, int max_L1, int maxPsize, int tresh) {
     cout<<"Took: "<<(double) (toc-tic)/CLOCKS_PER_SEC<<endl;
     
     write_to_file(lifted_edges, G_vcount, G_ecount, G_v_lifted, G_e_lifted, igraph_vcount(H), igraph_ecount(H), igraph_vcount(H) - H_v_dummy, igraph_ecount(H) - H_e_dummy, (double) (toc-tic)/CLOCKS_PER_SEC);
+    
+    set_topV(G_v_lifted);
+    set_topE(G_e_lifted);
+    set_bottomV(igraph_vcount(H));
+    set_bottomE(igraph_ecount(H));
+//    set_twoBondLiftedEdge();
+//    set_oneBondLiftedEdge();
+//    set_bonds();
 }
 /*************************************************************************//**
                                                                             * @brief
