@@ -47,6 +47,7 @@ bool start = false;
 vector<set<int> > vertex_neighbors_out;
 vector<set<int> > vertex_neighbors_in;
 set<int> top_tier_vertices;
+map<int, set<int> >top_tier_edges;
 ////////////////
 
 /************************************************************//**
@@ -3144,6 +3145,7 @@ void Security::kiso(int min_L1, int max_L1, int maxPsize, int tresh) {
     vertex_neighbors_in.clear();
     vertex_neighbors_out.clear();
     top_tier_vertices.clear();
+    top_tier_edges.clear();
     pags.clear();
     colors.clear();
     H_v_dummy = 0;
@@ -3465,6 +3467,12 @@ void Security::kiso(int min_L1, int max_L1, int maxPsize, int tresh) {
                         }
                         
                         G_e_lifted++;
+                        map<int, set<int> >::iterator in = top_tier_edges.find(VAN(G, "ID",from));
+                        if (in == top_tier_edges.end()) { // not in set
+                            set<int> tmp;
+                            tmp.insert(VAN(G, "ID",to));
+                            top_tier_edges.insert(pair<int, set<int> >(VAN(G, "ID",from), tmp));
+                        } else in->second.insert(VAN(G, "ID",to));
                         
                         SETVAN(G, "Removed", from, Removed);
                         SETVAN(G, "Removed", to, Removed);
@@ -3535,6 +3543,14 @@ void Security::kiso(int min_L1, int max_L1, int maxPsize, int tresh) {
             set<int>::iterator got = top_tier_vertices.find(*iter);
             if (got == top_tier_vertices.end()) // not in set
                 oneBond++;
+            else {
+                set<int>::iterator has = top_tier_edges[*it].find(*iter);
+                if (has == top_tier_edges[*it].end()) { // not in set
+                    G_e_lifted++;
+                    top_tier_edges[*it].insert(*iter);
+                    //igraph_add_edge
+                }
+            }
         }
         
         for (iter = vertex_neighbors_in[*it].begin(); iter != vertex_neighbors_in[*it].end(); iter++) {
@@ -3652,6 +3668,16 @@ void Security::kiso(int min_L1, int max_L1, int maxPsize, int tresh) {
     for (it = top_tier_vertices.begin(); it != top_tier_vertices.end(); it++)
         cout<<*it<<" ";
     cout<<endl;
+    
+    map<int, set<int> >::iterator itmap;
+    for (itmap = top_tier_edges.begin(); itmap != top_tier_edges.end(); itmap++) {
+        cout<<"edge: "<<itmap->first<<": ";
+        set<int> tmp = itmap->second;
+        set<int>::iterator itset;
+        for (itset = tmp.begin(); itset != tmp.end(); itset++)
+            cout<<*itset<<" ";
+        cout<<endl;
+    }
 
 //    for (int i = 0; i < vertex_neighbors_out.size(); i++) {
 //        set<int>::iterator it;
