@@ -51,6 +51,12 @@ using namespace std;
 
 #define Removed 1
 #define NotRemoved 0
+
+#define kDummy 1
+#define kNotDummy 0
+
+#define Top 1
+#define Bottom 0
 ////////////////
 
 

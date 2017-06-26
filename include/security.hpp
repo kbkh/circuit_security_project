@@ -192,7 +192,7 @@ public:
 class Security {
 private:
     Isosat *isosat;
-    Circuit *G, *H;
+    Circuit *G, *H, *F;
     igraph_vector_int_t colour_G, colour_H;
     L1_struct L1_state;
     // Added by Karl
@@ -214,7 +214,7 @@ private:
     void add_free_edges (int L1);
     void analyze_edge (int eid);
 public:
-    Security (Circuit *G, Circuit *H);
+    Security (Circuit *G, Circuit *H, Circuit *F);
     // Added by Karl
     /* Compute the security level for the whole Graph. Called from main */
     void L1_main (string outFileName, int _remove_vertices_max, int threads=1, int min_L1=2, int max_L1=-1, bool quite = true);

@@ -246,10 +246,11 @@ bool parse (string line, igraph_vector_t *soln) {
                                                                             * @brief
                                                                             * @version						v0.01b
                                                                             ****************************************************************************/
-Security::Security (Circuit *_G, Circuit *_H)
+Security::Security (Circuit *_G, Circuit *_H, Circuit *_F)
 {
     G = _G;
     H = _H;
+    F = _F;
     
     igraph_vector_int_init(&colour_G, igraph_vcount(G));
     igraph_vector_int_init(&colour_H, igraph_vcount(H));
@@ -2527,6 +2528,7 @@ void Security::create_graph(igraph_t* g, set<int> edges, map<int,int>& map12, se
     for (it = edges.begin(); it != edges.end(); it++) {
         int from, to;
         int new_from, new_to;
+        int F_from, F_to;
         
         igraph_edge(G,*it,&from,&to);
         
@@ -2541,12 +2543,24 @@ void Security::create_graph(igraph_t* g, set<int> edges, map<int,int>& map12, se
         if (got == vertices.end()) { // not in set
             igraph_add_vertices(g, 1, 0);
             
-            if (start)
-                H_v_dummy++;
-            ;
             int vid = igraph_vcount(g) - 1;
+            
+            if (start && !mapping && !create) {
+                H_v_dummy++;
+                igraph_add_vertices(F, 1, 0);
+                SETVAN(F, "Dummy", igraph_vcount(F)-1, kDummy);
+                SETVAN(F, "colour", igraph_vcount(F)-1, VAN(G, "colour", from));
+                SETVAN(F, "ID", igraph_vcount(F)-1, igraph_vcount(F)-1);
+                SETVAS(F, "Tier", igraph_vcount(F)-1, "Bottom");
+                F_from = igraph_vcount(F)-1;
+            } else if (!mapping && !create) {
+                SETVAS(F, "Tier", VAN(G, "ID", from), "Bottom");
+                F_from = VAN(G, "ID", from);
+            }
+            
             SETVAN(g, "colour", vid, VAN(G, "colour", from));
             SETVAN(g, "ID", vid, VAN(G, "ID", from));
+            
             vertices.insert(pair<int,int>(from,vid));
             new_from = vid;
             
@@ -2575,10 +2589,21 @@ void Security::create_graph(igraph_t* g, set<int> edges, map<int,int>& map12, se
         if (got == vertices.end()) { // not in set
             igraph_add_vertices(g, 1, 0);
             
-            if (start)
-                H_v_dummy++;
-            
             int vid = igraph_vcount(g) - 1;
+            
+            if (start && !mapping && !create) {
+                H_v_dummy++;
+                igraph_add_vertices(F, 1, 0);
+                SETVAN(F, "Dummy", igraph_vcount(F)-1, kDummy);
+                SETVAN(F, "colour", igraph_vcount(F)-1, VAN(G, "colour", to));
+                SETVAN(F, "ID", igraph_vcount(F)-1, igraph_vcount(F)-1);
+                SETVAS(F, "Tier", igraph_vcount(F)-1, "Bottom");
+                F_to = igraph_vcount(F)-1;
+            } else if (!mapping && !create) {
+                SETVAS(F, "Tier", VAN(G, "ID", to), "Bottom");
+                F_to = VAN(G, "ID", to);
+            }
+            
             SETVAN(g, "colour", vid, VAN(G, "colour", to));
             SETVAN(g, "ID", vid, VAN(G, "ID", to));
             vertices.insert(pair<int,int>(to,vid));
@@ -2605,8 +2630,14 @@ void Security::create_graph(igraph_t* g, set<int> edges, map<int,int>& map12, se
         
         igraph_add_edge(g, new_from, new_to);
         
-        if (start)
+        if (start && !mapping && !create) {
             H_e_dummy++;
+            igraph_add_edge(F, F_from, F_to);
+            SETEAN(F, "Dummy", igraph_ecount(F)-1, kDummy);
+//            SETEAN(F, "colour", igraph_ecount(F)-1, EAN(G, "colour", to));
+            SETEAS(F, "Tier", igraph_ecount(F)-1, "Bottom");
+        } else if (!mapping && !create)
+            SETEAS(F, "Tier", EAN(G, "ID", *it), "Bottom");
         
         SETEAN(g, "ID", igraph_ecount(g)-1, EAN(G, "ID", *it));
     }
@@ -3209,11 +3240,14 @@ void Security::kiso(int min_L1, int max_L1, int maxPsize, int tresh) {
                         int vid = igraph_vcount(H) - 1;
                         SETVAN(H, "colour", vid, VAN(G, "colour", temp[i]));
                         SETVAN(H, "ID", vid, VAN(G, "ID", temp[i]));
+                        
                         // delete v from G
                         //                    igraph_vs_t id;
                         //                    igraph_vs_1(&id, temp[i]);
                         //                    igraph_delete_vertices(G,id);
                         SETVAN(G, "Removed", temp[i], Removed);
+                        
+                        SETVAS(F, "Tier", VAN(G, "ID", temp[i]), "Bottom");
                         // delete v from vector
                         temp.erase(temp.begin()+i);
                         
@@ -3237,6 +3271,8 @@ void Security::kiso(int min_L1, int max_L1, int maxPsize, int tresh) {
                                 //                                igraph_vs_1(&id, temp[i]);
                                 //                                igraph_delete_vertices(G,id);
                                 SETVAN(G, "Removed", temp[i], Removed);
+                                
+                                SETVAS(F, "Tier", VAN(G, "ID", temp[i]), "Bottom");
                                 // delete v from vector
                                 temp.erase(temp.begin()+i);
                             } else {
@@ -3245,6 +3281,10 @@ void Security::kiso(int min_L1, int max_L1, int maxPsize, int tresh) {
                                 int tmp = it->first;
                                 SETVAN(H, "colour", vid, tmp);
                                 SETVAN(H, "ID", vid, vid);
+                                
+                                igraph_add_vertices(F, 1, 0);
+                                SETVAS(F, "Tier", igraph_vcount(F) - 1, "Bottom");
+                                SETVAN(F, "Dummy", igraph_vcount(F) - 1, kDummy);
                             }
                         }
                     } else {
@@ -3261,6 +3301,7 @@ void Security::kiso(int min_L1, int max_L1, int maxPsize, int tresh) {
                             //                            igraph_vs_1(&vid, temp[i]);
                             //                            igraph_delete_vertices(G,vid);
                             SETVAN(G, "Removed", temp[i], Removed);
+                            SETVAS(F, "Tier", VAN(G, "ID", temp[i]), "Top");
                             // delete v from vector
                             temp.erase(temp.begin()+i);
                         }
@@ -3456,6 +3497,7 @@ void Security::kiso(int min_L1, int max_L1, int maxPsize, int tresh) {
                                 top_tier_vertices.insert(VAN(G, "ID",from));
                             removed.insert(from);
                         }
+                        SETVAS(F, "Tier", VAN(G, "ID",from), "Top");
                         
                         got = removed.find(to);
                         if (got == removed.end()) { // not in set
@@ -3465,6 +3507,7 @@ void Security::kiso(int min_L1, int max_L1, int maxPsize, int tresh) {
                                 top_tier_vertices.insert(VAN(G, "ID",to));
                             removed.insert(to);
                         }
+                        SETVAS(F, "Tier", VAN(G, "ID", to), "Top");
                         
                         G_e_lifted++;
                         map<int, set<int> >::iterator in = top_tier_edges.find(VAN(G, "ID",from));
@@ -3473,6 +3516,10 @@ void Security::kiso(int min_L1, int max_L1, int maxPsize, int tresh) {
                             tmp.insert(VAN(G, "ID",to));
                             top_tier_edges.insert(pair<int, set<int> >(VAN(G, "ID",from), tmp));
                         } else in->second.insert(VAN(G, "ID",to));
+                        
+                        int eid;
+                        igraph_get_eid(F, &eid, VAN(G, "ID",from), VAN(G, "ID",to), IGRAPH_DIRECTED, 0);
+                        SETEAS(F, "Tier", eid, "Top");
                         
                         SETVAN(G, "Removed", from, Removed);
                         SETVAN(G, "Removed", to, Removed);
@@ -3560,12 +3607,12 @@ void Security::kiso(int min_L1, int max_L1, int maxPsize, int tresh) {
         }
     }
     
-    int lifted_edges = igraph_ecount(H) == 0 ? 0 : G_ecount - (igraph_ecount(H) - H_e_dummy) - G_e_lifted;
+    int lifted_edges = G_ecount - (igraph_ecount(H) - H_e_dummy) - G_e_lifted;
     set_topV(G_v_lifted);
     set_topE(G_e_lifted);
     set_bottomV(igraph_vcount(H));
     set_bottomE(igraph_ecount(H));
-    int twoBond = lifted_edges == 0 ? 0 : lifted_edges-oneBond;
+    int twoBond = lifted_edges-oneBond;
     set_twoBondLiftedEdge(twoBond);
     set_oneBondLiftedEdge(oneBond);
     set_bonds(oneBond + 2*twoBond);
@@ -3657,7 +3704,7 @@ void Security::kiso(int min_L1, int max_L1, int maxPsize, int tresh) {
     
     cout<<"Took: "<<(double) (toc-tic)/CLOCKS_PER_SEC<<endl;
     
-    write_to_file(lifted_edges, G_vcount, G_ecount, G_v_lifted, G_e_lifted, igraph_vcount(H), igraph_ecount(H), igraph_vcount(H) - H_v_dummy, igraph_ecount(H) - H_e_dummy, (double) (toc-tic)/CLOCKS_PER_SEC);
+    write_to_file(lifted_edges, G_vcount, G_ecount, G_v_lifted, G_e_lifted, igraph_vcount(H), igraph_ecount(H), igraph_vcount(H) - H_v_dummy, igraph_ecount(H) - H_e_dummy, (double) (toc-tic)/CLOCKS_PER_SEC, oneBond, twoBond, igraph_vcount(F), igraph_ecount(F));
 
     // debug
     
