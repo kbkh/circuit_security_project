@@ -212,7 +212,7 @@ int main(int argc, char **argv) {
         load_circuit(&circuit, circuit_filename, mono_lib);
         
         Security *security;
-        Circuit G, H, F;
+        Circuit G, H, F, R;
         G.copy(&circuit);
         G.remove_io();
         
@@ -222,7 +222,7 @@ int main(int argc, char **argv) {
             SETEAN(&G, "Original", i, NotOriginal);
             SETEAN(&G, "ID", i, i);
             SETEAN(&G, "Removed", i, NotRemoved);
-            SETEAS(&G, "Tier", i, "Top");
+            SETEAS(&G, "Tier", i, "Lifted");
             SETEAN(&G, "Dummy", i, kNotDummy);
         }
         
@@ -259,7 +259,7 @@ int main(int argc, char **argv) {
             H.rand_del_edges(remove_percent);
             H.save( working_dir + "/H_circuit.gml" );
             
-//            security = new Security(&G, &H, &F);            security->setConfBudget(budget);
+//            security = new Security(&G, &H, &F, &R);            security->setConfBudget(budget);
             
             cout << "Rand L0: |V(G)| = "  << (int) igraph_vcount(&G);
             cout << ", |E(G)| = "         << (int) igraph_ecount(&G);
@@ -309,7 +309,7 @@ int main(int argc, char **argv) {
             
             H.save( working_dir + "/H_circuit.gml" );
             
-            security = new Security(&G, &H, &F);            security->setConfBudget(budget);
+            security = new Security(&G, &H, &F, &R);            security->setConfBudget(budget);
             
             cout << "Rand L1: |V(G)| = "  << (int) igraph_vcount(&G);
             cout << ", |E(G)| = "         << (int) igraph_ecount(&G);
@@ -357,7 +357,7 @@ int main(int argc, char **argv) {
             
             H.save( working_dir + "/H_circuit.gml" );
             
-            security = new Security(&G, &H, &F);            security->setConfBudget(budget);
+            security = new Security(&G, &H, &F, &R);            security->setConfBudget(budget);
             
             cout << "Rand L1: |V(G)| = "  << (int) igraph_vcount(&G);
             cout << ", |E(G)| = "         << (int) igraph_ecount(&G);
@@ -377,7 +377,7 @@ int main(int argc, char **argv) {
             H.copy(&G);
             H.rand_del_edges((float) 1.0);
             
-            security = new Security(&G, &H, &F);            security->setConfBudget(budget);
+            security = new Security(&G, &H, &F, &R);            security->setConfBudget(budget);
             
             string output;
             output = "S1_rand ("  + G.get_name() + ")";
@@ -441,7 +441,7 @@ int main(int argc, char **argv) {
             } else if ( test_args.size() == 2 )
                 min_L1 = atoi(test_args[1].c_str());
             
-            security = new Security(&G, &H, &F);            security->setConfBudget(budget);
+            security = new Security(&G, &H, &F, &R);            security->setConfBudget(budget);
             
             string output;
             output = "S1_greedy ("  + G.get_name() + ")";
@@ -520,6 +520,7 @@ int main(int argc, char **argv) {
             H.del_vertices();
             
             F.copy(&G);
+            R.copy(&G);
             
             bool done(false);
             
@@ -552,7 +553,7 @@ int main(int argc, char **argv) {
             //        H.rand_del_edges((float) 1.0);
             ////////////////
             
-            security = new Security(&G, &H, &F);
+            security = new Security(&G, &H, &F, &R);
             security->setConfBudget(budget);
             
             string output;
@@ -623,7 +624,7 @@ int main(int argc, char **argv) {
                 min_L1 = atoi(test_args[1].c_str());
             
             cout << "I'm here!"; cout.flush();
-            security = new Security(&G, &H, &F);            security->setConfBudget(budget);
+            security = new Security(&G, &H, &F, &R);            security->setConfBudget(budget);
             
             string output;
             cout << "I'm here!";
@@ -643,7 +644,7 @@ int main(int argc, char **argv) {
         if ( test_args.size() >= 1 && 5 == atoi(test_args[0].c_str())) {
             
             H.copy(&G);
-            security = new Security(&G, &H, &F);            security->setConfBudget(budget);
+            security = new Security(&G, &H, &F, &R);            security->setConfBudget(budget);
             H.rand_del_edges((float) 0.0);
             
             //	security->clean_solutions();
@@ -674,7 +675,7 @@ int main(int argc, char **argv) {
             } else if ( test_args.size() == 2 )
                 min_L1 = atoi(test_args[1].c_str());
             
-            security = new Security(&G, &H, &F);            security->setConfBudget(budget);
+            security = new Security(&G, &H, &F, &R);            security->setConfBudget(budget);
             
             
             clock_t tic = clock();
@@ -707,7 +708,7 @@ int main(int argc, char **argv) {
             else if ( test_args.size() == 2 )
                 u = atoi(test_args[1].c_str());
             
-            security = new Security(&G, &H, &F);            security->setConfBudget(budget);
+            security = new Security(&G, &H, &F, &R);            security->setConfBudget(budget);
             
             
             clock_t tic = clock();
@@ -740,7 +741,7 @@ int main(int argc, char **argv) {
             else if ( test_args.size() == 2 )
                 u = atoi(test_args[1].c_str());
             
-            security = new Security(&G, &H, &F);            security->setConfBudget(budget);
+            security = new Security(&G, &H, &F, &R);            security->setConfBudget(budget);
             
             
             clock_t tic = clock();
@@ -764,7 +765,7 @@ int main(int argc, char **argv) {
             int min_L1(2), max_L1 = G.max_L1();
             H.copy(&G);
             H.rand_del_edges(igraph_ecount(&G) - no_of_edges);
-            security = new Security(&G, &H, &F);            security->setConfBudget(budget);
+            security = new Security(&G, &H, &F, &R);            security->setConfBudget(budget);
             int current_k_security = security->L1();
             int best_k_security = current_k_security;
             cout << "Starting with: " << current_k_security << endl;
@@ -795,7 +796,7 @@ int main(int argc, char **argv) {
                 H.add_edge(edge_list[0]);
                 
                 delete security;
-                security = new Security(&G, &H, &F);                security->setConfBudget(budget);
+                security = new Security(&G, &H, &F, &R);                security->setConfBudget(budget);
                 
                 int new_k_security = security->L1();
                 if (new_k_security >= current_k_security) {
@@ -858,7 +859,7 @@ int main(int argc, char **argv) {
             
             H.save( working_dir + "/H_circuit.gml" );
             
-            security = new Security(&G, &H, &F);            security->setConfBudget(budget);
+            security = new Security(&G, &H, &F, &R);            security->setConfBudget(budget);
             
             security->L1(label);
         }
@@ -888,7 +889,8 @@ int main(int argc, char **argv) {
         string str3 = ss3.str();
 
         F.save(working_dir + "/" + name + "_PAG_" + str4 + "_tresh_"+ str1 + "_lvl_" + str3 + "_F_circuit.gml");
-
+        R.save(working_dir + "/" + name + "_PAG_" + str4 + "_tresh_"+ str1 + "_lvl_" + str3 + "_R_circuit.gml");
+        
         target_security *= 2;
         
         if (print_gate)

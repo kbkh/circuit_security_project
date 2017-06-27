@@ -246,11 +246,12 @@ bool parse (string line, igraph_vector_t *soln) {
                                                                             * @brief
                                                                             * @version						v0.01b
                                                                             ****************************************************************************/
-Security::Security (Circuit *_G, Circuit *_H, Circuit *_F)
+Security::Security (Circuit *_G, Circuit *_H, Circuit *_F, Circuit *_R)
 {
     G = _G;
     H = _H;
     F = _F;
+    R = _R;
     
     igraph_vector_int_init(&colour_G, igraph_vcount(G));
     igraph_vector_int_init(&colour_H, igraph_vcount(H));
@@ -2555,6 +2556,7 @@ void Security::create_graph(igraph_t* g, set<int> edges, map<int,int>& map12, se
                 F_from = igraph_vcount(F)-1;
             } else if (!mapping && !create) {
                 SETVAS(F, "Tier", VAN(G, "ID", from), "Bottom");
+                SETVAS(R, "Tier", VAN(G, "ID", from), "Bottom");
                 F_from = VAN(G, "ID", from);
             }
             
@@ -2601,6 +2603,7 @@ void Security::create_graph(igraph_t* g, set<int> edges, map<int,int>& map12, se
                 F_to = igraph_vcount(F)-1;
             } else if (!mapping && !create) {
                 SETVAS(F, "Tier", VAN(G, "ID", to), "Bottom");
+                SETVAS(R, "Tier", VAN(G, "ID", to), "Bottom");
                 F_to = VAN(G, "ID", to);
             }
             
@@ -2636,8 +2639,10 @@ void Security::create_graph(igraph_t* g, set<int> edges, map<int,int>& map12, se
             SETEAN(F, "Dummy", igraph_ecount(F)-1, kDummy);
 //            SETEAN(F, "colour", igraph_ecount(F)-1, EAN(G, "colour", to));
             SETEAS(F, "Tier", igraph_ecount(F)-1, "Bottom");
-        } else if (!mapping && !create)
+        } else if (!mapping && !create) {
             SETEAS(F, "Tier", EAN(G, "ID", *it), "Bottom");
+            SETEAS(R, "Tier", EAN(G, "ID", *it), "Bottom");
+        }
         
         SETEAN(g, "ID", igraph_ecount(g)-1, EAN(G, "ID", *it));
     }
@@ -3171,6 +3176,7 @@ void Security::get_vertex_neighbors() {
 }
 
 void Security::kiso(int min_L1, int max_L1, int maxPsize, int tresh) {
+    // Initialization
     maxPAGsize = 0;
     edge_neighbors.clear();
     vertex_neighbors_in.clear();
@@ -3221,13 +3227,15 @@ void Security::kiso(int min_L1, int max_L1, int maxPsize, int tresh) {
         find_subgraphs();
         
         if (maxPAGsize == 0) {
+//            cout<<"color size: "<<colors.size()<<endl;
             map<int, vector<int> >::iterator it;
             for (it = colors.begin(); it != colors.end(); it++) {
                 vector<int> temp = it->second;
                 
                 //int multiple = temp.size()%min_L1;
                 //int div = floor(temp.size()/min_L1);
-                
+//                cout<<"temp size: "<<temp.size()<<endl;
+//                cout<<"tresh: "<<treshold<<endl;
                 int loop = temp.size()-1;
                 //int counter = 0;
                 if (temp.size() >= min_L1) {
@@ -3248,6 +3256,7 @@ void Security::kiso(int min_L1, int max_L1, int maxPsize, int tresh) {
                         SETVAN(G, "Removed", temp[i], Removed);
                         
                         SETVAS(F, "Tier", VAN(G, "ID", temp[i]), "Bottom");
+                        SETVAS(R, "Tier", VAN(G, "ID", temp[i]), "Bottom");
                         // delete v from vector
                         temp.erase(temp.begin()+i);
                         
@@ -3257,7 +3266,7 @@ void Security::kiso(int min_L1, int max_L1, int maxPsize, int tresh) {
                     //                if (multiple != 0) {
                     if (temp.size() >= treshold) {
                         // add
-                        for (int i = min_L1; i >= 0; i--) {
+                        for (int i = min_L1-1; i >= 0; i--) {
                             // add v to H
                             igraph_add_vertices(H, 1, 0);
                             
@@ -3273,6 +3282,7 @@ void Security::kiso(int min_L1, int max_L1, int maxPsize, int tresh) {
                                 SETVAN(G, "Removed", temp[i], Removed);
                                 
                                 SETVAS(F, "Tier", VAN(G, "ID", temp[i]), "Bottom");
+                                SETVAS(R, "Tier", VAN(G, "ID", temp[i]), "Bottom");
                                 // delete v from vector
                                 temp.erase(temp.begin()+i);
                             } else {
@@ -3302,6 +3312,7 @@ void Security::kiso(int min_L1, int max_L1, int maxPsize, int tresh) {
                             //                            igraph_delete_vertices(G,vid);
                             SETVAN(G, "Removed", temp[i], Removed);
                             SETVAS(F, "Tier", VAN(G, "ID", temp[i]), "Top");
+                            SETVAS(R, "Tier", VAN(G, "ID", temp[i]), "Top");
                             // delete v from vector
                             temp.erase(temp.begin()+i);
                         }
@@ -3498,6 +3509,7 @@ void Security::kiso(int min_L1, int max_L1, int maxPsize, int tresh) {
                             removed.insert(from);
                         }
                         SETVAS(F, "Tier", VAN(G, "ID",from), "Top");
+                        SETVAS(R, "Tier", VAN(G, "ID",from), "Top");
                         
                         got = removed.find(to);
                         if (got == removed.end()) { // not in set
@@ -3508,6 +3520,7 @@ void Security::kiso(int min_L1, int max_L1, int maxPsize, int tresh) {
                             removed.insert(to);
                         }
                         SETVAS(F, "Tier", VAN(G, "ID", to), "Top");
+                        SETVAS(R, "Tier", VAN(G, "ID", to), "Top");
                         
                         G_e_lifted++;
                         map<int, set<int> >::iterator in = top_tier_edges.find(VAN(G, "ID",from));
@@ -3520,6 +3533,7 @@ void Security::kiso(int min_L1, int max_L1, int maxPsize, int tresh) {
                         int eid;
                         igraph_get_eid(F, &eid, VAN(G, "ID",from), VAN(G, "ID",to), IGRAPH_DIRECTED, 0);
                         SETEAS(F, "Tier", eid, "Top");
+                        SETEAS(R, "Tier", eid, "Top");
                         
                         SETVAN(G, "Removed", from, Removed);
                         SETVAN(G, "Removed", to, Removed);
@@ -3582,28 +3596,52 @@ void Security::kiso(int min_L1, int max_L1, int maxPsize, int tresh) {
     }
     
     int oneBond = 0;
-    
     set<int>::iterator it;
     for (it = top_tier_vertices.begin(); it != top_tier_vertices.end(); it++) {
         set<int>::iterator iter;
         for (iter = vertex_neighbors_out[*it].begin(); iter != vertex_neighbors_out[*it].end(); iter++) {
             set<int>::iterator got = top_tier_vertices.find(*iter);
-            if (got == top_tier_vertices.end()) // not in set
+            if (got == top_tier_vertices.end()) { // not in set
                 oneBond++;
+                // edge going from to to is crossing
+                // edge already exists
+                int eid = -1;
+                igraph_get_eid(F, &eid, *it, *iter, IGRAPH_DIRECTED, 1);
+                if (eid != -1) {
+                    SETEAS(F, "Tier", eid, "Crossing");
+                    SETEAS(R, "Tier", eid, "Crossing");
+                }
+            }
             else {
                 set<int>::iterator has = top_tier_edges[*it].find(*iter);
                 if (has == top_tier_edges[*it].end()) { // not in set
                     G_e_lifted++;
                     top_tier_edges[*it].insert(*iter);
-                    //igraph_add_edge
+                    // edge is in top tier
+                    // edge already exists
+                    int eid = -1;
+                    igraph_get_eid(F, &eid, *it, *iter, IGRAPH_DIRECTED, 1);
+                    if (eid != -1) {
+                        SETEAS(F, "Tier", eid, "Top");
+                        SETEAS(R, "Tier", eid, "Top");
+                    }
                 }
             }
         }
         
         for (iter = vertex_neighbors_in[*it].begin(); iter != vertex_neighbors_in[*it].end(); iter++) {
             set<int>::iterator got = top_tier_vertices.find(*iter);
-            if (got == top_tier_vertices.end()) // not in set
+            if (got == top_tier_vertices.end()) {// not in set
                 oneBond++;
+                // edge going to to from is crossing
+                // edge already exists
+                int eid = -1;
+                igraph_get_eid(F, &eid, *iter, *it, IGRAPH_DIRECTED, 1);
+                if (eid != -1) {
+                    SETEAS(F, "Tier", eid, "Crossing");
+                    SETEAS(R, "Tier", eid, "Crossing");
+                }
+            }
         }
     }
     
