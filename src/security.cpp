@@ -3202,7 +3202,7 @@ void Security::kiso(int min_L1, int max_L1, int maxPsize, int tresh, bool baseli
     get_vertex_neighbors();
     
     while (igraph_vcount(G) != 0) {
-        start = false;
+        start = false; 
         pags.clear();
         edge_neighbors.clear();
         cout<<"PAG: "<<maxPAGsize<<endl;
