@@ -36,7 +36,7 @@ int target_security;
 /********************************************************************************
  * Functions
  ********************************************************************************/
-
+// Added by Karl
 void write_to_file(int lifted_edges, int G_vcount, int G_ecount, int G_v_lifted, int G_e_lifted, int H_vcount, int H_ecount, int H_v_no_dummy, int H_e_no_dummy, double took, int oneBond, int twoBonds, int Fvcount, int Fecount) {
     koutfile<<setfill(' ')<<setw(6)<<target_security<<setfill(' ')<<setw(15)<<lifted_edges<<setfill(' ')<<endl;
     koutfile2<<"Security lvl: "<<target_security<<endl;
@@ -61,7 +61,7 @@ void write_to_file(int lifted_edges, int G_vcount, int G_ecount, int G_v_lifted,
     koutfile2<<"Took: "<<took<<endl;
     koutfile2<<endl;
 }
-
+////////////////
 
 /*****************************************************************************
  * Main
@@ -134,7 +134,7 @@ int main(int argc, char **argv) {
         return 0;
     }
     
-    target_security = 2;
+    target_security = 16;
     
     cout<<outName<<" "<<tresh<<endl;
     stringstream ss;
