@@ -2725,7 +2725,7 @@ void Security::isomorphic_test(set<int> current_subgraph) {
         PAG temp_pag;
         pags.push_back(temp_pag);
         pags[pags.size()-1].pag = current_subgraph;
-        pags[pags.size()-1].mapPAGG = mapPAGG;
+       //pags[pags.size()-1].mapPAGG = mapPAGG; // newremoved
         pags[pags.size()-1].vertices = vert;
         pags[pags.size()-1].max_degree = max_degree;
         pags[pags.size()-1].processed = false;
@@ -2749,7 +2749,7 @@ void Security::isomorphic_test(set<int> current_subgraph) {
         for (int i = 0; i < igraph_vector_size(map12); i++)
             igraph_vector_set(map12, i, VAN(&new_pag, "ID", igraph_vector_e(map12,i)));
         
-        pags[index].embeddings[pags[index].embeddings.size()-1].map = map12;
+        //pags[index].embeddings[pags[index].embeddings.size()-1].map = map12; // newremoved
         pags[index].embeddings[pags[index].embeddings.size()-1].max_degree = 0;
         pags[index].embeddings[pags[index].embeddings.size()-1].vertices = vert;
         pags[index].embeddings[pags[index].embeddings.size()-1].max_degree = max_degree;
@@ -3037,7 +3037,7 @@ void Security::update_pags() {
                 }
             }
             
-            // if it was, remove it from the embeddings and from the vd-embeddings
+            // if it was, remove it from the embeddings and from the vd-embeddings // delete as well
             if (remove)
                 pags[i].embeddings.erase(pags[i].embeddings.begin()+j);
         }
@@ -3061,13 +3061,13 @@ void Security::update_pags() {
                 pags[i].pag = pags[i].embeddings[0].edges;
                 pags[i].vertices = pags[i].embeddings[0].vertices;
                 pags[i].max_degree = pags[i].embeddings[0].max_degree;
-                pags[i].mapPAGG.clear();
+                //pags[i].mapPAGG.clear(); // newremoved
                 
-                for (int j = 0; j < igraph_vector_size(pags[i].embeddings[0].map); j++)
-                    pags[i].mapPAGG.insert(pair<int,int>(j,igraph_vector_e(pags[i].embeddings[0].map, j)));
+                /*for (int j = 0; j < igraph_vector_size(pags[i].embeddings[0].map); j++)
+                    pags[i].mapPAGG.insert(pair<int,int>(j,igraph_vector_e(pags[i].embeddings[0].map, j)));*/ // newremoved
                 
                 // delete the pag
-                pags[i].embeddings.erase(pags[i].embeddings.begin());
+                pags[i].embeddings.erase(pags[i].embeddings.begin()); // delete as well
             } else pags[i].embeddings.erase(pags[i].embeddings.end()-1); // If the pag is a vd-embedding then remove it from list of embeddings because we will add it back when searching for the VD-embeddings
         }
     }
@@ -3116,10 +3116,10 @@ void Security::VD_embeddings(int* max_degree, int* max_count, int* first_pag, in
                 cout<<*it<<" ";
             cout<<endl;
             cout<<"map: ";
-            if (j != pags[i].embeddings.size()-1) {
+            /*if (j != pags[i].embeddings.size()-1) {
                 for (int k = 0; k < igraph_vector_size(pags[i].embeddings[j].map); k++)
                     cout<<igraph_vector_e(pags[i].embeddings[j].map, k)<<" ";
-            }
+            }*/ // newremoved
             cout<<endl;
             cout<<"vertices: ";
             for (it = pags[i].embeddings[j].vertices.begin(); it != pags[i].embeddings[j].vertices.end(); it++)
@@ -3203,6 +3203,11 @@ void Security::kiso(int min_L1, int max_L1, int maxPsize, int tresh, bool baseli
     
     while (igraph_vcount(G) != 0) {
         start = false;
+        
+      /*  for (int i = 0; i < pags.size(); i++)
+            for (int j = 0; j < pags[i].embeddings.size(); j++)
+                delete pags[i].embeddings[j].map; */ // newremoved
+        
         pags.clear();
         edge_neighbors.clear();
         cout<<"PAG: "<<maxPAGsize<<endl;
@@ -3336,12 +3341,12 @@ void Security::kiso(int min_L1, int max_L1, int maxPsize, int tresh, bool baseli
         int max_degree = 0;
         int max_count = 0;
         int first_pag = -1;
-        vector<vector<int> > VM;
+        //vector<vector<int> > VM; // newremoved
         
-        for (int i = 0; i < min_L1; i++) {
+       /* for (int i = 0; i < min_L1; i++) {
             vector<int> temp;
             VM.push_back(temp);
-        }
+        }*/ // newremoved
         
         do {
             max_degree = 0;
@@ -3398,7 +3403,7 @@ void Security::kiso(int min_L1, int max_L1, int maxPsize, int tresh, bool baseli
                      ****************************************************************/
                     
                     // if it's an embedding of the pag, then the isomorphic test generated a mapping
-                    if (itr->first != pags[first_pag].embeddings.size()-1)
+                    /*if (itr->first != pags[first_pag].embeddings.size()-1)
                         // go through that mapping and get the id of the vertex in H and insert it in the corresponding column in VM
                         for (int i = 0; i < igraph_vector_size(pags[first_pag].embeddings[itr->first].map); i++) {
                             map<int,int>::iterator got = mapGH.find(igraph_vector_e(pags[first_pag].embeddings[itr->first].map, i));
@@ -3411,10 +3416,10 @@ void Security::kiso(int min_L1, int max_L1, int maxPsize, int tresh, bool baseli
                             map<int,int>::iterator got = mapGH.find(VAN(G,"ID",it->second));
                             VM[counter%min_L1].push_back(got->second);
                         }
-                    }
+                    }*/ // newremoved
                     
                     // debug
-                    if (itr->first != pags[first_pag].embeddings.size()-1) {
+                   /* if (itr->first != pags[first_pag].embeddings.size()-1) {
                         cout<<"G H"<<endl;
                         for (int i = 0; i < igraph_vector_size(pags[first_pag].embeddings[itr->first].map); i++) {
                             map<int,int>::iterator got = mapGH.find(igraph_vector_e(pags[first_pag].embeddings[itr->first].map, i));
@@ -3428,7 +3433,7 @@ void Security::kiso(int min_L1, int max_L1, int maxPsize, int tresh, bool baseli
                             map<int,int>::iterator got = mapGH.find(VAN(G,"ID",it->second));
                             cout<<got->first<<" "<<got->second<<" "<<it->first<<endl;
                         }
-                    }
+                    }*/ // newremoved
                     //--
                 }
                 
@@ -3544,7 +3549,7 @@ void Security::kiso(int min_L1, int max_L1, int maxPsize, int tresh, bool baseli
                 }
                 
                 // Upadate PAGs
-                pags.erase(pags.begin() + pag);
+                pags.erase(pags.begin() + pag); // delete as well
                 update_pags();
                 
                 max_degree = 0;
@@ -3556,7 +3561,7 @@ void Security::kiso(int min_L1, int max_L1, int maxPsize, int tresh, bool baseli
         }
         
         // debug
-        cout<<endl;
+        /*cout<<endl;
         cout<<"VM:"<<endl;
         for (int i = 0; i < VM.size(); i++)
             cout<<i<<" ";
@@ -3566,7 +3571,7 @@ void Security::kiso(int min_L1, int max_L1, int maxPsize, int tresh, bool baseli
             for(int j = 0; j < VM.size(); j++)
                 cout<<VM[j][i]<<" ";
             cout<<endl;
-        }
+        }*/ // newremoved
         //--
         
         cout<<endl;
