@@ -46,75 +46,6 @@ void set_bonds(int a) {
 }
 ////////////////
 
-
-
-
-
-/*************************************************************************//**
- * @brief	
- * @version						v0.01b \n
- ****************************************************************************/
-
-void sis_convert(string infile, string tech_lib, string outfile) {
-
-    if (infile == outfile)
-        return;
-
-    string sis_cmds = "";
-    sis_cmds += "read_library " + tech_lib + "\n";
-    sis_cmds += "read_blif "    + infile + "\n";
-    sis_cmds += "decomp \n";
-    sis_cmds += "map -Wm 0.0 \n";
-	//sis_cmds += "map\n";
-    sis_cmds += "write_blif -n " + outfile + "\n";
-//sis_cmds += "write_blif " + outfile + "\n";
-    sis_cmds += "echo test \n";
-    sis_cmds += "quit \n";
-
-    // Setup Pipes
-    int pc[2], cp[2];
-    
-    if (pipe(pc) == -1 | pipe(cp) == -1) {
-        perror("Error: No Pipe \n");
-        exit(1);
-    }
-    
-    pid_t pid = fork();
-
-    // Error (PID == -1)    
-    if (pid == -1) {
-        perror("Error: No PID \n");
-        exit(1);
-        
-    // Child (PID == 0)
-    } else if (pid == 0) {
-        dup2 (pc[0],0);   // make 0 same as read-from end of pipe 
-        close(pc[1]);     // close write end of pipe              
-        close(cp[0]);     // close read end of pipe              
-        dup2 (cp[1],1);   // write to pipe
-        string sis = get_home("/bin/sis");
-//        string sis = get_home("/Downloads/bin/sis");
-// 	cout << "Right before...\n";
-        execlp(sis.c_str(),"sis",NULL);
-//	cout << "Right after...\n";
-        perror("error exec");
-        _exit(1);        // no flush                             
-
-    // Parent (PID > 0)
-    } else {
-        close(pc[0]);    // close read end of pipe               
-        write(pc[1], sis_cmds.c_str(), sis_cmds.size());
-        close(pc[1]);
-      
-        wait(NULL);
-        close(cp[0]);    // close excess fildes
-        close(cp[1]);
-    }
-
-}
-
-
-
 /*************************************************************************//**
  * @brief	
  * @version						v0.01b \n
@@ -230,20 +161,6 @@ void load_circuit(Circuit *circuit, string infile, bool nand=false) {
     circuit_file.close();
     circuit->update();
 }
-
-
-
-/*************************************************************************//**
- * @brief	
- * @version						v0.01b \n
- ****************************************************************************/
-bool Circuit::test_edge (Edge edge) {
-    int eid1(-1);
-    igraph_get_eid(this, &eid1, edge.first, edge.second, IGRAPH_DIRECTED, 0);
-    //cout<<"eid: "<<eid1<<endl;
-    return eid1 != -1;
-}
-
 
 
 /*************************************************************************//**
@@ -431,7 +348,7 @@ void Circuit::rand_del_edges (int rcount) {
 
 	
     for (unsigned int i=0; i<rcount; i++) {
-        int rnum = (float) urand()*igraph_ecount(this); //id of the edge
+        int rnum = 0.5;//(float) urand()*igraph_ecount(this); //id of the edge
         igraph_delete_edges(this, igraph_ess_1(rnum));
     }
 }
@@ -453,6 +370,7 @@ void Circuit::save (string filename) {
 	SETVANV(this, "fillcolor", &colors);
     igraph_write_graph_gml(this, file, NULL, NULL);
     fclose(file);
+    igraph_vector_destroy(&colors); // new addition
 }
 
 
@@ -467,8 +385,3 @@ void Circuit::load (string filename) {
     igraph_read_graph_gml(this, file);
     fclose(file);
 }
-
-
-
-
-
