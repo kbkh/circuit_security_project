@@ -75,7 +75,7 @@ int main(int argc, char **argv) {
      ******************************/
     
     bool mono_lib(false), print_gate(false), print_solns(false), print_sat(false), print_blif(false), print_verilog(false), baseline;
-    int num_threads, budget, remove_vertices_max, maxPAGsize, tresh; // Added by Karl (remove_vertices_max)
+    int num_threads, budget, remove_vertices_max, maxPAGsize, tresh;
     float remove_percent(0.6);
     vector<string> test_args;
     string outName;
@@ -134,7 +134,7 @@ int main(int argc, char **argv) {
         return 0;
     }
     
-    target_security = 8; //2
+    target_security = 2; //2
     
     cout<<outName<<" "<<tresh<<endl;
     stringstream ss;
@@ -154,7 +154,7 @@ int main(int argc, char **argv) {
     outname = outname + "_report.txt";
     koutfile2.open(outname.c_str());
     
-    while (target_security <= 8) { // 32
+    while (target_security <= 32) { // 32
         // Debug
         stringstream ss3;
         ss3 << target_security;
@@ -221,7 +221,7 @@ int main(int argc, char **argv) {
         
         load_circuit(&circuit, circuit_filename, mono_lib);
         
-        Security *security;
+        //Security *security;
         Circuit G, H, F, R;
         G.copy(&circuit);
         G.remove_io();
@@ -247,7 +247,6 @@ int main(int argc, char **argv) {
         circuit.save( working_dir + "/circuit.gml" );
         G.save( working_dir + "/G_circuit.gml" );
         
-        
         /****************************************************************
          * print G
          ****************************************************************/
@@ -268,43 +267,13 @@ int main(int argc, char **argv) {
             } else if ( test_args.size() == 2 )
                 min_L1 = atoi(test_args[1].c_str());
             
-            //igraph_vector_t match_vert;
-            //igraph_vector_init(&match_vert, 0);
-            
             int original = igraph_vcount(&G);
-            
-            // Creare a vector of size of how many colors we have and fill it with how many vertices of that color exist in the graph
-            //        for (int i = 0; i < igraph_vcount(&G); i++)
-            //        {
-            //            int color = VAN(&G, "colour", i);
-            //            if (igraph_vector_size(&match_vert) < color + 1)
-            //                for (int j = igraph_vector_size(&match_vert); j <= color; j++)
-            //                {
-            //                    igraph_vector_push_back(&match_vert, 0);
-            //                }
-            //            VECTOR(match_vert)[color]++;
-            //        }
+
             cout<<"vcount1: "<<igraph_vcount(&G)<<endl;
             cout<<"ecount1: "<<igraph_ecount(&G)<<endl;
-            //igraph_t temp;
-            //	igraph_copy(&temp, &G);
-            //	igraph_destroy(&G);
-            //	for (min_L1 = max_L1; min_L1 >= 1; min_L1--) {
-            //		igraph_copy(&G, &temp);
             
-            // if a color doesn't have a multiple of k (min_L1) vertices, add vertices with that color
             int count = 0;
-            //        for (int i = 0; i < igraph_vector_size(&match_vert); i++)
-            //        {
-            //            int n = ((int) VECTOR(match_vert)[i]) % min_L1; if (n == 0) continue;
-            //            for (int j = 0; j < min_L1 - n; j++)
-            //            { count++;
-            //                igraph_add_vertices(&G, 1, 0);
-            //                SETVAN(&G, "colour", igraph_vcount(&G) - 1, i);
-            //                SETVAN(&G, "Removed", igraph_vcount(&G) - 1, NotRemoved);
-            //                SETVAN(&G, "ID", igraph_vcount(&G) - 1, igraph_vcount(&G) - 1);
-            //            }
-            //        }
+            
             cout<<"vcount2: "<<igraph_vcount(&G)<<endl;
             cout<<"ecount2: "<<igraph_ecount(&G)<<endl;
             
@@ -319,51 +288,16 @@ int main(int argc, char **argv) {
             
             bool done(false);
             
-            // Added by Karl
-            //        for (int i = igraph_ecount(&G)-1; i >= 0; i--) {
-            //            igraph_es_t es;
-            //            igraph_es_1(&es, i);
-            //            igraph_delete_edges(&G,es);
-            //        }
-            //        cout<<"aahhh"<<endl;
-            //        for (int i = igraph_vcount(&G)-1; i >= 0; i--) {
-            //            igraph_vs_t es;
-            //            igraph_vs_1(&es, i);
-            //            igraph_delete_vertices(&G,es);
-            //        }
-            //        cout<<"aahhh2"<<endl;
-            //
-            //        igraph_add_vertices(&G, 9, 0);
-            //        igraph_add_edge(&G,0,1);
-            //        igraph_add_edge(&G,0,2);
-            //        igraph_add_edge(&G,0,3);
-            //        igraph_add_edge(&G,0,4);
-            //        igraph_add_edge(&G,1,2);
-            //        igraph_add_edge(&G,1,5);
-            //        igraph_add_edge(&G,1,6);
-            //        igraph_add_edge(&G,2,7);
-            //        igraph_add_edge(&G,2,8);
-            //        H.copy(&G);
-            //        G.save( working_dir + "/G_circuit.gml");
-            //        H.rand_del_edges((float) 1.0);
-            ////////////////
-            
-            security = new Security(&G, &H, &F, &R);
-            
-            string output;
-            output = "S1_greedy ("  + G.get_name() + ")";
-            output = report(output, &G, &H, max_L1);
-            //        cout << output;
+            //security = new Security(&G, &H, &F, &R);
+            Security security(&G, &H, &F, &R);
             
             fstream report;
-            if (!done)
-            {
+            if (!done) {
                 clock_t tic = clock();
-                security->kiso(target_security, max_L1, maxPAGsize, tresh, baseline);
+                //security->kiso(target_security, max_L1, maxPAGsize, tresh, baseline);
+                security.kiso(target_security, max_L1, maxPAGsize, tresh, baseline);
                 clock_t toc = clock();
-                //        cout << endl << "Heuristic took: ";
-                //       cout << (double) (toc-tic)/CLOCKS_PER_SEC << endl;
-            } //igraph_destroy(&G);}
+            }
             
         }
         
@@ -376,7 +310,6 @@ int main(int argc, char **argv) {
                     igraph_delete_vertices(&H,igraph_vss_1(i--)); // this will move all next vertices one inde to the left, this is why we do i--
             ///////////////
             H.save( working_dir + "/H_circuit.gml" );
-           // delete security;
         }
         
         stringstream ss1;
@@ -401,10 +334,14 @@ int main(int argc, char **argv) {
         system(command.c_str());
         ////////
         
-        delete security;
+        //delete security;
         
         target_security *= 2;
     }
+    
+    // Debug
+    string command = "ps u > usage_final.txt";
+    system(command.c_str());
     
     clock_t toc = clock();
     

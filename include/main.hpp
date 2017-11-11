@@ -32,12 +32,6 @@
 #include "general.hpp"
 #include "circuit.hpp"
 #include "security.hpp"
-
-
-//#include "minisat/core/Solver.h"
-//using namespace Minisat;
-
-//#include "formula.hpp"
 #include "subisosat.hpp"
 
 

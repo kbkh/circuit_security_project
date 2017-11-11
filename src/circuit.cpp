@@ -11,8 +11,6 @@
 // http://www.ros.org/wiki/CppStyleGuide
 
 #include "circuit.hpp"
-//#define NotLifted false
-//#define DEBUG //
 
 // Added by Karl
 int topV;
@@ -51,11 +49,6 @@ void set_bonds(int a) {
  * @version						v0.01b \n
  ****************************************************************************/
 void load_circuit(Circuit *circuit, string infile, bool nand=false) {
-
-
-//    printf("\n");
-//    printf("Circuit: %s \n", infile.c_str());
-
     /******************************
      * Create Graph
      ******************************/
@@ -140,10 +133,7 @@ void load_circuit(Circuit *circuit, string infile, bool nand=false) {
             SETVAS(circuit, "label", vertex_map[output].index, output.c_str());
             SETVAS(circuit, "type", vertex_map[output].index, vertex_map[output].type.c_str());
             // Added By Karl
-            //cout<<"yas "<<vertex_map[output].index<<endl;
-            //if (vertex_map[output].index%2 == 0)
-               // SETVAN(circuit, "Lifted", vertex_map[output].index, Lifted);
-            /*else*/ SETVAN(circuit, "Lifted", vertex_map[output].index, NotLifted);
+            SETVAN(circuit, "Lifted", vertex_map[output].index, NotLifted);
             ////////////////
             
             for (int i=0; i<io.size()-1; i++) {
