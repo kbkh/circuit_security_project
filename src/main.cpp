@@ -31,6 +31,7 @@
 
 ofstream koutfile;
 ofstream koutfile2;
+ofstream area_file;
 int target_security;
 
 /********************************************************************************
@@ -134,7 +135,7 @@ int main(int argc, char **argv) {
         return 0;
     }
     
-    target_security = 2; //2
+    int target_securityy = target_security; //2
     
     cout<<outName<<" "<<tresh<<endl;
     stringstream ss;
@@ -145,7 +146,11 @@ int main(int argc, char **argv) {
     ss2 << maxPAGsize;
     string str2 = ss2.str();
     
-    string outname = "PAG_testing/" + outName + "_PAG_" + str2 + "_tresh_" + str;
+    stringstream ss3;
+    ss3 << target_security;
+    string str3 = ss3.str();
+    
+    string outname = "PAG_testing/" + outName + "_PAG_" + str2 + "_tresh_" + str + "_k_" + str3;
     name = outName;
     outName = outname + ".txt";
     koutfile.open(outName.c_str());
@@ -154,105 +159,238 @@ int main(int argc, char **argv) {
     outname = outname + "_report.txt";
     koutfile2.open(outname.c_str());
     
-    while (target_security <= 32) { // 32
+    string circuit_filename, circuit_name, tech_filename, tech_name, working_dir, report_filename;
+    
+    // input circuit
+    if (vm.count("circuit") == 1) {
+        circuit_filename = vm["circuit"].as<string>();
+        circuit_name = circuit_filename.substr(circuit_filename.rfind('/')+1);
+        circuit_name = circuit_name.substr(0, circuit_name.find('.'));
+    } else {
+        cout << optional_args << "\n";
+        return 0;
+    }
+    
+    // input tech lib
+    if (vm.count("tech_lib")) {
+        tech_filename = vm["tech_lib"].as<string>();
+        tech_name = tech_filename.substr(tech_filename.rfind('/')+1);
+        tech_name = tech_name.substr(0, tech_name.find('.'));
+    } else {
+        cout << optional_args << "\n";
+        return 0;
+    }
+    
+    cout << "Circuit : " << circuit_filename << "\n";
+    cout << "Tech Lib: " << tech_filename << "\n";
+    
+    /******************************
+     * Setup working dir
+     ******************************/
+    working_dir = vm["wdir"].as<string>();
+    mkdir(working_dir.c_str(), S_IRWXU);
+    cout << "WDIR    : " << working_dir << "\n";
+    
+    
+    /******************************
+     * Convert circuit using tech_lib
+     ******************************/
+    string outfile = working_dir + circuit_filename.substr(circuit_filename.rfind('/'));
+    cout << "Outfile : " << outfile << "\n";
+    cout << "I'm here!\n";
+    circuit_filename = outfile;
+    // copy tech_lib
+    if ( tech_filename != string(working_dir + tech_filename.substr(tech_filename.rfind('/')) ) ) {
+        ifstream src( tech_filename.c_str() );
+        ofstream dst( string(working_dir + tech_filename.substr(tech_filename.rfind('/')) ).c_str() );
+        dst << src.rdbuf();
+        dst.close();
+        src.close();
+    }
+    
+    /******************************
+     * Load circuit
+     ******************************/
+    Circuit circuit;
+    
+    load_circuit(&circuit, circuit_filename, mono_lib);
+    
+    //Security *security;
+    Circuit G, H, F, R;
+    G.copy(&circuit);
+    G.remove_io();
+    
+    // Added By Karl
+    for (int i = 0; i < igraph_ecount(&G); i++) {
+        SETEAN(&G, "Lifted", i, NotLifted);
+        SETEAN(&G, "Original", i, NotOriginal);
+        SETEAN(&G, "ID", i, i);
+        SETEAN(&G, "Removed", i, NotRemoved);
+        SETEAS(&G, "Tier", i, "Lifted");
+        SETEAN(&G, "Dummy", i, kNotDummy);
+    }
+    
+    for (int i = 0; i < igraph_vcount(&G); i++) {
+        SETVAN(&G, "Removed", i, NotRemoved);
+        SETVAN(&G, "ID", i, i);
+        SETVAS(&G, "Tier", i, "Top");
+        SETVAN(&G, "Dummy", i, kNotDummy);
+    }
+    ////////////////
+    
+    circuit.save( working_dir + "/circuit.gml" );
+    G.save( working_dir + "/G_circuit.gml" );
+    
+    /****************************************************************
+     * print G
+     ****************************************************************/
+    if ( test_args.size() > 0 && -1 == atoi(test_args[0].c_str())) {
+        G.print();
+    }
+    
+    if ( test_args.size() > 0 && 0 == atoi(test_args[0].c_str())) {
+        string area_out = "areas/" + circuit_name + "_areas.txt";
+        area_file.open(area_out.c_str());
+        
+        float nand_area = 1.877200, inv_area = 1.407900;
+        string NAND = "nanf201", INV = "invf101";
+        
+        float area = 0.0;
+        
+        for (int i = 0; i < igraph_vcount(&G); i++)
+            area += (string)VAS(&G, "type", i)==NAND ? nand_area:inv_area;
+        
+        cout<<area<<endl;
+        
+        for (int pag = 4; pag < 7; pag++) {
+            stringstream int_pag;
+            int_pag << pag;
+            string str_pag = int_pag.str();
+            
+            for (int tresh = 0; tresh < 5; tresh += 2) {
+                stringstream int_tresh;
+                int_tresh << tresh;
+                string str_tresh = int_tresh.str();
+                
+                for (int k = 2; k < 15; k++) {
+                    stringstream int_k;
+                    int_k << k;
+                    string str_k = int_k.str();
+                    
+                    Circuit T;
+                    FILE* in;
+                    
+                    
+                    string filenme = "wdir/" + circuit_name + "/" + circuit_name + "_PAG_" + str_pag + "_tresh_" + str_tresh + "_lvl_" + str_k + "_F_circuit.gml";
+                    in = fopen(filenme.c_str(),"r");
+                    if (in == NULL)
+                        continue;
+                    cout<<filenme<<endl;
+                    igraph_read_graph_gml(&T, in);
+                    
+                    int nand = 0, inv = 0;
+                    int Nand = 1, Inv = 0;
+                    
+                    float top_area = 0.0, bottom_area = 0.0;
+                    
+                    for (int i = 0; i < igraph_vcount(&T); i++) {
+                        if ((string)VAS(&T, "Tier", i) == "Top") {
+                            if (VAN(&T, "colour", i) == Nand)
+                                top_area += nand_area;
+                            else if (VAN(&T, "colour", i) == Inv)
+                                top_area += inv_area;
+                        }
+                        else if ((string)VAS(&T, "Tier", i) == "Bottom") {
+                            if (VAN(&T, "colour", i) == Nand)
+                                bottom_area += nand_area;
+                            else if (VAN(&T, "colour", i) == Inv)
+                                bottom_area += inv_area;
+                            
+                            
+                            igraph_vector_t eids;
+                            igraph_vector_init(&eids,0);
+                            igraph_incident(&T, &eids, i, IGRAPH_ALL);
+                            
+                            int size = igraph_vector_size(&eids);
+                            int count = 0;
+                            //cout<<i<<" :";
+                            for (int j = 0; j < size; j++){
+                                // cout<<VECTOR(eids)[j]<<" "<<EAS(&T, "Tier", VECTOR(eids)[j])<<" ";
+                                if ((string)EAS(&T, "Tier", VECTOR(eids)[j]) == "Top" || (string)EAS(&T, "Tier", VECTOR(eids)[j]) == "Crossing" || (string)EAS(&T, "Tier", VECTOR(eids)[j]) == "Lifted") {
+                                    count++;
+                                    // cout<<"count = "<<count<<" ";
+                                }
+                            }
+                            //cout<<endl;
+                            if (count == size)
+                                if (VAN(&T, "colour", i) == Nand)
+                                    nand++;
+                                else if (VAN(&T, "colour", i) == Inv)
+                                    inv++;
+                            
+                            igraph_vector_destroy(&eids);
+                        }
+                    }
+                    
+                    top_area *= 2;
+                    
+                    if (nand > 0 && nand < 10)
+                        nand = 10 - nand;
+                    else if (nand >= 10)
+                        nand = 0;
+                    
+                    if (inv > 0 && inv < 10)
+                        inv = 10 - inv;
+                    else if (inv >= 10)
+                        inv = 0;
+                    
+                    bottom_area = bottom_area + nand*nand_area + inv*inv_area;
+                    
+                    cout<<nand<<" "<<inv<<endl;
+                    
+                    float bond_area = 0;
+                    filenme = "PAG_testing/" + circuit_name + "/" + circuit_name + "_PAG_" + str_pag + "_tresh_" + str_tresh + "_k_" + str_k + "_report.txt";
+                    ifstream infile(filenme.c_str());
+                    string line;
+                    boost::regex bond_rx("Total bonds:");
+                    boost::regex num_rx("\\d{3}");
+                    
+                    string s_bond_area;
+                    
+                    while (infile.good()) {
+                        getline(infile, line);
+                        
+                        if (boost::regex_search(line, bond_rx) && boost::regex_search(line, num_rx)) {
+                            boost::sregex_token_iterator itera(line.begin(),  line.end(), num_rx, 0);
+                            boost::sregex_token_iterator end;
+                            
+                            s_bond_area = *itera;
+                            cout<<"helloowz: "<<s_bond_area<<endl;
+                        }
+                    }
+                    
+                    bond_area = atof(s_bond_area.c_str());
+                    
+                    bond_area *= 16;
+                    
+                    cout<<"top = "<<top_area<<" bottom = "<<bottom_area<<" bond = "<<bond_area<<endl;
+                    float temp = max(top_area, bottom_area);
+                    area = max(temp, bond_area);
+                    
+                    cout<<area<<endl;
+                    area_file<<"PAG: "<<str_pag<<" Threshold: "<<str_tresh<<" security: "<<str_k<<" area = "<<area<<endl;
+                }
+            }
+        }
+        
+        return 0;
+    }
+    
+    while (target_securityy <= target_security) { // 32
         // Debug
-        stringstream ss3;
-        ss3 << target_security;
-        string str3 = ss3.str();
-        
-        string command = "ps u > usage_" + str3 + "_start.txt";
-        system(command.c_str());
+        //string command = "ps u > usage_" + str3 + "_start.txt";
+        //system(command.c_str());
         ////////
-        
-        string circuit_filename, circuit_name, tech_filename, tech_name, working_dir, report_filename;
-        
-        // input circuit
-        if (vm.count("circuit") == 1) {
-            circuit_filename = vm["circuit"].as<string>();
-            circuit_name = circuit_filename.substr(circuit_filename.rfind('/')+1);
-            circuit_name = circuit_name.substr(0, circuit_name.find('.'));
-        } else {
-            cout << optional_args << "\n";
-            return 0;
-        }
-        
-        // input tech lib
-        if (vm.count("tech_lib")) {
-            tech_filename = vm["tech_lib"].as<string>();
-            tech_name = tech_filename.substr(tech_filename.rfind('/')+1);
-            tech_name = tech_name.substr(0, tech_name.find('.'));
-        } else {
-            cout << optional_args << "\n";
-            return 0;
-        }
-        
-        cout << "Circuit : " << circuit_filename << "\n";
-        cout << "Tech Lib: " << tech_filename << "\n";
-        
-        
-        /******************************
-         * Setup working dir
-         ******************************/
-        working_dir = vm["wdir"].as<string>();
-        mkdir(working_dir.c_str(), S_IRWXU);
-        cout << "WDIR    : " << working_dir << "\n";
-        
-        
-        /******************************
-         * Convert circuit using tech_lib
-         ******************************/
-        string outfile = working_dir + circuit_filename.substr(circuit_filename.rfind('/'));
-        cout << "Outfile : " << outfile << "\n";
-        cout << "I'm here!\n";
-        circuit_filename = outfile;
-        // copy tech_lib
-        if ( tech_filename != string(working_dir + tech_filename.substr(tech_filename.rfind('/')) ) ) {
-            ifstream src( tech_filename.c_str() );
-            ofstream dst( string(working_dir + tech_filename.substr(tech_filename.rfind('/')) ).c_str() );
-            dst << src.rdbuf();
-            dst.close();
-            src.close();
-        }
-        
-        /******************************
-         * Load circuit
-         ******************************/
-        Circuit circuit;
-        
-        load_circuit(&circuit, circuit_filename, mono_lib);
-        
-        //Security *security;
-        Circuit G, H, F, R;
-        G.copy(&circuit);
-        G.remove_io();
-        
-        // Added By Karl
-        for (int i = 0; i < igraph_ecount(&G); i++) {
-            SETEAN(&G, "Lifted", i, NotLifted);
-            SETEAN(&G, "Original", i, NotOriginal);
-            SETEAN(&G, "ID", i, i);
-            SETEAN(&G, "Removed", i, NotRemoved);
-            SETEAS(&G, "Tier", i, "Lifted");
-            SETEAN(&G, "Dummy", i, kNotDummy);
-        }
-        
-        for (int i = 0; i < igraph_vcount(&G); i++) {
-            SETVAN(&G, "Removed", i, NotRemoved);
-            SETVAN(&G, "ID", i, i);
-            SETVAS(&G, "Tier", i, "Top");
-            SETVAN(&G, "Dummy", i, kNotDummy);
-        }
-        ////////////////
-        
-        circuit.save( working_dir + "/circuit.gml" );
-        G.save( working_dir + "/G_circuit.gml" );
-        
-        /****************************************************************
-         * print G
-         ****************************************************************/
-        if ( test_args.size() > 0 && -1 == atoi(test_args[0].c_str())) {
-            G.print();
-        }
         
         /****************************************************************
          * k-isomorphism
@@ -330,18 +468,18 @@ int main(int argc, char **argv) {
             print_file(circuit_filename);
         
         // Debug
-        command = "ps u > usage_" + str3 + "_end.txt";
-        system(command.c_str());
+        //command = "ps u > usage_" + str3 + "_end.txt";
+        //system(command.c_str());
         ////////
         
         //delete security;
         
-        target_security *= 2;
+        target_securityy *= 2;
     }
     
     // Debug
-    string command = "ps u > usage_final.txt";
-    system(command.c_str());
+    //string command = "ps u > usage_final.txt";
+    //system(command.c_str());
     
     clock_t toc = clock();
     

@@ -42,6 +42,10 @@ void set_oneBondLiftedEdge(int a) {
 void set_bonds(int a) {
     bonds = a;
 }
+
+int get_bonds() {
+    return bonds;
+}
 ////////////////
 
 /*************************************************************************//**

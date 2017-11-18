@@ -159,6 +159,7 @@ void Security::create_graph(igraph_t* g, set<int> edges, set<int>& vertices_set,
                 H_v_dummy++;
                 igraph_add_vertices(F, 1, 0);
                 SETVAN(F, "Dummy", igraph_vcount(F)-1, kDummy);
+                SETVAS(F, "type", igraph_vcount(F)-1, VAS(G, "type", from));
                 SETVAN(F, "colour", igraph_vcount(F)-1, VAN(G, "colour", from));
                 SETVAN(F, "ID", igraph_vcount(F)-1, igraph_vcount(F)-1);
                 SETVAS(F, "Tier", igraph_vcount(F)-1, "Bottom");
@@ -194,6 +195,7 @@ void Security::create_graph(igraph_t* g, set<int> edges, set<int>& vertices_set,
                 H_v_dummy++;
                 igraph_add_vertices(F, 1, 0);
                 SETVAN(F, "Dummy", igraph_vcount(F)-1, kDummy);
+                SETVAS(F, "type", igraph_vcount(F)-1, VAS(G, "type", to));
                 SETVAN(F, "colour", igraph_vcount(F)-1, VAN(G, "colour", to));
                 SETVAN(F, "ID", igraph_vcount(F)-1, igraph_vcount(F)-1);
                 SETVAS(F, "Tier", igraph_vcount(F)-1, "Bottom");
@@ -747,8 +749,9 @@ void Security::kiso(int min_L1, int max_L1, int maxPsize, int tresh, bool baseli
             map<int, vector<int> >::iterator it;
             for (it = colors.begin(); it != colors.end(); it++) {
                 vector<int> temp = it->second;
-                
+
                 int loop = temp.size()-1;
+                cout<<it->first<<" "<<loop<<endl;
                 
                 if (temp.size() >= min_L1) {
                     for (int i = loop; i >= 0; i--) {
@@ -792,6 +795,8 @@ void Security::kiso(int min_L1, int max_L1, int maxPsize, int tresh, bool baseli
                                 
                                 igraph_add_vertices(F, 1, 0);
                                 SETVAS(F, "Tier", igraph_vcount(F) - 1, "Bottom");
+                                SETVAS(F, "type", igraph_vcount(F) - 1, VAS(G, "type", temp[0]));
+                                SETVAN(F, "colour", igraph_vcount(F) - 1, VAN(G, "colour", temp[0]));
                                 SETVAN(F, "Dummy", igraph_vcount(F) - 1, kDummy);
                             }
                         }

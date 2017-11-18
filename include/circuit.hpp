@@ -64,6 +64,7 @@ void set_bottomE(int a);
 void set_twoBondLiftedEdge(int a);
 void set_oneBondLiftedEdge(int a);
 void set_bonds(int a);
+int get_bonds();
 ////////////////
 
 
