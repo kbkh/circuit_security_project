@@ -130,6 +130,7 @@ void Security::get_edge_neighbors() {
 
 void Security::create_graph(igraph_t* g, set<int> edges, set<int>& vertices_set, int* max_degree, bool create) {
     map<int,int> vertices;
+    map<int,int> vertices2;
     
     if (create)
         igraph_empty(g,0,IGRAPH_DIRECTED);
@@ -141,6 +142,8 @@ void Security::create_graph(igraph_t* g, set<int> edges, set<int>& vertices_set,
         int F_from, F_to;
         
         igraph_edge(G,*it,&from,&to);
+        //cout<<"!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!"<<endl;
+        //cout<<from<<" "<<to<<endl;
         
         // if adding vertices and egdes to H, "delete" them from G
         if (!create) {
@@ -174,6 +177,10 @@ void Security::create_graph(igraph_t* g, set<int> edges, set<int>& vertices_set,
             SETVAN(g, "ID", vid, VAN(G, "ID", from));
             
             vertices.insert(pair<int,int>(from,vid));
+            
+            if (start && !create)
+                vertices2.insert(pair<int,int>(from,F_from));
+            
             new_from = vid;
             
             // add to vertices set
@@ -183,7 +190,12 @@ void Security::create_graph(igraph_t* g, set<int> edges, set<int>& vertices_set,
             
             if (igraph_vertex_degree(G, from) > *max_degree)
                 *max_degree = igraph_vertex_degree(G, from);
-        } else new_from = vertices[from];
+        } else {
+            new_from = vertices[from];
+            
+            if (start)
+                F_from = vertices2[from];
+        }
         
         got = vertices.find(to);
         if (got == vertices.end()) { // not in set
@@ -208,7 +220,12 @@ void Security::create_graph(igraph_t* g, set<int> edges, set<int>& vertices_set,
             
             SETVAN(g, "colour", vid, VAN(G, "colour", to));
             SETVAN(g, "ID", vid, VAN(G, "ID", to));
+            
             vertices.insert(pair<int,int>(to,vid));
+            
+            if (start)
+                vertices2.insert(pair<int,int>(to,F_to));
+            
             new_to = vid;
             
             // add to vertices set
@@ -218,11 +235,18 @@ void Security::create_graph(igraph_t* g, set<int> edges, set<int>& vertices_set,
             
             if (igraph_vertex_degree(G, to) > *max_degree)
                 *max_degree = igraph_vertex_degree(G, to);
-        } else new_to = vertices[to];
+        } else {
+            new_to = vertices[to];
+            
+            if (start)
+                F_to = vertices2[to];
+        }
         
         igraph_add_edge(g, new_from, new_to);
         
-        if (start  && !create) {
+        //cout<<F_from<<" "<<F_to<<endl;
+        
+        if (start && !create) {
             H_e_dummy++;
             igraph_add_edge(F, F_from, F_to);
             SETEAN(F, "Dummy", igraph_ecount(F)-1, kDummy);
@@ -1124,5 +1148,10 @@ void Security::kiso(int min_L1, int max_L1, int maxPsize, int tresh, bool baseli
     }
     //--
     cout<<"top tier: "<<top_tier_vertices.size()<<endl;
+}
+
+void Security::update_bond() {
+    /*for (int i = 0; i < igraph_ecount(G); i++)
+        SETEAN(G, "Visited", i, 1);*/
 }
 ///////////////
