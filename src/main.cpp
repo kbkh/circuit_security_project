@@ -312,7 +312,7 @@ int main(int argc, char **argv) {
         for (int i = 0; i < igraph_vcount(&G); i++)
             area += (string)VAS(&G, "type", i)==NAND ? nand_area:inv_area;
         
-        cout<<area<<endl;
+        cout<<area*2<<endl;
         
         for (int pag = 4; pag < 7; pag++) {
             stringstream int_pag;
