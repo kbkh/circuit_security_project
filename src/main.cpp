@@ -304,7 +304,7 @@ int main(int argc, char **argv) {
         string area_out = "areas/" + circuit_name + "_03_areas.txt";
         area_file.open(area_out.c_str());
         
-        float nand_area = 0.0324, inv_area = 0.01944, nor_area = 1.0;
+        float nand_area = 0.0324, inv_area = 0.01944, nor_area = 0.0324;
         string NAND = "nanf201", INV = "invf101", NOR = "norf201";
         
         float area = 0.0;
@@ -367,7 +367,6 @@ int main(int argc, char **argv) {
                                 bottom_area += inv_area;
                             else if (VAN(&T, "colour", i) == Nor)
                                 bottom_area += nor_area;
-                            
                             
                             igraph_vector_t eids;
                             igraph_vector_init(&eids,0);
