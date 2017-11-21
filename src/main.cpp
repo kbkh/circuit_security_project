@@ -248,49 +248,6 @@ int main(int argc, char **argv) {
         G.print();
     }
     
-    if ( test_args.size() > 0 && 2 == atoi(test_args[0].c_str())) {
-        for (int pag = 4; pag < 5/*7*/; pag++) {
-            stringstream int_pag;
-            int_pag << pag;
-            string str_pag = int_pag.str();
-            
-            for (int tresh = 2/*0*/; tresh < 3/*5*/; tresh += 2) {
-                stringstream int_tresh;
-                int_tresh << tresh;
-                string str_tresh = int_tresh.str();
-                
-                for (int k = 4/*2*/; k < 5/*33*/; k++) {
-                    stringstream int_k;
-                    int_k << k;
-                    string str_k = int_k.str();
-                    
-                    Circuit T;
-                    FILE* in;
-                    
-                    
-                    string filenme = "wdir/" + circuit_name + "/" + circuit_name + "_PAG_" + str_pag + "_tresh_" + str_tresh + "_lvl_" + str_k + "_R_circuit.gml";
-                    in = fopen(filenme.c_str(),"r");
-                    if (in == NULL)
-                        continue;
-                    cout<<filenme<<endl;
-                    igraph_read_graph_gml(&T, in);
-                    
-                    for (int i = 0; i < igraph_ecount(&T); i++)
-                        SETEAN(&T, "Visited", i, 0);
-                    
-                    T.save("wdir/new1");
-                    
-                    Security security(&T, &T, &T, &T);
-                    security.update_bond();
-                    
-                    T.save("wdir/new2");
-                }
-            }
-        }
-        
-        return 0;
-    }
-    
     if ( test_args.size() > 0 && 0 == atoi(test_args[0].c_str())) {
         string area_out = "areas/" + circuit_name + "_areas.txt";
         area_file.open(area_out.c_str());

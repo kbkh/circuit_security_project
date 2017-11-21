@@ -1149,9 +1149,4 @@ void Security::kiso(int min_L1, int max_L1, int maxPsize, int tresh, bool baseli
     //--
     cout<<"top tier: "<<top_tier_vertices.size()<<endl;
 }
-
-void Security::update_bond() {
-    /*for (int i = 0; i < igraph_ecount(G); i++)
-        SETEAN(G, "Visited", i, 1);*/
-}
 ///////////////
