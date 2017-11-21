@@ -304,13 +304,19 @@ int main(int argc, char **argv) {
         string area_out = "areas/" + circuit_name + "_03_areas.txt";
         area_file.open(area_out.c_str());
         
-        float nand_area = 0.0324, inv_area = 0.01944;
-        string NAND = "nanf201", INV = "invf101";
+        float nand_area = 0.0324, inv_area = 0.01944, nor_area = 1.0;
+        string NAND = "nanf201", INV = "invf101", NOR = "norf201";
         
         float area = 0.0;
         
-        for (int i = 0; i < igraph_vcount(&G); i++)
-            area += (string)VAS(&G, "type", i)==NAND ? nand_area:inv_area;
+        for (int i = 0; i < igraph_vcount(&G); i++) {
+            if ((string)VAS(&G, "type", i) == NAND)
+                area += nand_area;
+            else if ((string)VAS(&G, "type", i) == INV)
+                area += inv_area;
+            else if ((string)VAS(&G, "type", i) == NOR)
+                area += nor_area;
+        }
         
         cout<<area*2<<endl;
         
@@ -340,8 +346,8 @@ int main(int argc, char **argv) {
                     cout<<filenme<<endl;
                     igraph_read_graph_gml(&T, in);
                     
-                    int nand = 0, inv = 0;
-                    int Nand = 1, Inv = 0;
+                    int nand = 0, inv = 0, nor = 0;
+                    int Nand = 2, Inv = 0, Nor = 1;
                     
                     float top_area = 0.0, bottom_area = 0.0;
                     
@@ -351,12 +357,16 @@ int main(int argc, char **argv) {
                                 top_area += nand_area;
                             else if (VAN(&T, "colour", i) == Inv)
                                 top_area += inv_area;
+                            else if (VAN(&T, "colour", i) == Nor)
+                                top_area += nor_area;
                         }
                         else if ((string)VAS(&T, "Tier", i) == "Bottom") {
                             if (VAN(&T, "colour", i) == Nand)
                                 bottom_area += nand_area;
                             else if (VAN(&T, "colour", i) == Inv)
                                 bottom_area += inv_area;
+                            else if (VAN(&T, "colour", i) == Nor)
+                                bottom_area += nor_area;
                             
                             
                             igraph_vector_t eids;
@@ -374,11 +384,14 @@ int main(int argc, char **argv) {
                                 }
                             }
                             //cout<<endl;
-                            if (count == size)
+                            if (count == size) {
                                 if (VAN(&T, "colour", i) == Nand)
                                     nand++;
                                 else if (VAN(&T, "colour", i) == Inv)
                                     inv++;
+                                else if (VAN(&T, "colour", i) == Nor)
+                                    nor++;
+                            }
                             
                             igraph_vector_destroy(&eids);
                         }
@@ -386,20 +399,25 @@ int main(int argc, char **argv) {
                     
                     top_area *= 4;
                     
-                    if (nand > 0 && nand < 10)
-                        nand = 10 - nand;
-                    else if (nand >= 10)
+                    if (nand > 0 && nand < k)
+                        nand = k - nand;
+                    else if (nand >= k)
                         nand = 0;
                     
-                    if (inv > 0 && inv < 10)
+                    if (inv > 0 && inv < k)
                         inv = 10 - inv;
-                    else if (inv >= 10)
+                    else if (inv >= k)
                         inv = 0;
                     
-                    bottom_area = bottom_area + nand*nand_area + inv*inv_area;
+                    if (nor > 0 && nor < k)
+                        nor = k - nor;
+                    else if (nor >= k)
+                        nor = 0;
+                    
+                    bottom_area = bottom_area + nand*nand_area + inv*inv_area + nor*nor_area;
                     bottom_area *= 2;
                     
-                    cout<<nand<<" "<<inv<<endl;
+                    cout<<nand<<" "<<inv<<" "<<nor<<endl;
                     
                    /* float bond_area = 0;
                     filenme = "PAG_testing/" + circuit_name + "/" + circuit_name + "_PAG_" + str_pag + "_tresh_" + str_tresh + "_k_" + str_k + "_report.txt";

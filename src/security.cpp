@@ -1367,21 +1367,24 @@ int Security::update_bond(int L1) {
         }
     }
     
-    int nand_count = 0, inv_count = 0;
+    int nand_count = 0, inv_count = 0, nor_count = 0;
     
     for (int i = 0; i < igraph_vcount(G); i++) {
         if ((string)VAS(G, "Tier", i) == "Bottom" && VAN(G, "Visited", i) == 0) {
-            if (VAN(G, "colour", i) == 1) {
+            if (VAN(G, "colour", i) == 2) {
                 nand_count++;
                 SETVAN(G, "Visited", i, 1);
             } else if (VAN(G, "colour", i) == 0) {
                 inv_count++;
                 SETVAN(G, "Visited", i, 1);
+            } else if (VAN(G, "colour", i) == 1) {
+                nor_count++;
+                SETVAN(G, "Visited", i, 1);
             }
         }
     }
     
-    int nand_deg = 3, inv_deg = 2;
+    int nand_deg = 3, inv_deg = 2, nor_deg = 3;
     
     if (nand_count > 0)
         nand_deg *= max(nand_count, L1); //k
@@ -1391,9 +1394,13 @@ int Security::update_bond(int L1) {
         inv_deg *= max(inv_count, L1); //k
     else inv_deg = 0;
     
-    cout<<nand_count<<" "<<inv_count<<endl;
-    cout<<nand_deg<<" "<<inv_deg<<endl;
-    bond_points += (nand_deg + inv_deg);
+    if (nor_count > 0)
+        nor_deg *= max(nor_count, L1); //k
+    else nor_deg = 0;
+    
+    cout<<nand_count<<" "<<inv_count<<" "<<nor_count<<endl;
+    cout<<nand_deg<<" "<<inv_deg<<" "<<nor_deg<<endl;
+    bond_points += (nand_deg + inv_deg + nor_deg);
     cout<<bond_points<<endl;
     
     return bond_points;
