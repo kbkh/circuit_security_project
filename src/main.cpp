@@ -268,7 +268,6 @@ int main(int argc, char **argv) {
                     Circuit T;
                     FILE* in;
                     
-                    
                     string filenme = "wdir/" + circuit_name + "/" + circuit_name + "_PAG_" + str_pag + "_tresh_" + str_tresh + "_lvl_" + str_k + "_R_circuit.gml";
                     in = fopen(filenme.c_str(),"r");
                     if (in == NULL)
@@ -431,7 +430,7 @@ int main(int argc, char **argv) {
                     cout<<"l "<<line<<endl;
                     bond_area = atof(line.c_str());
                     
-                    bond_area *= 16;
+                    bond_area *= 0.0784;
                     
                     cout<<"top = "<<top_area<<" bottom = "<<bottom_area<<" bond = "<<bond_area<<endl;
                     float temp = max(top_area, bottom_area);
