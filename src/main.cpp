@@ -32,6 +32,7 @@
 ofstream koutfile;
 ofstream koutfile2;
 ofstream area_file;
+ofstream bond_file;
 int target_security;
 
 /********************************************************************************
@@ -249,17 +250,17 @@ int main(int argc, char **argv) {
     }
     
     if ( test_args.size() > 0 && 2 == atoi(test_args[0].c_str())) {
-        for (int pag = 4; pag < 5/*7*/; pag++) {
+        for (int pag = 4; pag < 7; pag++) {
             stringstream int_pag;
             int_pag << pag;
             string str_pag = int_pag.str();
             
-            for (int tresh = 2/*0*/; tresh < 3/*5*/; tresh += 2) {
+            for (int tresh = 0; tresh < 5; tresh += 2) {
                 stringstream int_tresh;
                 int_tresh << tresh;
                 string str_tresh = int_tresh.str();
                 
-                for (int k = 4/*2*/; k < 5/*33*/; k++) {
+                for (int k = 2; k < 33; k++) {
                     stringstream int_k;
                     int_k << k;
                     string str_k = int_k.str();
@@ -278,12 +279,21 @@ int main(int argc, char **argv) {
                     for (int i = 0; i < igraph_ecount(&T); i++)
                         SETEAN(&T, "Visited", i, 0);
                     
-                    T.save("wdir/new1");
+                    for (int i = 0; i < igraph_vcount(&T); i++)
+                        SETVAN(&T, "Visited", i, 0);
+                    
+                    //T.save("wdir/new1");
+                    
+                    string bond_name = "bonds/" + circuit_name + "/" + circuit_name + "_PAG_" + str_pag + "_tresh_" + str_tresh + "_lvl_" + str_k + "_bonds.txt";
+                    cout<<bond_name<<endl;
+                    bond_file.open(bond_name.c_str());
                     
                     Security security(&T, &T, &T, &T);
-                    security.update_bond();
+                    int bond_points = security.update_bond(k);
                     
-                    T.save("wdir/new2");
+                    //T.save("wdir/new2");
+                    bond_file<<bond_points<<endl;
+                    bond_file.close();
                 }
             }
         }
@@ -391,7 +401,7 @@ int main(int argc, char **argv) {
                     
                     cout<<nand<<" "<<inv<<endl;
                     
-                    float bond_area = 0;
+                   /* float bond_area = 0;
                     filenme = "PAG_testing/" + circuit_name + "/" + circuit_name + "_PAG_" + str_pag + "_tresh_" + str_tresh + "_k_" + str_k + "_report.txt";
                     ifstream infile(filenme.c_str());
                     string line;
@@ -410,9 +420,16 @@ int main(int argc, char **argv) {
                             s_bond_area = *itera;
                             cout<<"helloowz: "<<s_bond_area<<endl;
                         }
-                    }
+                    }*/
                     
-                    bond_area = atof(s_bond_area.c_str());
+                    float bond_area = 0;
+                    filenme = "bonds/" + circuit_name + "/" + circuit_name + "_PAG_" + str_pag + "_tresh_" + str_tresh + "_lvl_" + str_k + "_bonds.txt";
+                    ifstream infile(filenme.c_str());
+                    string line;
+                    
+                    getline(infile, line);
+                    cout<<"l "<<line<<endl;
+                    bond_area = atof(line.c_str());
                     
                     bond_area *= 16;
                     
