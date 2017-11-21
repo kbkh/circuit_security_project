@@ -386,14 +386,14 @@ int main(int argc, char **argv) {
                     
                     top_area *= 4;
                     
-                    if (nand > 0 && nand < 10)
-                        nand = 10 - nand;
-                    else if (nand >= 10)
+                    if (nand > 0 && nand < k)
+                        nand = k - nand;
+                    else if (nand >= k)
                         nand = 0;
                     
-                    if (inv > 0 && inv < 10)
-                        inv = 10 - inv;
-                    else if (inv >= 10)
+                    if (inv > 0 && inv < k)
+                        inv = k - inv;
+                    else if (inv >= k)
                         inv = 0;
                     
                     bottom_area = bottom_area + nand*nand_area + inv*inv_area;
