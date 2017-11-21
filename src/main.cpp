@@ -304,7 +304,7 @@ int main(int argc, char **argv) {
         string area_out = "areas/" + circuit_name + "_areas.txt";
         area_file.open(area_out.c_str());
         
-        float nand_area = 1.877200, inv_area = 1.407900;
+        float nand_area = 0.0324, inv_area = 0.01944;
         string NAND = "nanf201", INV = "invf101";
         
         float area = 0.0;
@@ -384,7 +384,7 @@ int main(int argc, char **argv) {
                         }
                     }
                     
-                    top_area *= 2;
+                    top_area *= 4;
                     
                     if (nand > 0 && nand < 10)
                         nand = 10 - nand;
@@ -397,6 +397,7 @@ int main(int argc, char **argv) {
                         inv = 0;
                     
                     bottom_area = bottom_area + nand*nand_area + inv*inv_area;
+                    bottom_area *= 2;
                     
                     cout<<nand<<" "<<inv<<endl;
                     
