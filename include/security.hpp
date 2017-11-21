@@ -69,7 +69,7 @@ public:
     int max_degree; // degree of this embedding
     vector<int> mapEMB; // for bonds
     igraph_vector_t mapp;
-    map<int,int> mmap; //
+    map<int,int> mmap; 
 };
 
 class VDEMBEDDINGS {

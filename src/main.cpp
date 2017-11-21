@@ -268,7 +268,7 @@ int main(int argc, char **argv) {
                     Circuit T;
                     FILE* in;
                     
-                    string filenme = "wdir/" + circuit_name + "/" + circuit_name + "_PAG_" + str_pag + "_tresh_" + str_tresh + "_lvl_" + str_k + "_R_circuit.gml";
+                    string filenme = "wdir/" + circuit_name + "_03/" + circuit_name + "_PAG_" + str_pag + "_tresh_" + str_tresh + "_lvl_" + str_k + "_R_circuit.gml";
                     in = fopen(filenme.c_str(),"r");
                     if (in == NULL)
                         continue;
@@ -283,7 +283,7 @@ int main(int argc, char **argv) {
                     
                     //T.save("wdir/new1");
                     
-                    string bond_name = "bonds/" + circuit_name + "/" + circuit_name + "_PAG_" + str_pag + "_tresh_" + str_tresh + "_lvl_" + str_k + "_bonds.txt";
+                    string bond_name = "bonds/" + circuit_name + "_03/" + circuit_name + "_PAG_" + str_pag + "_tresh_" + str_tresh + "_lvl_" + str_k + "_bonds.txt";
                     cout<<bond_name<<endl;
                     bond_file.open(bond_name.c_str());
                     
@@ -301,7 +301,7 @@ int main(int argc, char **argv) {
     }
     
     if ( test_args.size() > 0 && 0 == atoi(test_args[0].c_str())) {
-        string area_out = "areas/" + circuit_name + "_areas.txt";
+        string area_out = "areas/" + circuit_name + "_03_areas.txt";
         area_file.open(area_out.c_str());
         
         float nand_area = 0.0324, inv_area = 0.01944;
@@ -333,7 +333,7 @@ int main(int argc, char **argv) {
                     FILE* in;
                     
                     
-                    string filenme = "wdir/" + circuit_name + "/" + circuit_name + "_PAG_" + str_pag + "_tresh_" + str_tresh + "_lvl_" + str_k + "_F_circuit.gml";
+                    string filenme = "wdir/" + circuit_name + "_03/" + circuit_name + "_PAG_" + str_pag + "_tresh_" + str_tresh + "_lvl_" + str_k + "_F_circuit.gml";
                     in = fopen(filenme.c_str(),"r");
                     if (in == NULL)
                         continue;
@@ -423,7 +423,7 @@ int main(int argc, char **argv) {
                     }*/
                     
                     float bond_area = 0;
-                    filenme = "bonds/" + circuit_name + "/" + circuit_name + "_PAG_" + str_pag + "_tresh_" + str_tresh + "_lvl_" + str_k + "_bonds.txt";
+                    filenme = "bonds/" + circuit_name + "_03/" + circuit_name + "_PAG_" + str_pag + "_tresh_" + str_tresh + "_lvl_" + str_k + "_bonds.txt";
                     ifstream infile(filenme.c_str());
                     string line;
                     
