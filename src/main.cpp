@@ -226,14 +226,14 @@ int main(int argc, char **argv) {
         SETEAN(&G, "Original", i, NotOriginal);
         SETEAN(&G, "ID", i, i);
         SETEAN(&G, "Removed", i, NotRemoved);
-        SETEAS(&G, "Tier", i, "Lifted");
+        SETEAS(&G, "Tier", i, "Bottom");
         SETEAN(&G, "Dummy", i, kNotDummy);
     }
     
     for (int i = 0; i < igraph_vcount(&G); i++) {
         SETVAN(&G, "Removed", i, NotRemoved);
         SETVAN(&G, "ID", i, i);
-        SETVAS(&G, "Tier", i, "Top");
+        SETVAS(&G, "Tier", i, "Bottom");
         SETVAN(&G, "Dummy", i, kNotDummy);
     }
     ////////////////
